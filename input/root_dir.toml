@@ -1,0 +1,6 @@
+# Contains the level root folders for all likely users
+
+Q_ROOT = 'C:\Users\qtran\Desktop\PROJECT Whale Nebula\WhaleNebula\Assets\StreamingAssets\levels'
+
+T_ROOT = 'C:\Insert your file path here'
+
