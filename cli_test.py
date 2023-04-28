@@ -1,5 +1,7 @@
 import toml
 
+print("hello world!")
+
 print("\n\n======== TOML DEMO ========")
 print("Here's how we can iterate through all the root directories using TOML!")
 
