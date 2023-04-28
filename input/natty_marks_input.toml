@@ -1,0 +1,5 @@
+default_level = 'g03.xml'
+
+default_input_layer = 'fg_raw'
+
+default_output_layer = 'collisions'
