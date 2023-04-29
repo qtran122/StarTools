@@ -7,3 +7,6 @@ def add_one(num1):
     """A simple function for incrementing. Used to show successful importing"""
     print ("-- math_utils.py : add_one() called")
     return num1 + 1
+
+def sub_one(num):
+    return num - 1
