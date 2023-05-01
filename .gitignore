@@ -1,1 +1,5 @@
 *.pyc 
+.DS_Store
+logic/.DS_Store
+logic/common/.DS_Store
+memo.txt
