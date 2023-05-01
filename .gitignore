@@ -1,1 +1,5 @@
 *.pyc 
+*.txt
+logic/common/.DS_Store
+logic/.DS_Store
+.DS_Store
