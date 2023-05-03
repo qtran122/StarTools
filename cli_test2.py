@@ -8,30 +8,21 @@ Testing file (TY)
 '''Import'''
 
 import toml
-from logic.common import file_utils as fu
-#	from logic.common import level_reader as lr
-#	from logic.common import level_writer as lw
-#	from logic.common import image_exporter as ie
-from logic.test import test_logic as logic
+from logic.common import utils_file
+from logic.common import utils_time
+from test_unit import test_root
 
 
 #==================================================#
 
-# I put main() inside a function
-#  in order to comment out single lines without affecting indentation
 def main():
 	'''The main procedure for each CLI'''
-	fu.start_procedures()
+	clock = utils_time.Clock() # Start the time tracking for program run
 
-	# TOML DEMO
-	fu.debug_root("input/root_dir.toml")
+	test_root.main()
 
-	# File I/O DEMO
-	input_path = fu.get_first_valid_root("input/root_dir.toml")
-	input_path += "d30.xml"
-#	print(input_path)
+	clock.end_procedures() # Indicate the end of a successful run, with time elapsed printed
 
-	fu.end_procedures()
 
 main()
 
