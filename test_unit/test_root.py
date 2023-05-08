@@ -7,7 +7,7 @@ from logic.common import utils_file
 
 def main(root_dir_toml = utils_file.DEFAULT_ROOT_TOML):
 	'''Checks the number of roots and highlight the chosen one'''
-	if not utils_file.check_file_exist(root_dir_toml):
+	if not os.path.exists(root_dir_toml):
 		return
 	root_dir_args = toml.load(root_dir_toml)
 	utils_file._print(f"~There's a total of {len(root_dir_args)} roots detected~")
