@@ -61,7 +61,7 @@ def read_file(file_name):
 	return list_s
 
 def write_file(file_name, list_s):
-	'''Overwrites to the file dircetory with the provided list of string'''
+	'''Overwrites to the file directory with the provided list of string'''
 	_print(f"Overwriting file \"{file_name}\"...")
 	file_object = open(file_name, "w")
 	file_object.write('\n'.join(list_s))
@@ -79,12 +79,15 @@ def strip_suffix(og_name):
 #--------------------------------------------------#
 '''String Operations'''
 
+# This was previously used for writing level files in QCT
+# But since we are revamping the LevelWriter anyway, this function might end up not being used...
 def deflate(list_s, list_end = -1):
+	'''Remove empty lines of any given list of string'''
 	if list_end < 0:
 		list_end = len(list_s)
 	temp_s = '\n'.join(list_s)
-	temp_s = temp_s.replace("\n\n","\n")
-	temp_s = temp_s.replace("\n\n","\n")
+	temp_s = temp_s.replace("\n\n","\n") # Remove odd-numbered empty lines
+	temp_s = temp_s.replace("\n\n","\n") # Remove even-numbered empty lines
 	# TODO: Find a way to splice a single string into a list by the character '\n'
 	list_s2 = [temp_s]
 	return list_s2
