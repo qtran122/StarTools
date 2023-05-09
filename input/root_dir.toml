@@ -2,5 +2,6 @@
 
 Q_ROOT = 'C:\Users\qtran\Desktop\PROJECT Whale Nebula\WhaleNebula\Assets\StreamingAssets\levels'
 
-T_ROOT = 'C:\Insert your file path here'
+T_ROOT = '/Users/Jimmy/Library/Application Support/Steam/steamapps/common/Whale Nebula/Contents/Resources/Data/StreamingAssets/levels'
 
+T_ROOT2 = '/Users/Jimmy/Documents/10 Star Iliad tasks/00-Tiling/10-workspace'
