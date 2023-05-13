@@ -7,7 +7,7 @@ This file contains time-related utility functions:
 import time
 from logic.common import utils_file
 
-#==================================================#
+#--------------------------------------------------#
 
 class Clock:
 	def __init__(self):
@@ -23,8 +23,12 @@ class Clock:
 		utils_file.print_linebreak(1,0)
 		print(f"\t~End of All Procedures~ ({time_passed}s)")
 		print("")
+		print("")
+		print("")
 
-#==================================================#
+
+
+#--------------------------------------------------#
 
 
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="74" nextobjectid="818">
+ <tileset firstgid="1" source="WhaleNebulaTileset.tsx"/>
+ <layer id="70" name="fg_test_tilelayer" width="4" height="4">
+  <data encoding="base64" compression="zlib">
+   eAENybEBACAIACBNH9c6PAYmMiIORTMsl0emp2iG5fL4bcgEMQ==
+  </data>
+ </layer>
+ <objectgroup id="73" name="objects_test_layer">
+  <object id="817" x="32" y="0" width="32" height="32">
+   <properties>
+    <property name="Property_1" value="Value_1"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
