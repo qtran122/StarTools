@@ -4,6 +4,7 @@ import os
 from logic.common import utils_file
 
 #==================================================#
+'''Main Testing Function'''
 
 def main(root_dir_toml = utils_file.DEFAULT_ROOT_TOML):
 	'''Checks the number of roots and highlight the chosen one'''
@@ -19,6 +20,8 @@ def main(root_dir_toml = utils_file.DEFAULT_ROOT_TOML):
 			selected = True
 		print_str += f"\t{name} : {root}"
 		print(print_str)
+
+	print(f"\n  First Valid Root : \n{utils_file.get_first_valid_root()}")
 
 #==================================================#
 

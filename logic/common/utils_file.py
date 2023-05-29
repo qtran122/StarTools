@@ -42,7 +42,7 @@ def _print_list(list_s):
 #--------------------------------------------------#
 '''File I/O'''
 
-def get_first_valid_root(root_dir_toml):
+def get_first_valid_root(root_dir_toml = DEFAULT_ROOT_TOML):
 	'''Return filepath based on the users' computer'''
 	root_dir_args = toml.load(root_dir_toml)
 	for name, root in root_dir_args.items():
