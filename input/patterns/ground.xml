@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="3" height="3" tilewidth="16" tileheight="16" infinite="0" nextlayerid="83" nextobjectid="676">
+ <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
+ <tileset firstgid="16385" source="../../../../JCT/JavaQuickCollision/10-XML/WhaleNebulaTileset.tsx"/>
+ <layer id="80" name="ground 3x3" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFrZGBgaCSAAVrYBIo=
+  </data>
+ </layer>
+ <objectgroup id="79" name="ground 3x3" visible="0">
+  <object id="674" x="0" y="0" width="48" height="48"/>
+ </objectgroup>
+ <layer id="82" name="ground 2x2" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFrZGBgaARiEADRMDZYAEoAADiUAgU=
+  </data>
+ </layer>
+ <objectgroup id="81" name="ground 2x2" visible="0">
+  <object id="675" x="0" y="0" width="32" height="32"/>
+ </objectgroup>
+ <layer id="72" name="ground 1x1" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjahcMA8ACjgAgg==
+  </data>
+ </layer>
+ <objectgroup id="73" name="ground 1x1" visible="0">
+  <object id="671" x="16" y="16" width="16" height="16"/>
+ </objectgroup>
+ <layer id="100" name="1f" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjQwMDagiDAwAErgBAg==
+  </data>
+ </layer>
+ <objectgroup id="73" name="1f">
+  <object id="671" x="16" y="16" width="16" height="16"/>
+ </objectgroup>
+ <layer id="100" name="2" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjQwMC1BFGBgAFNgBIg==
+  </data>
+ </layer>
+ <objectgroup id="73" name="2" visible="0">
+  <object id="671" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="angle" value="270"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="2f" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjQwMCqgiDAwADFgAog==
+  </data>
+ </layer>
+ <objectgroup id="73" name="2f" visible="0">
+  <object id="671" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="angle" value="90"/>
+    <property name="flip_x" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjQwMB1BFGBgAFvgBQg==
+  </data>
+ </layer>
+ <objectgroup id="73" name="3" visible="0">
+  <object id="671" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="angle" value="180"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3f" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjQwMDqgiDAwADngAwg==
+  </data>
+ </layer>
+ <objectgroup id="73" name="3f" visible="0">
+  <object id="671" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="angle" value="180"/>
+    <property name="flip_x" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjQwMCagiDAwAEJgA4g==
+  </data>
+ </layer>
+ <objectgroup id="73" name="4" visible="0">
+  <object id="671" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="angle" value="90"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4f" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjQwMD1BFGBgAGRgBYg==
+  </data>
+ </layer>
+ <objectgroup id="73" name="4f" visible="0">
+  <object id="671" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="angle" value="270"/>
+    <property name="flip_x" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

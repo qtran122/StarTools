@@ -16,7 +16,7 @@ class PatternMatcher():
         self.pattern_objects = {} # maps a pattern_name to a tuple (object_to_copy, x_offset, y_offset)
         print(f"-- pattern_matcher.py : initialized ...")
 
-    def FindAndCreate(self, playdo, tile_layer_name, objects_layer_to_create):
+    def FindAndCreate(self, playdo, tile_layer_name, objects_layer_to_create, allow_repeats = True):
         '''<FILL IN DESCRIPTION>'''
         # Get the target object group into which new generated objects will be added
         objects_group = playdo.GetObjectGroup(objects_layer_to_create, discard_old = True)
@@ -35,7 +35,7 @@ class PatternMatcher():
                 continue
             
             # Search for patterns
-            locations_to_add = self._FindPatternInTileMap(target_tiles2d, query_tiles2d)
+            locations_to_add = self._FindPatternInTileMap(target_tiles2d, query_tiles2d, allow_repeats)
             print(f"-- pattern_matcher.py : {pattern_name} found {len(locations_to_add)} matches!")
             
             # Copy object(s) to wherever there was a pattern match
@@ -57,7 +57,7 @@ class PatternMatcher():
                     return False
         return True
 
-    def _FindPatternInTileMap(self, tiles2d_to_search, tiles2d_query):
+    def _FindPatternInTileMap(self, tiles2d_to_search, tiles2d_query, allow_repeats):
         '''Searches a tiles2d tilemap for a specific pattern.
 
         :param tiles2d_to_search: 2d array of tile IDs (represents a tilemap layer). We will search it for matches
@@ -83,6 +83,11 @@ class PatternMatcher():
                         continue
                     if tiles2d_to_search[y + dy][x + dx] != tiles2d_query[dy][dx]:
                         return False
+                        
+            if not allow_repeats:
+                for dy in range(query_height):
+                    for dx in range(query_width):
+                        tiles2d_to_search[y + dy][x + dx] = 0 # Zero OUT to prevent repeat matches
             return True
 
         # Search for the tiles2d_query pattern in the tilemap.
