@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="3" height="3" tilewidth="16" tileheight="16" infinite="0" nextlayerid="86" nextobjectid="675">
+ <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
+ <layer id="46" name="1" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYGBgYGQGElAamQ0RZWAAAAF4ABE=
+  </data>
+ </layer>
+ <objectgroup id="71" name="1" visible="0">
+  <object id="672" name="relic_block" type="rare" x="0" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="46" name="1f" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYGBgYGRmaABSYABio/MBHzgCEQ==
+  </data>
+ </layer>
+ <objectgroup id="71" name="1f" visible="0">
+  <object id="672" name="relic_block" type="rare" x="16" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+    <property name="flip_x" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="46" name="2" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjZGZYwAjEDFAAYiPzQcIAOzgCkQ==
+  </data>
+ </layer>
+ <objectgroup id="71" name="2" visible="0">
+  <object id="672" name="relic_block" type="rare" x="0" y="0" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+    <property name="angle" value="270"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="46" name="2f" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYGBgYGRmUEDGQCEUAAANOACR
+  </data>
+ </layer>
+ <objectgroup id="71" name="2f" visible="0">
+  <object id="672" name="relic_block" type="rare" x="16" y="0" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+    <property name="angle" value="90"/>
+    <property name="flip_x" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="46" name="3" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYIAARmaGAyAWiEZmg8QALjgDEQ==
+  </data>
+ </layer>
+ <objectgroup id="71" name="3" visible="0">
+  <object id="672" name="relic_block" type="rare" x="16" y="0" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+    <property name="angle" value="180"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="46" name="3f" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjZGZwYIACRiAbhJH5IDYAFHgBEQ==
+  </data>
+ </layer>
+ <objectgroup id="71" name="3f" visible="0">
+  <object id="672" name="relic_block" type="rare" x="0" y="0" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+    <property name="angle" value="180"/>
+    <property name="flip_x" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="46" name="4" width="3" height="3" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAARmaGBBCGicD4ABF4AZE=
+  </data>
+ </layer>
+ <objectgroup id="71" name="4" visible="0">
+  <object id="672" name="relic_block" type="rare" x="16" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+    <property name="angle" value="90"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="46" name="4f" width="3" height="3">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFjMwMD5AxSBYAJ3gDkQ==
+  </data>
+ </layer>
+ <objectgroup id="71" name="4f">
+  <object id="672" name="relic_block" type="rare" x="0" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_4"/>
+    <property name="angle" value="270"/>
+    <property name="flip_x" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

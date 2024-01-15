@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="3" height="3" tilewidth="16" tileheight="16" infinite="0" nextlayerid="86" nextobjectid="676">
+ <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
+ <layer id="46" name="1" width="3" height="3">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAAJkYGBkYgBtILQDQIgGgACP8ArQ==
+  </data>
+ </layer>
+ <objectgroup id="71" name="1">
+  <object id="672" name="relic_block" type="rare" x="0" y="16" width="48" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="REEF_5"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
