@@ -1,4 +1,0 @@
-line1
-line 2
-line C
-.
