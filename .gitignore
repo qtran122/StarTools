@@ -1,1 +1,3 @@
 *.pyc 
+.DS_Store
+logic/common/utils_file.py
