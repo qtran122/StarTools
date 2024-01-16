@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="1" height="1" tilewidth="16" tileheight="16" infinite="0" nextlayerid="83" nextobjectid="688">
+ <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
+ <tileset firstgid="16385" source="../../../../JCT/JavaQuickCollision/10-XML/WhaleNebulaTileset.tsx"/>
+ <layer id="72" name="1" width="1" height="1" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAHrYmBgAAACLACL
+  </data>
+ </layer>
+ <objectgroup id="73" name="1" visible="0">
+  <object id="683" x="0" y="16">
+   <polyline points="0,0 16,-16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="1f" width="1" height="1" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAHrYmBoAAACrAEL
+  </data>
+ </layer>
+ <objectgroup id="73" name="1f" visible="0">
+  <object id="684" x="0" y="0">
+   <polyline points="0,0 16,16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="2" width="1" height="1" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAHrYmBYAAACzAEr
+  </data>
+ </layer>
+ <objectgroup id="73" name="2" visible="0">
+  <object id="685" x="0" y="0">
+   <polyline points="0,0 16,16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="2f" width="1" height="1" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAHrYmBQAAACTACr
+  </data>
+ </layer>
+ <objectgroup id="73" name="2f" visible="0">
+  <object id="683" x="0" y="16">
+   <properties>
+    <property name="angle" value="90"/>
+    <property name="flip_x" value=""/>
+   </properties>
+   <polyline points="0,0 16,-16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3" width="1" height="1" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAHrYmA4AAAC7AFL
+  </data>
+ </layer>
+ <objectgroup id="73" name="3" visible="0">
+  <object id="683" x="0" y="16">
+   <properties>
+    <property name="angle" value="180"/>
+   </properties>
+   <polyline points="0,0 16,-16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3f" width="1" height="1" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAHrYmBwAAACbADL
+  </data>
+ </layer>
+ <objectgroup id="73" name="3f" visible="0">
+  <object id="686" x="0" y="0">
+   <polyline points="0,0 16,16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4" width="1" height="1" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAHrYmBIAAACjADr
+  </data>
+ </layer>
+ <objectgroup id="73" name="4" visible="0">
+  <object id="687" x="0" y="0">
+   <polyline points="0,0 16,16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4f" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAHrYmB4AAADDAFr
+  </data>
+ </layer>
+ <objectgroup id="73" name="4f">
+  <object id="683" x="0" y="16">
+   <properties>
+    <property name="angle" value="270"/>
+    <property name="flip_x" value=""/>
+   </properties>
+   <polyline points="0,0 16,-16"/>
+  </object>
+ </objectgroup>
+</map>

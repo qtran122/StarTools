@@ -31,11 +31,16 @@ pattern_matcher_bb.LoadPattern(pattern_root + "reef5.xml")
 # Create a PatternMatcher for "fg_raw" : Ground and Slopes
 pattern_matcher_ground = PM.PatternMatcher()
 pattern_matcher_ground.LoadPattern(pattern_root + "ground.xml")
+pattern_matcher_ground.LoadPattern(pattern_root + "owp_flat.xml")
+pattern_matcher_ground.LoadPattern(pattern_root + "owp_1x1.xml")
+pattern_matcher_ground.LoadPattern(pattern_root + "owp_1x2.xml")
+pattern_matcher_ground.LoadPattern(pattern_root + "owp_1x4.xml")
 pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x1.xml")
 pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x2.xml")
 pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x2a.xml")
 pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x2b.xml")
 pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x4.xml")
+pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x4a.xml")
 
 # Perform the matching - mold the playdo
 pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_repeats = False)
