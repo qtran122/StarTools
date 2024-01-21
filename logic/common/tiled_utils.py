@@ -1,4 +1,4 @@
-'''Common math functions that are generally useful for all Tiling-related scripts.'''
+'''Common tiled functions that are generally useful for all Tiling-related scripts.'''
 
 import base64
 import zlib

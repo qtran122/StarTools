@@ -2,12 +2,12 @@
 <map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="10" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="89" nextobjectid="679">
  <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
  <tileset firstgid="16385" source="../../../../JCT/JavaQuickCollision/10-XML/WhaleNebulaTileset.tsx"/>
- <layer id="88" name="ground 10x10" width="10" height="10">
+ <layer id="88" name="ground 10x10" width="10" height="10" visible="0">
   <data encoding="base64" compression="zlib">
    eAFrZGBgaBzFgyYMAMbBMmU=
   </data>
  </layer>
- <objectgroup id="87" name="ground 10x10">
+ <objectgroup id="87" name="ground 10x10" visible="0">
   <object id="678" x="0" y="0" width="160" height="160"/>
  </objectgroup>
  <layer id="86" name="ground 5x5" width="10" height="10" visible="0">
@@ -42,12 +42,12 @@
  <objectgroup id="81" name="ground 2x2" visible="0">
   <object id="675" x="16" y="16" width="32" height="32"/>
  </objectgroup>
- <layer id="72" name="ground 1x1" width="10" height="10" visible="0">
+ <layer id="72" name="ground 1x1" width="10" height="10">
   <data encoding="base64" compression="zlib">
    eAFjYKANaKSNscPeVACeyACC
   </data>
  </layer>
- <objectgroup id="73" name="ground 1x1" visible="0">
+ <objectgroup id="73" name="ground 1x1">
   <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
  <layer id="100" name="1f" width="10" height="10" visible="0">
@@ -55,7 +55,7 @@
    eAFjYKANaGRgaKCNycPbVAA5VwEC
   </data>
  </layer>
- <objectgroup id="73" name="1f" visible="0">
+ <objectgroup id="73" name="1f">
   <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
  <layer id="100" name="2" width="10" height="10" visible="0">
@@ -63,50 +63,32 @@
    eAFjYKANaGRgWEAbk4e3qQBf9wEi
   </data>
  </layer>
- <objectgroup id="73" name="2" visible="0">
-  <object id="671" x="32" y="32" width="16" height="16">
-   <properties>
-    <property name="angle" value="270"/>
-   </properties>
-  </object>
+ <objectgroup id="73" name="2">
+  <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
  <layer id="100" name="2f" width="10" height="10" visible="0">
   <data encoding="base64" compression="zlib">
    eAFjYKANaGRgUKCNycPbVADFaACi
   </data>
  </layer>
- <objectgroup id="73" name="2f" visible="0">
-  <object id="671" x="32" y="32" width="16" height="16">
-   <properties>
-    <property name="angle" value="90"/>
-    <property name="flip_x" value=""/>
-   </properties>
-  </object>
+ <objectgroup id="73" name="2f">
+  <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
  <layer id="100" name="3" width="10" height="10" visible="0">
   <data encoding="base64" compression="zlib">
    eAFjYKANaGRgOEAbk4e3qQCGlwFC
   </data>
  </layer>
- <objectgroup id="73" name="3" visible="0">
-  <object id="671" x="32" y="32" width="16" height="16">
-   <properties>
-    <property name="angle" value="180"/>
-   </properties>
-  </object>
+ <objectgroup id="73" name="3">
+  <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
  <layer id="100" name="3f" width="10" height="10" visible="0">
   <data encoding="base64" compression="zlib">
    eAFjYKANaGRgcKCNycPbVADsCADC
   </data>
  </layer>
- <objectgroup id="73" name="3f" visible="0">
-  <object id="671" x="32" y="32" width="16" height="16">
-   <properties>
-    <property name="angle" value="180"/>
-    <property name="flip_x" value=""/>
-   </properties>
-  </object>
+ <objectgroup id="73" name="3f">
+  <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
  <layer id="100" name="4" width="10" height="10" visible="0">
   <data encoding="base64" compression="zlib">
@@ -114,23 +96,14 @@
   </data>
  </layer>
  <objectgroup id="73" name="4" visible="0">
-  <object id="671" x="32" y="32" width="16" height="16">
-   <properties>
-    <property name="angle" value="90"/>
-   </properties>
-  </object>
+  <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
  <layer id="100" name="4f" width="10" height="10" visible="0">
   <data encoding="base64" compression="zlib">
    eAFjYKANaGRgeEAbk4e3qQCtNwFi
   </data>
  </layer>
- <objectgroup id="73" name="4f" visible="0">
-  <object id="671" x="32" y="32" width="16" height="16">
-   <properties>
-    <property name="angle" value="270"/>
-    <property name="flip_x" value=""/>
-   </properties>
-  </object>
+ <objectgroup id="73" name="4f">
+  <object id="671" x="32" y="32" width="16" height="16"/>
  </objectgroup>
 </map>

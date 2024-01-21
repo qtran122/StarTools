@@ -1,0 +1,88 @@
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="1" height="1" tilewidth="16" tileheight="16" infinite="0" nextlayerid="86" nextobjectid="673">
+ <tileset firstgid="1" source="../../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx" />
+ <layer id="46" name="1" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAGTZGFgAAAAdAAe
+  </data>
+ </layer>
+ <objectgroup id="71" name="1">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   </properties>
+  </object>
+ </objectgroup>
+<layer id="100" name="1f" width="1" height="1"><data encoding="base64" compression="zlib">eJyTZGFoAAAA9ACe</data></layer><objectgroup id="71" name="1f">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   <property name="flip_x" value="" /></properties>
+  </object>
+ </objectgroup>
+<layer id="100" name="2" width="1" height="1"><data encoding="base64" compression="zlib">eJyTZGFYAAABFAC+</data></layer><objectgroup id="71" name="2">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   <property name="angle" value="270" /></properties>
+  </object>
+ </objectgroup>
+<layer id="100" name="2f" width="1" height="1"><data encoding="base64" compression="zlib">eJyTZGFQAAAAlAA+</data></layer><objectgroup id="71" name="2f">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   <property name="angle" value="90" /><property name="flip_x" value="" /></properties>
+  </object>
+ </objectgroup>
+<layer id="100" name="3" width="1" height="1"><data encoding="base64" compression="zlib">eJyTZGE4AAABNADe</data></layer><objectgroup id="71" name="3">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   <property name="angle" value="180" /></properties>
+  </object>
+ </objectgroup>
+<layer id="100" name="3f" width="1" height="1"><data encoding="base64" compression="zlib">eJyTZGFwAAAAtABe</data></layer><objectgroup id="71" name="3f">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   <property name="angle" value="180" /><property name="flip_x" value="" /></properties>
+  </object>
+ </objectgroup>
+<layer id="100" name="4" width="1" height="1"><data encoding="base64" compression="zlib">eJyTZGFIAAAA1AB+</data></layer><objectgroup id="71" name="4">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   <property name="angle" value="90" /></properties>
+  </object>
+ </objectgroup>
+<layer id="100" name="4f" width="1" height="1"><data encoding="base64" compression="zlib">eJyTZGF4AAABVAD+</data></layer><objectgroup id="71" name="4f">
+  <object id="672" name="AT" type="4" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="_art" value="NATTY_CLAM_3" />
+    <property name="_material" value="allbright" />
+    <property name="_sort" value="bg_tiles,32" />
+    <property name="behavior" value="UNDULATE_COLOR,00ff1e/0.3,00ff1e/0,cycle_time,4.5,start_time,[GEN_NUM_CLAM]" />
+   <property name="angle" value="270" /><property name="flip_x" value="" /></properties>
+  </object>
+ </objectgroup>
+</map>
