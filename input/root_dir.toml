@@ -1,8 +1,9 @@
 # Contains the level root folders for all likely users
 
-Q_ROOT = 'C:\Users\qtran\Desktop\PROJECT Whale Nebula\WhaleNebula\Assets\StreamingAssets\levels\'
-Q_PATTERN = 'C:\Users\qtran\Desktop\Github Projects\StarTools\input\patterns\'
+Q_ROOT = 'C:/Users/qtran/Desktop/PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/'
+Q_INPUT = 'C:/Users/qtran/Desktop/Github Projects/StarTools/input/'
 
 T_ROOT = '/Users/Jimmy/Library/Application Support/Steam/steamapps/common/Whale Nebula/Contents/Resources/Data/StreamingAssets/levels/'
+T_INPUT = 'C:/Insert your file path here'
 T_ROOT2 = '/Users/Jimmy/Documents/10 Star Iliad tasks/00-Tiling/10-workspace/'
-T_PATTERN = 'C:\Insert your file path here'
+T_PATTERN = 'C:/Insert your file path here'

@@ -16,8 +16,8 @@ parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help='Verbosi
 args = parser.parse_args()
 
 # Use a playdo to read/process the XML
+playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 pattern_root = file_utils.GetPatternRoot()
-playdo = play.LevelPlayDo(file_utils.GetLevelRoot() + args.filename)
 
 # Create a PatternMatcher for "_BB" : Breakable Blocks and Skell Reefs
 pattern_matcher_bb = PM.PatternMatcher()
@@ -27,6 +27,7 @@ pattern_matcher_bb.LoadPattern(pattern_root + "reef2.xml")
 pattern_matcher_bb.LoadPattern(pattern_root + "reef3.xml")
 pattern_matcher_bb.LoadPattern(pattern_root + "reef4.xml")
 pattern_matcher_bb.LoadPattern(pattern_root + "reef5.xml")
+pattern_matcher_bb.LoadPattern(pattern_root + "reef6.xml")
 
 # Create a PatternMatcher for "fg_raw" : Ground and Slopes
 pattern_matcher_ground = PM.PatternMatcher()

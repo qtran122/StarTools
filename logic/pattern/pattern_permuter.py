@@ -1,8 +1,8 @@
 '''A convenience module that helps to auto-generate the 7 other tile and object layers as if
    the object was rotated and flipped manually
 '''
-import logic.common.math_utils as math_utils
-
+import logic.common.tiled_utils as tiled_utils
+    
 def CreatePermutationsOfPattern(playdo):
     print("-- pattern_permuter.py")
     
@@ -27,7 +27,7 @@ def CreatePermutationsOfPattern(playdo):
     ]
     
     for new_name, tiles_2d_var, obj_properties in zip(new_pattern_names, tiles_2d_variants, attrib_properties):
-        encoded_data_str = math_utils.EncodeIntoZlibString64(tiles_2d_var)
+        encoded_data_str = tiled_utils.EncodeIntoZlibString64(tiles_2d_var)
         # TODO: Important to get the actual Tiled object ID? using '100' in the meanwhile
         playdo.AddNewTileLayer(new_name, encoded_data_str, '100')
         playdo.DuplicateObjectGroup(orig_object_group, new_name, obj_properties)
@@ -35,13 +35,13 @@ def CreatePermutationsOfPattern(playdo):
 def _GenerateVariants(tiles_2d):
     variants = []
     # first append a flipped version of the original tiles_2d
-    variants.append(math_utils.FlipTiles2d(tiles_2d))
+    variants.append(tiled_utils.FlipTiles2d(tiles_2d))
     # Next, Rotate 90, 180, 270 degrees. Append rotated and flipped-rotated variants
     rotated = tiles_2d
     for _ in range(3):
-        rotated = math_utils.RotateTiles2d(rotated)
+        rotated = tiled_utils.RotateTiles2d(rotated)
         variants.append(rotated)
-        variants.append(math_utils.FlipTiles2d(rotated))
+        variants.append(tiled_utils.FlipTiles2d(rotated))
 
     return variants
     

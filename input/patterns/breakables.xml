@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="75" nextobjectid="671">
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="89" nextobjectid="678">
  <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
- <layer id="72" name="small_bb" width="4" height="4" visible="0">
+ <layer id="72" name="blowhole_bb" width="4" height="4" visible="0">
   <data encoding="base64" compression="zlib">
-   eAFjYMAE/OyYYrhEAAQBABc=
+   eAFjYMAEPZyYYrhEABnTAJY=
   </data>
  </layer>
- <objectgroup id="73" name="small_bb" visible="0">
-  <object id="664" name="relic_block" type="9" x="16" y="16" width="16" height="16">
+ <objectgroup id="73" name="blowhole_bb" visible="0">
+  <object id="664" name="relic_block" type="5" x="16" y="16" width="16" height="16">
    <properties>
     <property name="_sort" value="fg_tiles,-1"/>
     <property name="_type" value="SNOT_1x1"/>
@@ -15,16 +15,114 @@
    </properties>
   </object>
  </objectgroup>
- <layer id="46" name="big_bb" width="4" height="4">
+ <layer id="46" name="blowhole_bb2" width="4" height="4" visible="0">
   <data encoding="base64" compression="zlib">
-   eAFjYMAEvWwMDH1ADAO87AwMfECMDQAANLIBUQ==
+   eAFjYMAEXZwMDN1ADANcXAwM3ECMDQAANKYBUQ==
   </data>
  </layer>
- <objectgroup id="71" name="big_bb">
+ <objectgroup id="71" name="blowhole_bb2" visible="0">
   <object id="660" name="relic_block" type="rare" x="16" y="16" width="32" height="32">
    <properties>
     <property name="_sort" value="fg_tiles,-1"/>
     <property name="_type" value="BIG_SNOT"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="78" name="lava_bb" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEPTyYYrhEABpUAJk=
+  </data>
+ </layer>
+ <objectgroup id="77" name="lava_bb" visible="0">
+  <object id="672" name="relic_block" type="5" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="LAVA_1x1a"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="76" name="lava_bb2" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEXTwMDN1ADANcvAwM3ECMDQAANjIBXQ==
+  </data>
+ </layer>
+ <objectgroup id="75" name="lava_bb2" visible="0">
+  <object id="671" name="relic_block" type="rare" x="16" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="LAVA_2x2"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="82" name="lung_bb" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEPdyYYrhEABopAJg=
+  </data>
+ </layer>
+ <objectgroup id="81" name="lung_bb" visible="0">
+  <object id="674" name="relic_block" type="5" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="LUNG_1x1"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="80" name="lung_bb2" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEXdwMDN1ADANcPAwM3ECMDQAANa4BWQ==
+  </data>
+ </layer>
+ <objectgroup id="79" name="lung_bb2" visible="0">
+  <object id="673" name="relic_block" type="rare" x="16" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="LUNG_2x2"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="86" name="surface_bb" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEPVyYYrhEABn+AJc=
+  </data>
+ </layer>
+ <objectgroup id="85" name="surface_bb" visible="0">
+  <object id="676" name="relic_block" type="5" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="SURFACE_1x1"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="84" name="surface_bb2" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEXVwMDN1ADANc3AwM3ECMDQAANSoBVQ==
+  </data>
+ </layer>
+ <objectgroup id="83" name="surface_bb2" visible="0">
+  <object id="675" name="relic_block" type="rare" x="16" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="SURFACE_2x2"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="88" name="goo_bb" width="4" height="4">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEPRyYYrhEABmoAJU=
+  </data>
+ </layer>
+ <objectgroup id="87" name="goo_bb">
+  <object id="677" name="relic_block" type="8" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="GOO_1x1"/>
     <property name="autoset" value=""/>
    </properties>
   </object>

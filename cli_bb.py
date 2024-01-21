@@ -1,10 +1,4 @@
-""" Command-Line Tool to add small and big BBs (breakable blocks) to a level. 
-    
-    Tool will scan provided xml level, searching for a graphic tile layer named "_BB". 
-    If found, it will add small and big BB objects to matching locations in a newly
-    generated object layer named "collisions_BB"    
-    
-    USAGE: <FILL IN>
+""" DEPRECATED!! TOSS THIS FILE
 """
 import argparse
 import logic.common.level_playdo as play
