@@ -13,8 +13,8 @@ def DecodeIntoTiles2d(encoded_str, row_width):
     '''
     Takes a TILED layer encoded string and converts it into a tiles2d
       encoded_str - string containing a layer's 'data' in TILED, zlib-encoded and base64-compressed
-      row_width   - integer indicating number of cells each row should contain
-      tiles2d     - 2d array of Tile IDs, first row is at top
+      row_width - integer indicating number of cells each row should contain
+      tiles2d - 2d array of Tile IDs, first row is at top
       >>> DecodeIntoTiles2d("eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw==", 4)
       >>> [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
     '''
@@ -33,7 +33,7 @@ def DecodeIntoTiles2d(encoded_str, row_width):
 def EncodeIntoZlibString64(tiles2d):
     '''
     Takes a TILED layer encoded string and converts it into a tiles2d
-      tiles2d     - 2d array of Tile IDs, first row is at top
+      tiles2d - 2d array of Tile IDs, first row is at top
       encoded_str - string containing a layer's 'data' in TILED, zlib-encoded and base64-compressed
       >>> EncodeIntoZlibString64([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
       >>> "eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw=="
@@ -65,7 +65,7 @@ def PrintTiles2d(tiles2d, multi_line=False):
 def TrimTiles2d(tiles2d):
     '''
     Removes empty rows and columns from a Tiles2D.
-      tiles2d     - 2d array of Tile IDs, cells with value 0 are "empty tile"
+      tiles2d - 2d array of Tile IDs, cells with value 0 are "empty tile"
       >>> TrimTiles2d([[0, 0, 0], [0, 1, 2], [0, 3, 4]])
       >>> [[1, 2], [3, 4]]
     '''

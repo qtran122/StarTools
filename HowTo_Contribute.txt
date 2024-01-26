@@ -1,0 +1,46 @@
+(WIP) User's Manual
+    Mostly TY's personal memo
+--------------------------------------------------
+'''Downloading (anew)'''
+
+1. Go to the folder you want to make changes on
+ e.g.	https://github.com/qtran122/StarTools
+2. From [Watch] [Fork] [Star], click [Fork] and proceed
+3. Open Desktop app
+4. At the [Let's get started!] front page, click the desired repository
+ e.g.	TYWong99/StarTools
+5. Click [Clone <repository name>] at the bottom-left, then [Clone]
+6. Select [To contribute to the parent project], [Continue]
+7.  -> (see "Uploading" section)
+
+
+
+'''Downloading (changes)'''
+
+1. ...
+1. 
+
+
+
+--------------------------------------------------
+'''Uploading (Pull Request)'''
+
+1. Edit files (e.g. write codes with IDE, make level files with Tiled, etc.)
+2. Open the GitHub app when finished editing
+3. Write the Summary & Description at bottom-left, click [Commit to main]
+	You should now be redirected to the front page saying [No local changes]
+4. Click [Push Origin]
+ 1. If there is conflict, ...?
+5. Go to page in browser
+ e.g.	https://github.com/TYWong99/StarTools/tree/main/input
+6. Click [Contribute] -> [Open pull request]
+7. Click [Create pull request]
+8. Click [Create pull request] again if the Summary & Description look alright
+9. You should be able to see your request at the main branch
+ e.g.	https://github.com/qtran122/StarTools/pulls
+
+
+
+
+
+--------------------------------------------------

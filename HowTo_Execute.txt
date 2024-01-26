@@ -1,0 +1,25 @@
+(WIP) User's Manual
+    Mostly TY's personal memo
+--------------------------------------------------
+'''Terminal Command'''
+
+cd /Users/Jimmy/20-GitHub/StarTools
+
+
+
+python cli_collide.py __test.xml
+
+
+
+
+
+
+	[WIP]
+
+python cli_bb.py
+
+python cli_permutate.py
+
+
+
+--------------------------------------------------
