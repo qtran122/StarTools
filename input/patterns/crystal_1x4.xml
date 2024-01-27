@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="83" nextobjectid="684">
+ <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
+ <tileset firstgid="16385" source="../../../../JCT/JavaQuickCollision/10-XML/WhaleNebulaTileset.tsx"/>
+ <layer id="72" name="ground 1x1" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAPWBkZGNiAmB2IOYAYHQAAAzQAHw==
+  </data>
+ </layer>
+ <objectgroup id="73" name="ground 1x1" visible="0">
+  <object id="676" type="9" x="16" y="32">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="48,0 -16,16 48,16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="1f" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAPOBgZGtiBmA2IWYEYXTUAMVwCHw==
+  </data>
+ </layer>
+ <objectgroup id="73" name="1f" visible="0">
+  <object id="677" type="9" x="0" y="32">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="0,0 64,16 0,16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="2" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYGBgYGVkWACk4IANjc+OxudA4gMAVqQCnw==
+  </data>
+ </layer>
+ <objectgroup id="73" name="2" visible="0">
+  <object id="678" type="9" x="16" y="0">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="0,0 16,64 0,64"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="2f" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYIAAVkYGBSgTTLGh8dnR+BxQPgASLACf
+  </data>
+ </layer>
+ <objectgroup id="73" name="2f" visible="0">
+  <object id="679" type="9" x="48" y="0">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="0,0 -16,64 0,64"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFHIwMB9iBmA2IWYEYVRaTBwB6PAMf
+  </data>
+ </layer>
+ <objectgroup id="73" name="3" visible="0">
+  <object id="680" type="9" x="64" y="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="0,0 -64,16 -64,0"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3f" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYEAFrIwMDmxAzA7EHECMKovJAwAsFAEf
+  </data>
+ </layer>
+ <objectgroup id="73" name="3f" visible="0">
+  <object id="681" type="9" x="0" y="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="0,0 64,0 64,16"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYIAADkaGBCgTTLGj8dnQ+KxQPgAvzAGf
+  </data>
+ </layer>
+ <objectgroup id="73" name="4" visible="0">
+  <object id="682" type="9" x="32" y="0">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="0,0 16,0 16,64"/>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4f" width="4" height="4">
+  <data encoding="base64" compression="zlib">
+   eAFjYGBg4GBkeACk4IAdjc+GxmdF4gMAeEQDnw==
+  </data>
+ </layer>
+ <objectgroup id="73" name="4f" visible="0">
+  <object id="683" type="9" x="32" y="0">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+   <polygon points="0,0 -16,64 -16,0"/>
+  </object>
+ </objectgroup>
+</map>

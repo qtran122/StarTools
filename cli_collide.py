@@ -14,7 +14,7 @@ import logic.pattern.pattern_matcher as PM
 '''Pattern Lists'''
 
 # Breakable Blocks and Skell Reefs
-_LIST_PATTERN_BB = {
+_LIST_PATTERN_BB = [
     "breakables",
     "reef1",
     "reef2",
@@ -22,10 +22,10 @@ _LIST_PATTERN_BB = {
     "reef4",
     "reef5",
     "reef6"
-}
+]
 
 # Ground and Slopes
-_LIST_PATTERN_GROUND = {
+_LIST_PATTERN_GROUND = [
     "ground",
     "owp_flat",
     "owp_1x1",
@@ -37,8 +37,17 @@ _LIST_PATTERN_GROUND = {
     "slope_1x2b",
     "slope_1x4",
     "slope_1x4a"
-}
+]
 
+# Crystals
+_LIST_CRYSTAL = [
+    "crystal_1x1",
+    "crystal_1x2",
+    "crystal_1x2a",
+    "crystal_1x2b",
+    "crystal_1x4",
+    "crystal_solid",
+]
 
 
 #--------------------------------------------------#
@@ -57,36 +66,24 @@ def main():
 
     # Create a PatternMatcher for "_BB" : Breakable Blocks and Skell Reefs
     pattern_matcher_bb = PM.PatternMatcher()
-    pattern_matcher_bb.LoadPattern(pattern_root + "breakables.xml")
-    pattern_matcher_bb.LoadPattern(pattern_root + "reef1.xml")
-    pattern_matcher_bb.LoadPattern(pattern_root + "reef2.xml")
-    pattern_matcher_bb.LoadPattern(pattern_root + "reef3.xml")
-    pattern_matcher_bb.LoadPattern(pattern_root + "reef4.xml")
-    pattern_matcher_bb.LoadPattern(pattern_root + "reef5.xml")
-    pattern_matcher_bb.LoadPattern(pattern_root + "reef6.xml")
+    for pattern in _LIST_PATTERN_BB:
+        pattern_matcher_bb.LoadPattern(pattern_root + pattern + ".xml")
 
     # Create a PatternMatcher for "fg_raw" : Ground and Slopes
     pattern_matcher_ground = PM.PatternMatcher()
-    pattern_matcher_ground.LoadPattern(pattern_root + "ground.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "owp_flat.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "owp_1x1.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "owp_1x2.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "owp_1x4.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x1.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x2.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x2a.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x2b.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x4.xml")
-    pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x4a.xml")
-
-    # Simplified iteration method
-#    for pattern in _LIST_PATTERN_BB: pattern_matcher_bb.LoadPattern(pattern_root + pattern + ".xml")
-#    for pattern in _LIST_PATTERN_GROUND: pattern_matcher_ground.LoadPattern(pattern_root + pattern + ".xml")
-
+    for pattern in _LIST_PATTERN_GROUND:
+        pattern_matcher_ground.LoadPattern(pattern_root + pattern + ".xml")
+    
+    # Create a PatternMatcher for "fg_crystal" : Crystals
+    pattern_matcher_crystal = PM.PatternMatcher()
+    for pattern in _LIST_CRYSTAL:
+        pattern_matcher_crystal.LoadPattern(pattern_root + pattern + ".xml")
+        
     # Perform the matching - mold the playdo
     pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_repeats = False)
     pattern_matcher_ground.FindAndCreate(playdo, "fg_raw", "collisions", allow_repeats = False)
-
+    pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_repeats = False)
+    
     # Flush changes to File!
     playdo.Write()
 
