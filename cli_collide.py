@@ -1,9 +1,6 @@
-''' Command-Line Tool to auto-add ground, BBs, and skell reefs to a level. 
+''' Command-Line Tool to auto-add ground, BBs, crystals, and skell reefs to a level. 
     
-    <summary>
-    
-    USAGE: <FILL
-
+    USAGE: python cli_collide.py j01
 '''
 import argparse
 import logic.common.level_playdo as play
