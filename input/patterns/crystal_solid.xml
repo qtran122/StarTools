@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="1" height="1" tilewidth="16" tileheight="16" infinite="0" nextlayerid="89" nextobjectid="679">
+ <tileset firstgid="1" source="../../../../PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/WhaleNebulaTileset.tsx"/>
+ <tileset firstgid="16385" source="../../../../JCT/JavaQuickCollision/10-XML/WhaleNebulaTileset.tsx"/>
+ <layer id="72" name="ground 1x1" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGRgAAAACwAD
+  </data>
+ </layer>
+ <objectgroup id="73" name="ground 1x1">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="1f" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGRoAAAAiwCD
+  </data>
+ </layer>
+ <objectgroup id="73" name="1f">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="2" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGRYAAAAqwCj
+  </data>
+ </layer>
+ <objectgroup id="73" name="2">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="2f" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGRQAAAAKwAj
+  </data>
+ </layer>
+ <objectgroup id="73" name="2f">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGQ4AAAAywDD
+  </data>
+ </layer>
+ <objectgroup id="73" name="3">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="3f" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGRwAAAASwBD
+  </data>
+ </layer>
+ <objectgroup id="73" name="3f">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGRIAAAAawBj
+  </data>
+ </layer>
+ <objectgroup id="73" name="4">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="100" name="4f" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjZGR4AAAA6wDj
+  </data>
+ </layer>
+ <objectgroup id="73" name="4f">
+  <object id="671" type="9" x="0" y="0" width="16" height="16">
+   <properties>
+    <property name="block_hook" value=""/>
+    <property name="def" value="CRYSTAL"/>
+    <property name="sfx" value="CRYSTAL"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

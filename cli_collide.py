@@ -43,9 +43,19 @@ pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x2b.xml")
 pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x4.xml")
 pattern_matcher_ground.LoadPattern(pattern_root + "slope_1x4a.xml")
 
+# Create a PatternMatcher for "fg_crystal" : Crystals
+pattern_matcher_crystal = PM.PatternMatcher()
+pattern_matcher_crystal.LoadPattern(pattern_root + "crystal_1x1.xml")
+pattern_matcher_crystal.LoadPattern(pattern_root + "crystal_1x2.xml")
+pattern_matcher_crystal.LoadPattern(pattern_root + "crystal_1x2a.xml")
+pattern_matcher_crystal.LoadPattern(pattern_root + "crystal_1x2b.xml")
+pattern_matcher_crystal.LoadPattern(pattern_root + "crystal_1x4.xml")
+pattern_matcher_crystal.LoadPattern(pattern_root + "crystal_solid.xml")
+
 # Perform the matching - mold the playdo
 pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_repeats = False)
 pattern_matcher_ground.FindAndCreate(playdo, "fg_raw", "collisions", allow_repeats = False)
+pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_repeats = False)
 
 # Flush changes to File!
 playdo.Write()
