@@ -4,56 +4,53 @@ import base64
 import zlib
 import numpy
 
+
+
+#--------------------------------------------------#
+'''Base64 string <-> Array'''
+
 def DecodeIntoTiles2d(encoded_str, row_width):
-    '''Takes a TILED layer encoded string and converts it into a tiles2d
-    
-    :param encoded_str: a TILED layer's 'data'. This is an encoded string using zlib base64 compression
-    :param row_width: integer indicating how many cells each row should have in the resultant tiles2d
-    :returns tiles2d: A 2d array of tile IDs
-    
-    Example: 
-    >>> DecodeIntoTiles2d("eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw==", 4)
-    >>> [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
     '''
-    
-    # Decode the base64 string
+    Takes a TILED layer encoded string and converts it into a tiles2d
+      encoded_str - string containing a layer's 'data' in TILED, zlib-encoded and base64-compressed
+      row_width - integer indicating number of cells each row should contain
+      tiles2d - 2d array of Tile IDs, first row is at top
+      >>> DecodeIntoTiles2d("eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw==", 4)
+      >>> [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+    '''
+
+    # Convert the base64 string to a numpy array (uint32)
     decoded_data = base64.b64decode(encoded_str)
-    
-    # Decompress the data using zlib
     decompressed_data = zlib.decompress(decoded_data)
-    
-    # Convert the decompressed data to a numpy array with type uint32
     array = numpy.frombuffer(decompressed_data, dtype=numpy.uint32)
-    
+
     # Reshape the array to the desired dimensions
     tiles2d = array.reshape(-1, row_width)
-    
     return tiles2d.tolist()
-    
+
+
+
 def EncodeIntoZlibString64(tiles2d):
-    ''' Takes a tiles2d and converts it into a zlib base64 encoded string.
-    
-    :param tiles2d: A 2d array of tile IDs
-    :returns encoded_string: a zlib base64 string
-        
-    Example: 
-    >>> EncodeIntoZlibString64([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
-    >>> "eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw=="
     '''
-    # Convert the input array to a numpy array with type uint32
+    Takes a TILED layer encoded string and converts it into a tiles2d
+      tiles2d - 2d array of Tile IDs, first row is at top
+      encoded_str - string containing a layer's 'data' in TILED, zlib-encoded and base64-compressed
+      >>> EncodeIntoZlibString64([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+      >>> "eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw=="
+    '''
+
+    # Convert: tiles2d array -> numpy array (uint32) -> bytes -> zlib string -> base64 string
     np_array = numpy.array(tiles2d, dtype=numpy.uint32)
-
-    # Convert the numpy array to bytes
     array_bytes = np_array.tobytes()
-
-    # Compress the bytes using zlib
     compressed_data = zlib.compress(array_bytes)
-
-    # Encode the compressed data using base64
     encoded_str = base64.b64encode(compressed_data).decode()
 
     return encoded_str
 
+
+
+#--------------------------------------------------#
+'''Tiles2D Utilities'''
 
 def PrintTiles2d(tiles2d, multi_line=False):
     '''Prints a tiles2d (2d array of tile IDs). If multi_line is specified, will space out each row.'''
@@ -62,14 +59,15 @@ def PrintTiles2d(tiles2d, multi_line=False):
     else:
         print('[' + ', '.join('[' + ', '.join(str(x) for x in row) + ']' for row in tiles2d) + ']')
 
+
+
+
 def TrimTiles2d(tiles2d):
-    '''Removes empty rows and columns from a Tiles2D.
-    
-    :param tiles2d: A 2d array of tile IDs to trim. A cell is considered empty if it is 0
-        
-    Example: 
-    >>> TrimTiles2d([[0, 0, 0], [0, 1, 2], [0, 3, 4]])
-    >>> [[1, 2], [3, 4]]
+    '''
+    Removes empty rows and columns from a Tiles2D.
+      tiles2d - 2d array of Tile IDs, cells with value 0 are "empty tile"
+      >>> TrimTiles2d([[0, 0, 0], [0, 1, 2], [0, 3, 4]])
+      >>> [[1, 2], [3, 4]]
     '''
     start_row, end_row = len(tiles2d), 0
     start_col, end_col = len(tiles2d[0]), 0
@@ -96,53 +94,47 @@ def TrimTiles2d(tiles2d):
     
     return (trimmed_tiles2d, start_row, start_col)
 
-def RotateTiles2d(tiles2d):
-    '''Rotate a tiles2d 90 degrees clockwise - similar to pressing 'z' on a block of tiles in Tiled
-    
-    :param tiles2d: A 2d array of tile IDs to rotate.
-        
-    Example: 
-    >>> TrimTiles2d([[0, 1], [2, 3]])
-    >>> [[2684354563,2684354561], [2684354564,2684354562]]
-    '''
-    # rotate the position of the cells
-    rotated_tiles2d = list(zip(*tiles2d[::-1]))
-    # rotate the content within the cells (e.g toggling the top 3 bits)
-    return [[RotateTileId(tile_id) if tile_id != 0 else 0 for tile_id in row] for row in rotated_tiles2d]
+
+
+#--------------------------------------------------#
+'''Single-Tile manipulation (Flip & Rotate)'''
 
 def FlipTiles2d(tiles2d):
-    '''Flips a tiles2d horizontally - similar to pressing 'x' on a block of tiles in Tiled
-    
-    :param tiles2d: A 2d array of tile IDs to flip.
-        
-    Example: 
-    >>> FlipTiles2d([[0, 1], [2, 3]])
-    >>> [[2147483650, 2147483649], [2147483652, 2147483651]]
     '''
-    # flip the position of the cells
+    Flips a tiles2d horizontally (pressing [x] in Tiled)
+      tiles2d - 2d array of Tile IDs, the rectangular section to flip
+      >>> FlipTiles2d([[0, 1, 2], [3, 4, 5]])
+      >>> [[-2, -1, -0], [-5, -4, -3]]
+    '''
+    # Change the cell position, then content within (e.g toggling the top 3 bits)
     flipped_tiles2d = [row[::-1] for row in tiles2d]
-    # flip the content within the cells (e.g. toggling the top 3 bits)
     return [[FlipTileId(tile_id) if tile_id != 0 else 0 for tile_id in row] for row in flipped_tiles2d]
 
-def FlipTileId(tile_id):
-    '''Flips one tile id according to TILED's implementation of flippedness.
-    
-    Example: 
-    >>> FlipTileId(1)
-    >>> 2147483650
+
+
+def RotateTiles2d(tiles2d):
     '''
-    
+    Rotates a tiles2d 90˚ clockwise (pressing [z] in Tiled)
+      tiles2d - 2d array of Tile IDs, the rectangular section to rotate
+      >>> RotateTiles2d([[0, 1, 2], [3, 4, 5]])
+      >>> [[*3,*0], [*4,*1], [*5,*2]]
+    '''
+    # Change the cell position, then content within (e.g toggling the top 3 bits)
+    rotated_tiles2d = list(zip(*tiles2d[::-1]))
+    return [[RotateTileId(tile_id) if tile_id != 0 else 0 for tile_id in row] for row in rotated_tiles2d]
+
+
+
+def FlipTileId(tile_id):
+    '''Flips one tiles horizontally (pressing [x] in Tiled), e.g. 1 -> 2147483650'''
     mask = 1 << 31
     return tile_id ^ mask
-    
+
+
+
 def RotateTileId(tile_id):
-    '''Rotates one tile id according to TILED's implementation of rotation.
-    
-    Example: 
-    >>> RotateTileId(1)
-    >>> 2684354563
-    '''
-    
+    '''Rotates one tiles 90˚ clockwise (pressing [z] in Tiled), e.g. 1 -> 2684354563'''
+
     # Extract the top 3 bits
     top_3_bits = (tile_id >> 29) & 0b111
 
@@ -166,3 +158,11 @@ _ROTATE_BIT_MAP = {
     0b010: 0b001,
     0b001: 0b100
 }
+
+#--------------------------------------------------#
+
+
+
+
+
+# end of file
