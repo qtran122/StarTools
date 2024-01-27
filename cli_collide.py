@@ -62,7 +62,7 @@ def main():
 
     # Use a playdo to read/process the XML
     pattern_root = file_utils.GetPatternRoot()
-    playdo = play.LevelPlayDo(file_utils.GetLevelRoot() + args.filename)
+    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
     # Create a PatternMatcher for "_BB" : Breakable Blocks and Skell Reefs
     pattern_matcher_bb = PM.PatternMatcher()
