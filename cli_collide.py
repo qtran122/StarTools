@@ -77,9 +77,9 @@ def main():
         pattern_matcher_crystal.LoadPattern(pattern_root + pattern + ".xml")
         
     # Perform the matching - mold the playdo
-    pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_repeats = False)
-    pattern_matcher_ground.FindAndCreate(playdo, "fg_raw", "collisions", allow_repeats = False)
-    pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_repeats = False)
+    pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_overlap = False)
+    pattern_matcher_ground.FindAndCreate(playdo, "fg_raw", "collisions", allow_overlap = False)
+    pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_overlap = False)
     
     # Flush changes to File!
     playdo.Write()

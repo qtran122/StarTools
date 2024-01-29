@@ -16,7 +16,7 @@ class PatternMatcher():
         self.pattern_objects = {} # maps a pattern_name to a tuple (object_to_copy, x_offset, y_offset)
         print(f"-- pattern_matcher.py : initialized ...")
 
-    def FindAndCreate(self, playdo, tile_layer_name, objects_layer_to_create, allow_repeats = True, discard_old = True):
+    def FindAndCreate(self, playdo, tile_layer_name, objects_layer_to_create, allow_overlap = True, discard_old = True):
         '''<FILL IN DESCRIPTION>'''
         
         # Get the target tile layer that will be searched for pattern matches
@@ -38,7 +38,7 @@ class PatternMatcher():
                 continue
             
             # Search for patterns
-            locations_to_add = self._FindPatternInTileMap(target_tiles2d, query_tiles2d, allow_repeats)
+            locations_to_add = self._FindPatternInTileMap(target_tiles2d, query_tiles2d, allow_overlap)
             print(f"-- pattern_matcher.py : {pattern_name} found {len(locations_to_add)} matches!")
             
             # Copy object(s) to wherever there was a pattern match
@@ -51,7 +51,7 @@ class PatternMatcher():
                     object_copy.set('y', str(location[1] * playdo.tile_height + offset_y))
                     objects_group.append(object_copy)
     
-    def FindAndCreateAll(self, playdo, objects_layer_to_create, allow_repeats = True):
+    def FindAndCreateAll(self, playdo, objects_layer_to_create, allow_overlap = True):
         '''Performs FindAndCreateon all ALL "visible" tile layers (layers starting with "bg_" or "fg_")'''
         tile_layers_to_search = []
         for layer in playdo.level_root.findall('layer'):
@@ -63,11 +63,11 @@ class PatternMatcher():
             return
             
         # Perform FindAndCreate on the first name in the list. When we do, discard all the contents of the old layer
-        self.FindAndCreate(playdo, tile_layers_to_search[0], objects_layer_to_create, allow_repeats = True, discard_old = True)
+        self.FindAndCreate(playdo, tile_layers_to_search[0], objects_layer_to_create, allow_overlap = True, discard_old = True)
         
         # Perform FindAndCreate on the rest of the list. This time, do NOT discard the contents
         for  layer_name in tile_layers_to_search[1:]:
-            self.FindAndCreate(playdo, layer_name, objects_layer_to_create, allow_repeats = True, discard_old = False)
+            self.FindAndCreate(playdo, layer_name, objects_layer_to_create, allow_overlap = True, discard_old = False)
         
         
     
@@ -80,7 +80,7 @@ class PatternMatcher():
                     return False
         return True
 
-    def _FindPatternInTileMap(self, tiles2d_to_search, tiles2d_query, allow_repeats):
+    def _FindPatternInTileMap(self, tiles2d_to_search, tiles2d_query, allow_overlap):
         '''Searches a tiles2d tilemap for a specific pattern.
 
         :param tiles2d_to_search: 2d array of tile IDs (represents a tilemap layer). We will search it for matches
@@ -107,10 +107,12 @@ class PatternMatcher():
                     if tiles2d_to_search[y + dy][x + dx] != tiles2d_query[dy][dx]:
                         return False
                         
-            if not allow_repeats:
+            # If overlapping matches are not allowed, Zero OUT searched tiles on match
+            if not allow_overlap:
                 for dy in range(query_height):
                     for dx in range(query_width):
-                        tiles2d_to_search[y + dy][x + dx] = 0 # Zero OUT to prevent repeat matches
+                        if tiles2d_query[dy][dx] != 0:
+                            tiles2d_to_search[y + dy][x + dx] = 0 
             return True
 
         # Search for the tiles2d_query pattern in the tilemap.
