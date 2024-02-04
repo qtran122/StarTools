@@ -43,7 +43,7 @@ class LevelPlayDo():
         # Map for tile_layer_name to a Hashset (for quick checking tile matches). This is created & cached w/  GetTilemapAs2DList()
         self._2D_tiles_hash = {}
         
-        print(f"-- level_playdo.py : initialized {file_name} ...")
+        #print(f"-- level_playdo.py : initialized {file_name} ...")
 
 
 
@@ -154,7 +154,7 @@ class LevelPlayDo():
 
     def Write(self):
         '''Stamps the Playdo back into an XML file and writes to disk'''
-        print(f"-- level_playdo.py : flushing changes...")
+        # print(f"-- level_playdo.py : flushing changes...")
         self.my_xml_tree.write(self.full_file_name)
 
 
