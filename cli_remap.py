@@ -19,7 +19,7 @@ playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.file_name))
 
 # Create a TileRemapper and load it with the specified remap instructions
 tile_remapper = TM.TileRemapper()
-tile_remapper.LoadPattern(file_utils.GetFullRemapPath(args.pattern_name))
+tile_remapper.LoadRemapXml(file_utils.GetFullRemapPath(args.pattern_name))
 
 # Perform the matching - mold the playdo
 tile_remapper.Remap(playdo)
