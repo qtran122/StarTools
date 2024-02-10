@@ -46,6 +46,14 @@ _LIST_CRYSTAL = [
     "crystal_solid",
 ]
 
+# Asteroids
+_LIST_ASTEROIDS = [
+    "asteroid_6x3",
+    "asteroid_5x2",
+    "asteroid_4x3",
+    "asteroid_3x2",
+    "asteroid_2x2",
+]
 
 #--------------------------------------------------#
 '''Main'''
@@ -71,15 +79,21 @@ def main():
     for pattern in _LIST_PATTERN_GROUND:
         pattern_matcher_ground.LoadPattern(pattern_root + pattern + ".xml")
     
-    # Create a PatternMatcher for "fg_crystal" : Crystals
+    # Create a PatternMatcher for "fg_crystal" : Creates Crystals
     pattern_matcher_crystal = PM.PatternMatcher()
     for pattern in _LIST_CRYSTAL:
         pattern_matcher_crystal.LoadPattern(pattern_root + pattern + ".xml")
-        
+    
+    # Create a PatternMatcher for "_asteroids" : Creates Asteroids
+    pattern_matcher_asteroid = PM.PatternMatcher()
+    for pattern in _LIST_ASTEROIDS:
+        pattern_matcher_asteroid.LoadPattern(pattern_root + pattern + ".xml")
+    
     # Perform the matching - mold the playdo
     pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_overlap = False)
     pattern_matcher_ground.FindAndCreate(playdo, "fg_raw", "collisions", allow_overlap = False)
     pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_overlap = False)
+    pattern_matcher_asteroid.FindAndCreate(playdo, "_asteroids", "objects_asteroids", allow_overlap = False)
     
     # Flush changes to File!
     playdo.Write()
