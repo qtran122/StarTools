@@ -1,0 +1,38 @@
+(WIP) User's Manual
+    Mostly TY's personal memo
+--------------------------------------------------
+'''Terminal Command'''
+
+cd /Users/Jimmy/20-GitHub/StarTools
+
+
+python cli_test.py a01 --v 0
+
+python cli_collide.py ___test --v 0
+python cli_water.py ___test --v 2
+
+
+
+
+python cli_remap.py d51 _remap_mouth_hair
+python cli_remap.py j03-ref2 _remap_mouth_hair
+python cli_remap.py rules/mouth/rules_mouth_skellbg_x _remap_mouth_hair
+
+
+
+/Users/Jimmy/Library/Application\ Support/Steam/steamapps/common/Whale\ Nebula/Contents/MacOS/WhaleNebula
+
+
+
+
+
+
+
+	[WIP]
+
+
+python cli_permutate.py
+
+
+
+--------------------------------------------------

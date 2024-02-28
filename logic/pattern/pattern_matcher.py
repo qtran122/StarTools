@@ -1,12 +1,31 @@
-'''A convenience module that...
+''' PatternMatcher is a convenience module that scans the entire level for matching patterns.
+
+It loads a playdo object, then scans the requested tilelayer to create the requested objects.
+
+
+    <Usage>
+
+import logic.pattern.pattern_matcher as PM
+
+    # Read a tiled xml and create a playdo
+    pattern_matcher_bb = PM.PatternMatcher()
+    for pattern in _LIST_PATTERN_BB:
+        pattern_matcher_bb.LoadPattern(pattern_root + pattern + ".xml")
+    pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_overlap = False)
+
     
 '''
 
 import os
 import toml
 import xml.etree.ElementTree as ET
-import logic.common.tiled_utils as tiled_utils
+import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
+import logic.common.tiled_utils as tiled_utils
+
+
+#--------------------------------------------------#
+'''Class Initialization'''
 
 class PatternMatcher():
     '''The convenience class to aid performing operations upon a TILED level XML file'''
@@ -14,7 +33,12 @@ class PatternMatcher():
     def __init__(self):
         self.pattern_tiles = {} # maps a pattern_name to a 2D list of ints (tile_ids)
         self.pattern_objects = {} # maps a pattern_name to a tuple (object_to_copy, x_offset, y_offset)
-        print(f"-- pattern_matcher.py : initialized ...")
+        log.Info(f"-- pattern_matcher.py : initialized ...")
+
+
+
+#--------------------------------------------------#
+    '''Public Functions'''
 
     def FindAndCreate(self, playdo, tile_layer_name, objects_layer_to_create, allow_overlap = True, discard_old = True):
         '''<FILL IN DESCRIPTION>'''
@@ -39,7 +63,7 @@ class PatternMatcher():
             
             # Search for patterns
             locations_to_add = self._FindPatternInTileMap(target_tiles2d, query_tiles2d, allow_overlap)
-            print(f"-- pattern_matcher.py : {pattern_name} found {len(locations_to_add)} matches!")
+            log.Info(f"-- pattern_matcher.py : {pattern_name} found {len(locations_to_add)} matches!")
             
             # Copy object(s) to wherever there was a pattern match
             for location in locations_to_add:
@@ -68,9 +92,12 @@ class PatternMatcher():
         # Perform FindAndCreate on the rest of the list. This time, do NOT discard the contents
         for  layer_name in tile_layers_to_search[1:]:
             self.FindAndCreate(playdo, layer_name, objects_layer_to_create, allow_overlap = True, discard_old = False)
-        
-        
-    
+
+
+
+#--------------------------------------------------#
+    '''Search?'''
+
     def _Possibility4MatchExists(self, tiles2d_hash, tiles2d_query):
         '''Quick checks tiles2d_query contents vs a hash of the tilemap being searched to ensure the possibility for
         a match exists. If there is no chance, we escape the more expensive future _FindPatternInTileMap call'''
@@ -124,6 +151,11 @@ class PatternMatcher():
 
         return matches
 
+
+
+#--------------------------------------------------#
+    '''Pattern'''
+
     def LoadPattern(self, pattern_file_path):
         '''Load a 'pattern' to be searched for AND the objects to generate should a match be found.
            Underneath, a pattern is a tiles2d (aka 2D array of tile ids)
@@ -159,9 +191,9 @@ class PatternMatcher():
             self.pattern_tiles[key_name] = tiles2d
             self.pattern_objects[key_name] = (matching_obj_group, rows_trimmed, cols_trimmed)
             
-            #print("----------- pattern -----------")
+            #log.Info("----------- pattern -----------")
             #tiled_utils.PrintTiles2d(tiles2d, True)
-            print("-- pattern_matcher.py : LOADED pattern " + key_name + "...")
+            log.Extra("-- pattern_matcher.py : LOADED pattern " + key_name + "...")
         
     def _ValidatePattern(self, pattern_root, pattern_file_name):
         ''' Check pattern file superficially to ensure they are properly formatted.
@@ -199,3 +231,18 @@ class PatternMatcher():
             if len(objectgroup.findall('object')) == 0:
                 raise Exception(f"Error in '{pattern_file_name}' detected! " + 
                     f"Objectgroup '{objectgroup.get('name')}' does not contain any objects.")
+
+
+
+#--------------------------------------------------#
+
+
+
+
+
+
+
+
+
+
+# end of file

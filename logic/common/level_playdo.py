@@ -16,6 +16,7 @@ An example usage of LevelPlayDo would be as follows:
 import random
 import copy
 import xml.etree.ElementTree as ET
+import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
 
 
@@ -43,7 +44,7 @@ class LevelPlayDo():
         # Map for tile_layer_name to a Hashset (for quick checking tile matches). This is created & cached w/  GetTilemapAs2DList()
         self._2D_tiles_hash = {}
         
-        #print(f"-- level_playdo.py : initialized {file_name} ...")
+        log.Info(f"-- level_playdo.py : initialized {file_name} ...")
 
 
 
@@ -75,7 +76,7 @@ class LevelPlayDo():
 
 
     def GetTilesHashSet(self, tile_layer_name):
-        #print(f"-- level_playdo.py : GetTilemapAsHashSet {tile_layer_name}")
+        #log.Info(f"-- level_playdo.py : GetTilemapAsHashSet {tile_layer_name}")
         if tile_layer_name not in self._2D_tiles_hash:
             raise Exception(f"level_playdo.py : tile_layer hashset '{tile_layer_name}' was requested, but does not exist! " +
                 "Call GetTilemapAs2DList() first - that will force its creation.")
@@ -121,6 +122,17 @@ class LevelPlayDo():
 
 
 
+    def GetAllObjectsWithName(self, object_name):
+        '''Searches all object groups to find objects with the given object_name'''
+        objects_w_matching_names = []
+        for object_group in self.level_root.findall('objectgroup'):
+            for object in object_group.findall('object'):
+                if object.get('name') == object_name:
+                    objects_w_matching_names.append(object)
+        return objects_w_matching_names
+
+
+
     def AddNewTileLayer(self, new_tile_layer_name, encoded_data_str, number_id = '100'):
         # create new tile layer's high and low-level attributes
         tile_layer_attributes = {
@@ -154,7 +166,7 @@ class LevelPlayDo():
 
     def Write(self):
         '''Stamps the Playdo back into an XML file and writes to disk'''
-        # print(f"-- level_playdo.py : flushing changes...")
+        log.Info(f"-- level_playdo.py : flushing changes...")
         self.my_xml_tree.write(self.full_file_name)
 
 
@@ -187,6 +199,11 @@ def _AddPropertiesToObject(tiled_object, properties):
 
 
 #--------------------------------------------------#
+
+
+
+
+
 
 
 

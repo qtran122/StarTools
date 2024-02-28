@@ -17,8 +17,13 @@
 
 '''Downloading (changes)'''
 
-1. ...
-1. 
+1. Go to your "fork page"
+ e.g. 	https://github.com/TYWong99/StarTools
+2. Click [Sync fork] -> [Update branch]
+     If there are conflicts, click [Discard 4 commits]
+3. Open Desktop app
+4. Click [Pull origin]
+5. The local files should be up to date to the latest "official" branch now
 
 
 
@@ -32,12 +37,19 @@
 4. Click [Push Origin]
  1. If there is conflict, ...?
 5. Go to page in browser
- e.g.	https://github.com/TYWong99/StarTools/tree/main/input
-6. Click [Contribute] -> [Open pull request]
+ e.g. 	https://github.com/qtran122/StarTools/compare/main...TYWong99:StarTools:main
 7. Click [Create pull request]
 8. Click [Create pull request] again if the Summary & Description look alright
 9. You should be able to see your request at the main branch
  e.g.	https://github.com/qtran122/StarTools/pulls
+
+
+	vvv Replaced vvv
+5. Go to page in browser
+ e.g. 	https://github.com/qtran122/StarTools/compare/main...TYWong99:StarTools:main
+ e.g.	https://github.com/TYWong99/StarTools/tree/main/input
+6. Click [Contribute] -> [Open pull request]
+
 
 
 
