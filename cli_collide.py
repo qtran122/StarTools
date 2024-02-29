@@ -1,5 +1,12 @@
-''' Command-Line Tool to auto-add ground, BBs, crystals, and skell reefs to a level. 
-    
+'''
+Command-Line Tool to automatically add the following objects to a level:
+ - Ground
+ - BBs
+ - Crystals
+ - Skell reefs
+ - Asteroid
+
+
 USAGE EXAMPLE:
     python cli_collide.py j01
     python cli_collide.py j01 --v 2

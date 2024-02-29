@@ -1,18 +1,14 @@
-''' PatternMatcher is a convenience module that scans the entire level for matching patterns.
+'''
+PatternMatcher is a convenience module that scans the entire level for matching patterns.
 
 It loads a playdo object, then scans the requested tilelayer to create the requested objects.
 
 
-    <Usage>
-
-import logic.pattern.pattern_matcher as PM
-
-    # Read a tiled xml and create a playdo
+USAGE EXAMPLE:
+    import logic.pattern.pattern_matcher as PM
     pattern_matcher_bb = PM.PatternMatcher()
-    for pattern in _LIST_PATTERN_BB:
-        pattern_matcher_bb.LoadPattern(pattern_root + pattern + ".xml")
-    pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_overlap = False)
-
+    pattern_matcher_bb.LoadPattern("breakable_blocks_pattern.xml")
+    pattern_matcher_bb.FindAndCreate(playdo, "_BB_input", "collisions_BB_output", allow_overlap = False)
     
 '''
 

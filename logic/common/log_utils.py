@@ -1,12 +1,14 @@
-''' Utility functions for printing and logging
+'''
+Utility functions for printing and logging
+
+Verbosity level is usually first set in CLI file once during initialisation
+Afterwards, you may use log.Info(s), log.Must(s), log.Extra(s) anywhere you need
+
 
 USAGE EXAMPLE:
     import logic.common.utils_log as log
     log.SetVerbosityLevel(1)
     log.Info("Hello World!")
-
-# Verbosity level is usually first set in CLI file once during initialisation
-# Afterwards, you may use log.Info(s), log.Must(s), log.Extra(s) anywhere you need
 
 '''
 
@@ -56,37 +58,29 @@ def SetVerbosityLevel(log_lv_num, file_name = DEFAULT_FILENAME, format = DEFAULT
 
 
 def _WriteHeaderToLog(log_lv_num):
-    print_msg = ""
-    print_msg += "\n" + DEFAULT_DIVIDER + "\n"    # Divider before meta data
-    print_msg += "  "                             # Indentation
-    print_msg += os.getcwd() + "\n"               #  Current OS
-    print_msg += "  "                             # Indentation
-    print_msg += "Verbosity = " + str(log_lv_num) #  Verbosity Level
-    print_msg += "" # TODO DateTime
-    print_msg += ""
-    print_msg += "\n" + DEFAULT_DIVIDER           # Divider between meta data & tool content
-    print_msg += "\n"
-
-    # Header is logged regardless of verbosity
-    logging.warning(print_msg)
-
+    print_msg  = "\n" + DEFAULT_DIVIDER                 # Divider before meta data
+    print_msg += "\n  " + os.getcwd()                   # Current OS
+    print_msg += "\n  Verbosity = " + str(log_lv_num)   # Verbosity Level
+    print_msg += "\n" + DEFAULT_DIVIDER + "\n"          # Divider between meta data & tool content
+    #print_msg += "" # TODO DateTime
+    logging.warning(print_msg)  # Header is logged regardless of verbosity
 
 
 
 #--------------------------------------------------#
 '''Public Functions'''
 
-def Must(s):
-    '''Logs messages no matter the verbosity leve'''
-    logging.warning(s)
+def Must(msg):
+    '''Logs messages no matter the verbosity level'''
+    logging.warning(msg)
 
-def Info(s):
+def Info(msg):
     '''Logs messages when --v = 1 or 2 (normal level of verbosity)'''
-    logging.info(s)
+    logging.info(msg)
 
-def Extra(s):
+def Extra(msg):
     '''Logs messages when --v = 2 (extra verbose)'''
-    logging.debug(s)
+    logging.debug(msg)
 
 
 def GetVerbosityLevel():
