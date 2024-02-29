@@ -1,10 +1,21 @@
-''' Command-Line Tool to auto-add ground, BBs, crystals, and skell reefs to a level. 
-    
-    USAGE: python cli_collide.py j01
+'''
+Command-Line Tool to automatically add the following objects to a level:
+ - Ground
+ - BBs
+ - Crystals
+ - Skell reefs
+ - Asteroid
+
+
+USAGE EXAMPLE:
+    python cli_collide.py j01
+    python cli_collide.py j01 --v 2
+
 '''
 import argparse
-import logic.common.level_playdo as play
+import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
+import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
 
 #--------------------------------------------------#
@@ -55,15 +66,24 @@ _LIST_ASTEROIDS = [
     "asteroid_2x2",
 ]
 
+
+
 #--------------------------------------------------#
 '''Main'''
 
+arg_description = 'Process a tiled level XML and add BB + reef objects to a "_BB" layer.'
+arg_help1 = 'Name of the tiled level XML to add BB & reef objects to'
+arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
+
+
+
 def main():
     # Use argparse to get the filename & other optional arguments from the command line
-    parser = argparse.ArgumentParser(description='Process a tiled level XML and add BB + reef objects to a "_BB" layer.')
-    parser.add_argument('filename', type=str, help='Name of the tiled level XML to add BB & reef objects to')
-    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help='Verbosity level: 0 = silent. 2 = verbose')
+    parser = argparse.ArgumentParser(description = arg_description)
+    parser.add_argument('filename', type=str, help = arg_help1)
+    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
     args = parser.parse_args()
+    log.SetVerbosityLevel(args.v)
 
     # Use a playdo to read/process the XML
     pattern_root = file_utils.GetPatternRoot()
@@ -79,11 +99,11 @@ def main():
     for pattern in _LIST_PATTERN_GROUND:
         pattern_matcher_ground.LoadPattern(pattern_root + pattern + ".xml")
     
-    # Create a PatternMatcher for "fg_crystal" : Creates Crystals
+    # Create a PatternMatcher for "fg_crystal" : Crystals
     pattern_matcher_crystal = PM.PatternMatcher()
     for pattern in _LIST_CRYSTAL:
         pattern_matcher_crystal.LoadPattern(pattern_root + pattern + ".xml")
-    
+
     # Create a PatternMatcher for "_asteroids" : Creates Asteroids
     pattern_matcher_asteroid = PM.PatternMatcher()
     for pattern in _LIST_ASTEROIDS:
@@ -98,11 +118,11 @@ def main():
     # Flush changes to File!
     playdo.Write()
 
-main()
-
 
 
 #--------------------------------------------------#
+
+main()
 
 
 
