@@ -3,8 +3,8 @@ Command-Line Tool for auto-aligning water_line objects to the x-/y-axis.
     
 
 USAGE EXAMPLE:
-	cd /Users/Jimmy/20-GitHub/StarTools
-	python cli_water.py __test.xml --v 0
+	python cli_water.py j08.xml
+	python cli_water.py j08.xml --v 2
 '''
 
 import argparse
@@ -32,7 +32,6 @@ def main():
     log.Info(f'Run cli_water on level \"{args.filename}\"')
 
     # Use a playdo to read/process the XML
-    pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
     # Create a WaterSnapper to align water_line to x-/y-axis

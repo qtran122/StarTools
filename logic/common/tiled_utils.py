@@ -159,7 +159,26 @@ _ROTATE_BIT_MAP = {
     0b001: 0b100
 }
 
+
+
 #--------------------------------------------------#
+'''Object Properties'''
+
+def GetPolyPoints( line_vertice ):
+    '''Convert string into list of points: [ [x1,y1], [x2,y2], ... ]'''
+    list_points = line_vertice.split(" ")
+    list_condensed = [ pt.split(",") for pt in list_points]
+    list_num = [ [float(v) for v in pt] for pt in list_condensed ]
+    return list_num
+
+
+
+#--------------------------------------------------#
+
+
+
+
+
 
 
 
