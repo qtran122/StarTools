@@ -31,8 +31,8 @@ def AlignWater(playdo):
     # Process individual object
     count_need_alignment = 0
     log.Info("--------------------------------------------------")
-    for count, water_line_obj in enumerate(list_of_all_water_lines):
-        if count != 0:
+    for index, water_line_obj in enumerate(list_of_all_water_lines):
+        if index != 0:
             log.Extra("--------------------------------------------------")
 
         # Obtain vertice data
@@ -66,7 +66,7 @@ def MakeNewAlignment(line_points):
     '''Return a new str if the line needs alignment'''
 
     # Obtain vertex values
-    [x1, y1], [x2, y2] = line_points
+    (x1, y1), (x2, y2) = line_points
     x_diff = x2-x1
     y_diff = y2-y1
     log.Extra(f"Bef - ({x1}, {y1}) ~ ({x2}, {y2})")
@@ -89,31 +89,16 @@ def MakeNewAlignment(line_points):
         return None
     elif slope > 1:
         log.Info(CHAR_TRUE + "Line should snap to y-axis (vertical)")
-        return MakeAlignedStr(line_points, True)
+        log.Extra(f"Aft - ({x1}, {y1}) ~ ({x1}, {y2})") # same x-value
+        return f"{x1},{y1} {x1},{y2}"
     else:
         log.Info(CHAR_TRUE + "Line should snap to x-axis (horizontal)")
-        return MakeAlignedStr(line_points, False)
+        log.Extra(f"Aft - ({x1}, {y1}) ~ ({x2}, {y1})") # same y-value
+        return f"{x1},{y1} {x2},{y1}"
 
 
     # Default, should be impossible to reach
     return None
-
-
-
-def MakeAlignedStr(line_points, is_vertical):
-    '''Alter the x-/y-position of the 2nd vertex to match the 1st'''
-    [x1, y1], [x2, y2] = line_points
-
-    # Alignment
-    new_x = x2
-    new_y = y2
-    if is_vertical: new_x = x1
-    else: new_y = y1
-    new_str_value = f"{x1},{y1} {new_x},{new_y}"
-
-    # Logging
-    log.Extra(f"Aft - ({x1}, {y1}) ~ ({new_x}, {new_y})")
-    return new_str_value
 
 
 

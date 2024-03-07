@@ -164,13 +164,12 @@ _ROTATE_BIT_MAP = {
 #--------------------------------------------------#
 '''Object Properties'''
 
-def GetPolyPoints( line_vertice ):
-    '''Convert string into list of points: [ [x1,y1], [x2,y2], ... ]'''
-    list_points = line_vertice.split(" ")
-    list_condensed = [ pt.split(",") for pt in list_points]
-    list_num = [ [float(v) for v in pt] for pt in list_condensed ]
-    return list_num
-
+def GetPolyPoints( input_string ):
+    '''Convert string into list of tuples: [ (x1,y1), (x2,y2), ... ]'''
+    point_strings = input_string.split()
+    point_pair_strings = [point_string.split(',') for point_string in point_strings]
+    poly_points = [(float(x), float(y)) for x, y in point_pair_strings]
+    return poly_points
 
 
 #--------------------------------------------------#
