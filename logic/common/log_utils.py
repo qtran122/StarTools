@@ -8,12 +8,13 @@ Afterwards, you may use log.Info(s), log.Must(s), log.Extra(s) anywhere you need
 USAGE EXAMPLE:
     import logic.common.utils_log as log
     log.SetVerbosityLevel(1)
-    log.Info("Hello World!")
+    log.Info('Hello World!')
 
 '''
 
 import os
 import logging
+import logic.common.file_utils as file_utils
 
 #--------------------------------------------------#
 '''Logger Settings'''
@@ -39,30 +40,31 @@ def SetVerbosityLevel(log_lv_num, file_name = DEFAULT_FILENAME, format = DEFAULT
     logger = logging.getLogger()
     logger.setLevel(log_level) # Set the minimum logging level
 
-    # Create a file handler to log messages to a file
-#    file_handler = logging.FileHandler(FOLDER_PATH+file_name)
-    file_handler = logging.FileHandler(FOLDER_PATH+file_name, 'w')
-    file_handler.setLevel(log_level)
-    file_handler.setFormatter(logging.Formatter(format))
-
     # Create a stream handler for console output
     console_handler = logging.StreamHandler()
     console_handler.setLevel(log_level)
     console_handler.setFormatter(logging.Formatter(format))
+    logger.addHandler(console_handler)    # Moved higher since MakeDir() uses logging
 
-    # Add the handlers to the logger
+    # Create a file handler to log messages to a file
+    file_utils.GetFile(FOLDER_PATH)
+    file_handler = logging.FileHandler(FOLDER_PATH+file_name, 'w')
+    file_handler.setLevel(log_level)
+    file_handler.setFormatter(logging.Formatter(format))
     logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+
+    # Include header strings to logged messages
     _WriteHeaderToLog(log_lv_num)
 
 
 
 def _WriteHeaderToLog(log_lv_num):
-    print_msg  = "\n" + DEFAULT_DIVIDER                 # Divider before meta data
-    print_msg += "\n  " + os.getcwd()                   # Current OS
-    print_msg += "\n  Verbosity = " + str(log_lv_num)   # Verbosity Level
-    print_msg += "\n" + DEFAULT_DIVIDER + "\n"          # Divider between meta data & tool content
-    #print_msg += "" # TODO DateTime
+    print_msg  = '\n' + DEFAULT_DIVIDER                 # Divider before meta data
+    print_msg += '\n  ' + os.getcwd()                   # Current OS
+    print_msg += '\n  Verbosity = ' + str(log_lv_num)   # Verbosity Level
+    print_msg += '\n' + DEFAULT_DIVIDER + '\n'          # Divider between meta data & tool content
+    # print_msg += '' # TODO DateTime
+    # print_msg += '' # TODO Specification of current cli?
     logging.warning(print_msg)  # Header is logged regardless of verbosity
 
 

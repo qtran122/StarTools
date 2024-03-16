@@ -1,6 +1,7 @@
 '''Common math functions that are generally useful for all Tiling-related scripts.'''
 import os
 import toml
+import logic.common.log_utils as log
 
 
 def GetLevelRoot():
@@ -131,3 +132,29 @@ def StripFilename(file_path):
     filename_without_extension, _ = os.path.splitext(filename_with_extension)
 
     return filename_without_extension
+
+
+
+
+
+def GetFile(filename):
+    '''Create new directory if it does not exist'''
+    # TODO Also read new file and return its content?
+
+    # Can extract the folder's path even if provided with a file instead
+    if filename.endswith("/"):
+        folder_path = filename
+    else:
+        folder_path = "/".join( filename.split("/")[0:-1] )
+
+    # Create new folder if not already exist
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        log.Info(f'Created new directory: {folder_path}')
+
+
+
+
+
+
+
