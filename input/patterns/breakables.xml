@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="89" nextobjectid="678">
+<map version="1.5" tiledversion="1.6.0" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="4" height="4" tilewidth="16" tileheight="16" infinite="0" nextlayerid="93" nextobjectid="680">
  <tileset firstgid="1" source="../gfx/StarToolsTileset.tsx"/>
  <layer id="72" name="blowhole_bb" width="4" height="4" visible="0">
   <data encoding="base64" compression="zlib">
@@ -113,16 +113,44 @@
    </properties>
   </object>
  </objectgroup>
- <layer id="88" name="goo_bb" width="4" height="4">
+ <layer id="88" name="goo_bb" width="4" height="4" visible="0">
   <data encoding="base64" compression="zlib">
    eAFjYMAEPRyYYrhEABmoAJU=
   </data>
  </layer>
- <objectgroup id="87" name="goo_bb">
+ <objectgroup id="87" name="goo_bb" visible="0">
   <object id="677" name="relic_block" type="8" x="16" y="16" width="16" height="16">
    <properties>
     <property name="_sort" value="fg_tiles,-1"/>
     <property name="_type" value="GOO_1x1"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="92" name="mouth_bb" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEPbyYYrhEABp/AJo=
+  </data>
+ </layer>
+ <objectgroup id="91" name="mouth_bb" visible="0">
+  <object id="679" name="relic_block" type="5" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="MOUTH_1x1"/>
+    <property name="autoset" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="90" name="mouth_bb2" width="4" height="4" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFjYMAEXbwMDN1ADANcfAwM3ECMDQAANrYBYQ==
+  </data>
+ </layer>
+ <objectgroup id="89" name="mouth_bb2" visible="0">
+  <object id="678" name="relic_block" type="rare" x="16" y="16" width="32" height="32">
+   <properties>
+    <property name="_sort" value="fg_tiles,-1"/>
+    <property name="_type" value="MOUTH_2x2"/>
     <property name="autoset" value=""/>
    </properties>
   </object>
