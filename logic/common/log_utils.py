@@ -47,7 +47,7 @@ def SetVerbosityLevel(log_lv_num, file_name = DEFAULT_FILENAME, format = DEFAULT
     logger.addHandler(console_handler)    # Moved higher since MakeDir() uses logging
 
     # Create a file handler to log messages to a file
-    file_utils.GetFile(FOLDER_PATH)
+    file_utils.EnsureFolderExists(FOLDER_PATH)
     file_handler = logging.FileHandler(FOLDER_PATH+file_name, 'w')
     file_handler.setLevel(log_level)
     file_handler.setFormatter(logging.Formatter(format))

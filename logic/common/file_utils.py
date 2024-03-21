@@ -1,7 +1,6 @@
 '''Common math functions that are generally useful for all Tiling-related scripts.'''
 import os
 import toml
-import logic.common.log_utils as log
 
 
 def GetLevelRoot():
@@ -148,7 +147,7 @@ def EnsureFolderExists(filename):
     # Create new folder if not already exist
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-        log.Info(f'Created new directory: {folder_path}')
+        print(f'Created new directory: {folder_path}')
 
 
 
