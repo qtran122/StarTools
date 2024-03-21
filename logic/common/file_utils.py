@@ -131,3 +131,27 @@ def StripFilename(file_path):
     filename_without_extension, _ = os.path.splitext(filename_with_extension)
 
     return filename_without_extension
+
+
+
+
+
+def EnsureFolderExists(filename):
+    '''Create new folders if provided one does not exist, also accepts full filename'''
+
+    # If provided string is not a folder's path, remove characters past the last /
+    folder_path = filename
+    if not filename.endswith("/"):
+        folder_path = "/".join( filename.split("/")[0:-1] )
+
+    # Create new folder if not already exist
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f'Created new directory: {folder_path}')
+
+
+
+
+
+
+
