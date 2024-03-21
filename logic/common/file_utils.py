@@ -137,14 +137,12 @@ def StripFilename(file_path):
 
 
 
-def GetFile(filename):
-    '''Create new directory if it does not exist'''
-    # TODO Also read new file and return its content?
+def EnsureFolderExists(filename):
+    '''Create new folders if provided one does not exist, also accepts full filename'''
 
-    # Can extract the folder's path even if provided with a file instead
-    if filename.endswith("/"):
-        folder_path = filename
-    else:
+    # If provided string is not a folder's path, remove characters past the last /
+    folder_path = filename
+    if not filename.endswith("/"):
         folder_path = "/".join( filename.split("/")[0:-1] )
 
     # Create new folder if not already exist
