@@ -125,7 +125,14 @@ class LevelPlayDo():
     def GetAllObjectsWithName(self, object_name):
         '''Searches all object groups to find objects with the given object_name'''
         objects_w_matching_names = []
-        for object_group in self.level_root.findall('objectgroup'):
+
+        # Can search in object_layer outside fodlers and 1 layer of folders
+        obj_layer_list = self.level_root.findall('objectgroup')
+        for folder in self.level_root.findall('group'):
+            obj_layer_list += folder.findall('objectgroup')
+
+        # Search in each object_layer/object_group
+        for object_group in obj_layer_list:
             for object in object_group.findall('object'):
                 if object.get('name') == object_name:
                     objects_w_matching_names.append(object)
