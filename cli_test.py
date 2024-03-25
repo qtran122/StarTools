@@ -1,4 +1,5 @@
-''' Command-Line Tool for testing features in isolation.
+'''
+Command-Line Tool for testing features in isolation.
     Can also be used as template for creating new files
     
 USAGE EXAMPLE:
@@ -10,7 +11,7 @@ import argparse
 import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
-import logic.pattern.pattern_matcher as PM
+import logic.standalone.aligner as aligner
 
 #--------------------------------------------------#
 '''Variables'''
@@ -36,30 +37,13 @@ def main():
     log.SetVerbosityLevel(args.v)
 
     # Use a playdo to read/process the XML
-    pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
-
-    # Logging test 1
-    msg0 = 'v0: REQUIRED level of info'
-    msg1 = 'v1: Normal level of info'
-    msg2 = 'v2: Extra level of info'
-    log.Must(msg0)
-    log.Info(msg1)
-    log.Extra(msg2)
+    # ...
 
 
-    # Logging test 2
-    msg_multi = ['Line 1', 'Line 2']
-    log.Must(msg_multi)
-
-
-    # Logging test 3
-    msg_multi2 = [1, 2]
-    msg_multi3 = [[1, 2, 3], [4, 5, 6]]
-    log.Must(msg_multi2)
-    log.Must(msg_multi3)
-#    log.print_2d(msg_multi3)
+    # Flush changes to File!
+    playdo.Write()
 
 
 

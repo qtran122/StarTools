@@ -164,12 +164,38 @@ _ROTATE_BIT_MAP = {
 #--------------------------------------------------#
 '''Object Properties'''
 
+def GetProperty( curr_obj, property_name ):
+    '''Extract the property as string, e.g. returns 'BRONZE' from GetProperty('_type')'''
+    for curr_property in curr_obj.find('properties').findall('property'):
+        if curr_property.get('name') == property_name:
+            return curr_property.get('value')
+    return ''    # returning None would crash when attempted to be converted into string
+
+
+def GetSort( curr_obj ):
+    '''Take an object and extract its sort value as string, e.g. "fg_tiles,-1"'''
+    return GetProperty(curr_obj, '_sort')
+
+
+
+
+# TODO Obtain directly from inputting an object instead?
 def GetPolyPoints( input_string ):
     '''Convert string into list of tuples: [ (x1,y1), (x2,y2), ... ]'''
     point_strings = input_string.split()
     point_pair_strings = [point_string.split(',') for point_string in point_strings]
     poly_points = [(float(x), float(y)) for x, y in point_pair_strings]
     return poly_points
+
+
+
+# TODO provide more info
+def GetObjPrintData( curr_obj ):
+    '''General summary for the content of an object'''
+    print_str = ""
+    print_str += curr_obj.get('name')
+    return print_str
+
 
 
 #--------------------------------------------------#
