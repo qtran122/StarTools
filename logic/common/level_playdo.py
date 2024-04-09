@@ -47,11 +47,29 @@ class LevelPlayDo():
         log.Info(f"-- level_playdo.py : initialized {file_name} ...")
 
 
+    def GetAllTileLayerNames(self):
+        '''Fetches the names of all graphic tile layers and returns them as a list of strings'''
+        tile_layer_names = []
+        # Search using an XPath query so that tile_layers tucked within folders will not be missed
+        for tile_layer in self.level_root.findall(".//layer"):
+            tile_layer_name = tile_layer.get('name')
+            if tile_layer_name is None:
+                tile_layer_names.append('unnamed_tile_layer')
+            else:
+                tile_layer_names.append(tile_layer_name)
+                
+        log.Extra(f'-- level_playdo.py : number tile layers found : {len(tile_layer_names)}')
+        return tile_layer_names
+        
 
     def GetTiles2d(self, tile_layer_name):
-        '''Retrieves Tiles2D by name (2D array of Tile Ids).
+        '''Retrieves Tiles2d by name (2D array of Tile Ids).
         
-        If 'NONE' is provided for tile_layer_name, then retrieves the first Tiles2D found
+        tile_layer_name - the name of the tile layer in the LEVEL xml that we want to retrieve.
+        If 'NONE' is provided for input tile_layer_name, then retrieves the first Tiles2D found
+        
+        Returns 'Tiles2d'. Tiles2d presents the data in an easily readable (already decoded) and
+        editable format. Apply changes to the Tiles2d and write them back using SetTiles2d()
         '''
         if tile_layer_name in self._2D_tiles_map:
             return self._2D_tiles_map[tile_layer_name]
@@ -73,6 +91,23 @@ class LevelPlayDo():
         
         return None
 
+
+    def SetTiles2d(self, tile_layer_name, new_tiles2d):
+        '''Overwrites a LEVEL XML's tile layer with new data - usually after edits have been made
+        
+        tile_layer_name - the name of the tile layer that we want to overwrite
+        new_tiles2d - A 2D array of Tile Ids that contains the edits we want to flush
+        '''
+        tile_layer_to_rewrite = None
+        for layer in self.level_root.findall('layer'):
+            if tile_layer_name == layer.get('name'):
+                tile_layer_to_rewrite = layer
+                break
+        if tile_layer_to_rewrite is None:
+            raise Exception(f"level_playdo.py : SetTiles2d was called for '{tile_layer_name}'," 
+                + f" but '{tile_layer_name}' does not exist!")
+
+        tile_layer_to_rewrite.find('data').text = tiled_utils.EncodeIntoZlibString64(new_tiles2d)
 
 
     def GetTilesHashSet(self, tile_layer_name):
