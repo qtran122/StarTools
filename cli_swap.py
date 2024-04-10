@@ -29,12 +29,13 @@ parser.add_argument('file_name', type=str, help='Name of the tiled level XML to 
 parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help='Verbosity level: 0 = silent. 2 = verbose')
 args = parser.parse_args()
 
+log.SetVerbosityLevel(args.v)
+log.Info(f'Running cli_swap on LEVEL {args.file_name}...')
+
 # Use a playdo to read/process the XML
 playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.file_name))
 
 # Perform the matching - mold the playdo
-log.SetVerbosityLevel(args.v)
-log.Info(f'Running cli_swap on LEVEL {args.file_name}...')
 result = tile_swapper.Swap(playdo)
 
 # Flush changes to File!
