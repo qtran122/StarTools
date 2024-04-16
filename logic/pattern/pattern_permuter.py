@@ -10,7 +10,7 @@ def CreatePermutationsOfPattern(playdo):
     _ValidatePattern(playdo)
     
     # Fetch the singular object_group and tiles2d from the file
-    orig_tiles2d = playdo.GetTiles2d(None)
+    orig_tiles2d = _GetAnyTiles2d(playdo)
     orig_object_group = playdo.GetObjectGroup(None, discard_old = False)
     
     # Create 7 copies of the tile layer and object group
@@ -32,6 +32,14 @@ def CreatePermutationsOfPattern(playdo):
         playdo.AddNewTileLayer(new_name, encoded_data_str, '100')
         playdo.DuplicateObjectGroup(orig_object_group, new_name, obj_properties)
             
+
+def _GetAnyTiles2d(playdo):
+    '''Fetches the first tile layer. We do this since we expect there'd be just one tile layer'''
+    all_tile_layer_names = playdo.GetAllTileLayerNames()
+    tile_layer_name = all_tile_layer_names[0]
+    return playdo.GetTiles2d(tile_layer_name)
+
+
 def _GenerateVariants(tiles_2d):
     variants = []
     # first append a flipped version of the original tiles_2d
