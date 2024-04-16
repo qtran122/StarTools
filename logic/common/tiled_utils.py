@@ -131,7 +131,6 @@ def FlipTileId(tile_id):
     return tile_id ^ mask
 
 
-
 def RotateTileId(tile_id):
     '''Rotates one tiles 90˚ clockwise (pressing [z] in Tiled), e.g. 1 -> 2684354563'''
 
@@ -147,6 +146,7 @@ def RotateTileId(tile_id):
 
     return tile_id
 
+
 # Maps the top 3 bit transformation patterns for TILED rotations
 _ROTATE_BIT_MAP = {
     0b000: 0b101,
@@ -159,7 +159,14 @@ _ROTATE_BIT_MAP = {
     0b001: 0b100
 }
 
-
+def GetTileIdPermutations(tile_id):
+    '''Processes tile id & returns a list of 8 tile ids (all of the possible orientations from flipping & rotating)'''
+    tile_id_list = [tile_id, FlipTileId(tile_id)]
+    for _ in range(3):
+        tile_id = RotateTileId(tile_id)
+        tile_id_list.append(tile_id)
+        tile_id_list.append(FlipTileId(tile_id))
+    return tile_id_list
 
 #--------------------------------------------------#
 '''Object Properties'''

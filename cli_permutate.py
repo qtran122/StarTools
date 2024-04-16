@@ -1,7 +1,16 @@
-""" Command-Line Tool to <FILL IN>
+'''
+Command-Line Tool to permute a pattern XML file to add the 7 other variants
 
-    USAGE: <FILL IN>
-"""
+    Say we wish to create a new skell reef pattern xml to be added to cli_collide tool. We create 
+    a new pattern file XML, add a tile layer, then add an object layer. That allows us to match one
+    orientation. However, the skell reef can be flipped and rotated for a total of 8 different
+    orientations. To save on the tedium of creating the 7 other orientations manally, we can use 
+    cli_permutate. It will create the 7 other orientations. The 7 generated tile layers will be 
+    flipped and rotated. Object layers will have the 'angle' and 'flipped' flags already added
+
+USAGE EXAMPLE:
+	python cli_permutate.py reef7 # reef7.xml has been added as an example
+'''
 
 import os
 import argparse
