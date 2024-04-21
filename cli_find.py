@@ -9,6 +9,8 @@ USAGE EXAMPLE:
 	python cli_search.py 657    # where 657 is a number ID assigned by TILED
 '''
 
+import sys
+import time
 import argparse
 import logic.common.file_utils as file_utils
 import logic.common.tiled_utils as tiled_utils
@@ -45,18 +47,21 @@ def main():
         log.Info(f"Narrowing search to select prefix '{args.prefix}'")
         files_to_search = [fn for fn in files_to_search if file_utils.StripFilename(fn).startswith(args.prefix)]
         
-    log.Must(f"Preparing to search {len(files_to_search)} files...")
+    num_files =  len(files_to_search)
+    log.Must(f"Preparing to search {num_files} files...\n")
     
     files_w_errors = []     # List of files that could not be searched, likely due to using wrong encoding
     files_w_matches = {}    # dict mapping file_name to another dict of {tile_layer_name : coordinates}
                             # In other words: {file_name : {tile_layer_name : [(x1,y1), (x2, y2), ...]}
     for num, filename in enumerate(files_to_search):
         search_results = tile_finder.SearchFileForTileIds(filename, tiles_to_search)
+        PrintProgressBar(num + 1, num_files, prefix='Find Progress:', suffix=f'processing {_FormatName(filename)}', length=30)
         if search_results:
             files_w_matches[file_utils.StripFilename(filename)] = search_results
         elif search_results is None:
             files_w_errors.append(filename)
     
+    time.sleep(0.25)
     if files_w_errors:
         log.Info(f"\nWARNING: The below {len(files_w_errors)} files were unsearchable! Likely do to their encoding")
         for erred_file in files_w_errors:
@@ -64,15 +69,36 @@ def main():
             
     if files_w_matches:
         log.Must(f"\n\nSUCCESS! TILE ID {args.tile_id} was discovered in {len(files_w_matches)} files...\n")
-        for filename, search_results in files_w_matches.items():
-            log.Must(f"    {filename}.xml ".ljust(50, '-'))
+        for index, (filename, search_results) in enumerate(files_w_matches.items(), start=1):
+            log.Must(f"    {index}. {filename}.xml ".ljust(50, '-'))
             log.Must(tile_finder.FormatSearchResult(search_results))
     else:
         log.Must(f"\nNOT FOUND! TILE ID {args.tile_id} was not used in any files...")
     
-    log.Must("\n\ncli_find concluded!")
+    log.Must(f"\n\ncli_find concluded! {len(files_w_matches)} files found with a match!")
 
+
+def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
+    """Call in a loop to create terminal progress bar"""
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '-' * (length - filled_length)
+    sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
+    sys.stdout.flush()
+
+
+def _FormatName(name):
+    name = file_utils.StripFilename(name)
+    if len(name) > 20:
+        # Truncate and add "..." to the end
+        formatted_name = name[:17] + "..."
+    else:
+        # Pad with spaces to make it 20 characters
+        formatted_name = name.ljust(20)
+    return formatted_name
 
 #--------------------------------------------------#
+
+
 
 main()
