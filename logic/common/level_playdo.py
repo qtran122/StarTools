@@ -164,10 +164,9 @@ class LevelPlayDo():
     def GetAllObjectsWithName(self, object_name):
         '''Searches all object groups to find objects with the given object_name'''
         objects_w_matching_names = []
-        for object_group in self.level_root.findall('objectgroup'):
-            for object in object_group.findall('object'):
-                if object.get('name') == object_name:
-                    objects_w_matching_names.append(object)
+        for object in self.level_root.findall(".//object"):
+            if object.get('name') == object_name:
+                objects_w_matching_names.append(object)
         return objects_w_matching_names
 
 
