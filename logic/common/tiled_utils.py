@@ -30,6 +30,37 @@ def DecodeIntoTiles2d(encoded_str, row_width):
 
 
 
+def DecodeCSVIntoTiles2d(csv_str, row_width):
+    '''Does same thing as 'DecodeIntoTiles2d', except it works on CSV data strings '''
+    numbers = [int(num_str) for num_str in csv_str.split(',')]
+    result = []
+    for i in range(0, len(numbers), row_width):
+        result.append(numbers[i:i+row_width])
+    return result
+
+
+
+def DecodeIntoTiles2d(encoded_str, row_width):
+    '''
+    Takes a TILED layer encoded string and converts it into a tiles2d
+      encoded_str - string containing a layer's 'data' in TILED, zlib-encoded and base64-compressed
+      row_width - integer indicating number of cells each row should contain
+      tiles2d - 2d array of Tile IDs, first row is at top
+      >>> DecodeIntoTiles2d("eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw==", 4)
+      >>> [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+    '''
+
+    # Convert the base64 string to a numpy array (uint32)
+    decoded_data = base64.b64decode(encoded_str)
+    decompressed_data = zlib.decompress(decoded_data)
+    array = numpy.frombuffer(decompressed_data, dtype=numpy.uint32)
+
+    # Reshape the array to the desired dimensions
+    tiles2d = array.reshape(-1, row_width)
+    return tiles2d.tolist()
+
+
+
 def EncodeIntoZlibString64(tiles2d):
     '''
     Takes a TILED layer encoded string and converts it into a tiles2d
@@ -38,13 +69,20 @@ def EncodeIntoZlibString64(tiles2d):
       >>> EncodeIntoZlibString64([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
       >>> "eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw=="
     '''
-
     # Convert: tiles2d array -> numpy array (uint32) -> bytes -> zlib string -> base64 string
     np_array = numpy.array(tiles2d, dtype=numpy.uint32)
     array_bytes = np_array.tobytes()
     compressed_data = zlib.compress(array_bytes)
     encoded_str = base64.b64encode(compressed_data).decode()
 
+    return encoded_str
+    
+    
+    
+def EncodeIntoCsv(tiles2d):
+    '''Similar to EncodeIntoZlibString64, except it generates a CSV string'''
+    flattened_list = [str(num) for row in tiles2d for num in row]
+    encoded_str = ', '.join(flattened_list)
     return encoded_str
 
 
@@ -131,6 +169,7 @@ def FlipTileId(tile_id):
     return tile_id ^ mask
 
 
+
 def RotateTileId(tile_id):
     '''Rotates one tiles 90˚ clockwise (pressing [z] in Tiled), e.g. 1 -> 2684354563'''
 
@@ -159,6 +198,8 @@ _ROTATE_BIT_MAP = {
     0b001: 0b100
 }
 
+
+
 def GetTileIdPermutations(tile_id):
     '''Processes tile id & returns a list of 8 tile ids (all of the possible orientations from flipping & rotating)'''
     tile_id_list = [tile_id, FlipTileId(tile_id)]
@@ -170,6 +211,8 @@ def GetTileIdPermutations(tile_id):
 
 #--------------------------------------------------#
 '''Object Properties'''
+
+
 
 def GetPolyPoints( input_string ):
     '''Convert string into list of tuples: [ (x1,y1), (x2,y2), ... ]'''

@@ -104,8 +104,14 @@ class TileRemapper():
         using_dual_maps = len(self.A_to_B_map) == len(self.B_to_A_map)
         using_dual_maps = True
         for tile_layer in all_tile_layers:
-            old_data = tile_layer.find('data').text.strip()
-            tiles2d = tiled_utils.DecodeIntoTiles2d(old_data, playdo.map_width)
+            data_element = tile_layer.find('data')
+            encoding_used = data_element.get('encoding')
+            old_data = data_element.text.strip()
+            tiles2d = None
+            if encoding_used == 'csv':
+                tiles2d = tiled_utils.DecodeCSVIntoTiles2d(old_data, playdo.map_width)
+            else:
+                tiles2d = tiled_utils.DecodeIntoTiles2d(old_data, playdo.map_width)
             
             if not using_dual_maps:
                 # Performing Tile Migration
@@ -113,7 +119,10 @@ class TileRemapper():
                     for j in range(playdo.map_width):
                         if tiles2d[i][j] in self.A_to_B_map: 
                             tiles2d[i][j] = self.A_to_B_map[tiles2d[i][j]]
-                tile_layer.find('data').text = tiled_utils.EncodeIntoZlibString64(tiles2d)
+                if encoding_used == 'csv':
+                    tile_layer.find('data').text = tiled_utils.EncodeIntoCsv(tiles2d)
+                else:
+                    tile_layer.find('data').text = tiled_utils.EncodeIntoZlibString64(tiles2d)
             else:
                 # Performing Tile Remap
                 
@@ -137,10 +146,16 @@ class TileRemapper():
                 if count_remapped_A_to_B == 0 and count_remapped_B_to_A == 0:
                     continue
                 elif count_remapped_A_to_B > count_remapped_B_to_A:
-                    tile_layer.find('data').text = tiled_utils.EncodeIntoZlibString64(tiles2d_AB)
+                    if encoding_used == 'csv':
+                        tile_layer.find('data').text = tiled_utils.EncodeIntoCsv(tiles2d_AB)
+                    else:
+                        tile_layer.find('data').text = tiled_utils.EncodeIntoZlibString64(tiles2d_AB)
                     #print(f"-- tile_remapper.py : layer {tile_layer.get('name')} remapped {count_remapped_A_to_B} tiles!")
                 else:
-                    tile_layer.find('data').text = tiled_utils.EncodeIntoZlibString64(tiles2d_BA)
+                    if encoding_used == 'csv':
+                        tile_layer.find('data').text = tiled_utils.EncodeIntoCsv(tiles2d_BA)
+                    else:
+                        tile_layer.find('data').text = tiled_utils.EncodeIntoZlibString64(tiles2d_BA)
                     #print(f"-- tile_remapper.py : layer {tile_layer.get('name')} remapped {count_remapped_B_to_A} tiles!")
     
     def _ValidateRemapXml(self, pattern_root, pattern_file_name):
