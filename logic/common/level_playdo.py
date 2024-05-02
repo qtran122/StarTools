@@ -201,10 +201,15 @@ class LevelPlayDo():
                 elem.set('value', elem.get('value').replace(target_text, new_number_string))
 
 
-    def Write(self):
+    def Write(self, location = None):
         '''Stamps the Playdo back into an XML file and writes to disk'''
-        log.Info(f"-- level_playdo.py : flushing changes...")
-        self.my_xml_tree.write(self.full_file_name)
+        if location is None:
+            log.Extra(f"-- level_playdo.py : flushing changes...")
+            self.my_xml_tree.write(self.full_file_name)
+        else:
+            log.Extra(f"-- level_playdo.py : flushing changes to new location...")
+            self.my_xml_tree.write(location)
+
 
 
     def PreCalculateInternalTileData(self):
@@ -230,6 +235,7 @@ class LevelPlayDo():
             self._ProcessLayer(tile_layer, tile_layer_name)
         
         return self._tiles2d_map, self._tiles2d_hash
+    
     
     
     def _ProcessLayer(self, layer, tile_layer_name):

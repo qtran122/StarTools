@@ -1,3 +1,36 @@
+"""
+The Command-Line Tool to "rebind" all of the levels inside the root Levels folder. This is done
+when the master tilesheet.png has become too disordered and re-organizing it becomes desired.
+
+INSTRUCTIONS:
+    1.  Create a new XML level that is as big as the master tiles.png (128 x 128 tiles)
+        Call this file "new_tiles.xml"
+    2.  We'll be using TILED to construct the new tiles.png since it already has 
+        all the functionality we need to quickly organize the tiles
+    3.  Re-organize the tiles within new_tiles.xml. Flipping & Rotating tiles is OK
+    4.  Once finished, export this level as a new tiles.PNG. Leave this png on desktop.
+    5.  Back up the levels folder and the graphics
+    6.  Run the cli_migration tool (see below)
+    7.  Confirm that all the levels now show a jumbled mess
+    8.  Take the new tiles.png (from step 4) and place it in the project graphics folder
+    9.  Confirm everything has been successfully migrated over
+    
+USAGE EXAMPLE:
+    The below command performs a "test" run. No changes will be flushed. This is useful since
+    a test run will compile an image and inform us if any tiles are missing. If we proceed,
+    missing tiles will be "zeroed" out
+    
+    > python cli_migration.py
+
+    The below command has "real_run" specified, so changes will be recorded. However, a prefix
+    is also specified, so it'll target just one level (a02). Useful as a small test run
+    > python cli_migration.py --real_run --prefix=a02
+    
+    The below command performs the run for real on the entire levels folder
+    > python cli_migration.py --real_run 
+"""
+
+
 import os
 import sys
 import time
@@ -5,6 +38,8 @@ import argparse
 import logic.common.level_playdo as play
 import logic.common.file_utils as file_utils
 import logic.remapper.tile_remapper as TM
+import logic.common.log_utils as log
+
 
 
 def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
@@ -33,7 +68,7 @@ def CheckForUserExit():
     user_input = input().strip().upper()
     if user_input != 'Y':
         time.sleep(0.5)
-        print("\ntiles migration canceled...\n")
+        log.Must("\ntiles migration canceled...\n")
         sys.exit()
         
         
@@ -46,14 +81,7 @@ def _CompactPrintFiles(files):
             if len(filename) > 20: formatted_filename = filename[:17] + "..."
             else : formatted_filename = filename
             formatted_line += f'{formatted_filename:<20}'
-        print(formatted_line)
-
-
-
-def _FetchTilesPngFullPath(filename):
-    if not filename.endswith(".png"):
-        return file_utils.GetInputFolder() + '/migrate/' + filename + ".png"
-    return file_utils.GetInputFolder() + '/migrate/' + filename
+        log.Info(formatted_line)
 
 
 
@@ -75,67 +103,65 @@ def PerformTilesMigration(tile_remapper, files_to_process, is_real_run):
 
 
 
-tool_description = 'Retiles all levels after the master tiles.png has been edited'
+tool_description = 'Rebinds all levels after the master tiles.png has been re-organized'
 arg_real_run_desc = 'By default, all runs are simulation runs. Set this flag to really perform the migration'
-arg_old_tiles_desc = 'Name of the old tiles png we are migrating from. This png should sit in the "input/migrate" folder'
-arg_new_tiles_desc = 'Name of the new tiles png we are migrating to. This png should sit in the "input/migrate" folder'
-arg_desc_verbosity = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
+arg_new_tiles_desc = 'Name of the new tiles XML we are migrating to. This XML should sit in the regular Levels folder'
 arg_prefix_desc = 'Narrows the migration selection requiring files match a prefix. For Ex: "--prefix=f" targets the stomach area'
+arg_desc_verbosity = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=tool_description)
     parser.add_argument('--real_run', action='store_true', help=arg_real_run_desc)
-    parser.add_argument('--old_tiles', type=str, default='migrate_tiles_old.png', help=arg_old_tiles_desc)
-    parser.add_argument('--new_tiles', type=str, default='migrate_tiles_new.png', help=arg_new_tiles_desc)
+    parser.add_argument('--new_tiles', type=str, default='new_tiles', help=arg_new_tiles_desc)
     parser.add_argument('--prefix', type=str, default=None, help=arg_prefix_desc)
     parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help=arg_desc_verbosity )
     args = parser.parse_args()
     
-    if args.real_run: print("\nRunning REAL Tiles Migration...")
-    else: print("\nRunning Tiles Migration SIMULATION...\nNo changes will be recorded.\n")
+    log.SetVerbosityLevel(args.v)
+    
+    if args.real_run: log.Must("\nRunning REAL Tiles Migration...")
+    else: log.Must("\nRunning Tiles Migration SIMULATION...\nNo changes will be recorded.\n")
     
     tile_remapper = TM.TileRemapper()
+    mapping_file_path = file_utils.GetFullLevelPath(args.new_tiles)
+    tiles_png_path = file_utils.GetGfxFolder() + "tiles.png"
     
-    old_tiles_png_path = _FetchTilesPngFullPath(args.old_tiles)
-    new_tiles_png_path = _FetchTilesPngFullPath(args.new_tiles)
-    num_unmatched_tiles = tile_remapper.LoadMigrationMap(old_tiles_png_path, new_tiles_png_path)
+    unseen_tile_ids = tile_remapper.LoadMigrationMap(mapping_file_path, tiles_png_path)
     
-    # Question 1 : Ask user to check migration images & reconcile any mismatches
-    if num_unmatched_tiles > 0:
-        print(f"\nDiscovered {num_unmatched_tiles} unmatched tiles! See generated mismatch image.")
-        print("Unmatched tiles should be reconciled via an override_bindings file.\n\nStill Proceed? (Y/N)")
-        CheckForUserExit()
-            
+    if unseen_tile_ids:
+        log.Must(f"\nDiscovered {len(unseen_tile_ids)} forgotten tiles! Check generated image.")
     else:
-        print("Matches for all tiles were found!")
+        log.Must(f"All tiles FOUND!")
     
-    # Question 2 : Scan levels folder and confirm number of files to be operated upon
+    # Question : Scan levels folder and confirm number of files to be operated upon
     files_to_process = file_utils.GetAllLevelFiles()
     if not files_to_process:
-        print("prefix Levels folder not found! Please update 'root_dir.toml'")
+        log.Must("Levels folder not found! Please update 'root_dir.toml'")
+        sys.exit()
         
     # Prune the list of files to migrate if "prefix" is specified
     if args.prefix is not None:
-        print(f"Narrowing search to select prefix '{args.prefix}'...\n")
+        log.Must(f"Narrowing search to select prefix '{args.prefix}'...\n")
         files_to_process = [fn for fn in files_to_process if file_utils.StripFilename(fn).startswith(args.prefix)]
         if not files_to_process:
-            print("No files are targeted with specified prefix!")
+            log.Must("No files are targeted with specified prefix!")
+            sys.exit()
         _CompactPrintFiles(files_to_process)
     
     time.sleep(0.5)
-    print(f"\nFound {len(files_to_process)} files for Tiles Migration! Proceed with migration? (Y/N)")
+    log.Must(f"\nFound {len(files_to_process)} files! Proceed with Tiles Migration? (Y/N)")
     CheckForUserExit()
         
     # Begin the Tiles Migration
-    print()
+    log.Must('\n')
     errors = PerformTilesMigration(tile_remapper, files_to_process, args.real_run)
-    print()
+    log.Must('\n')
     
     if not errors: sys.exit()
     
     time.sleep(1)
-    print(f"\nHowever, {len(errors)} files errored out!")
+    log.Must(f"\nHowever, {len(errors)} files errored out!")
     for filename, error_message in errors:
         time.sleep(0.1)
-        print(f"\t{filename} - {error_message}")
+        log.Must(f"\t{filename} - {error_message}")
 
