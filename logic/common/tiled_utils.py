@@ -8,14 +8,34 @@ import numpy
 
 #--------------------------------------------------#
 '''Base64 string <-> Array'''
+    
 
-def DecodeIntoTiles2d(encoded_str, row_width):
+def DecodeIntoTiles2d(encoded_str, row_width, encoding_used = None):
+    '''All-purpose Decode to Tiles2d function that will delegate which decoding Fn to use'''
+    if encoding_used == 'csv':
+        return DecodeCSVIntoTiles2d(encoded_str, row_width)
+    else:
+        # The only other supported encoding is 'base64 zlib'
+        return DecodeBase64ZlibIntoTiles2d(encoded_str, row_width)
+
+
+
+def EncodeToTiledFormat(tiles2d, encoding_used = None):
+    if encoding_used == 'csv':
+        return EncodeIntoCsv(tiles2d)
+    else:
+        # The only other supported encoding is 'base64 zlib'
+        return EncodeIntoZlibString64(tiles2d)
+
+
+
+def DecodeBase64ZlibIntoTiles2d(encoded_str, row_width):
     '''
     Takes a TILED layer encoded string and converts it into a tiles2d
       encoded_str - string containing a layer's 'data' in TILED, zlib-encoded and base64-compressed
       row_width - integer indicating number of cells each row should contain
       tiles2d - 2d array of Tile IDs, first row is at top
-      >>> DecodeIntoTiles2d("eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw==", 4)
+      >>> DecodeBase64ZlibIntoTiles2d("eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw==", 4)
       >>> [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
     '''
 
@@ -31,34 +51,13 @@ def DecodeIntoTiles2d(encoded_str, row_width):
 
 
 def DecodeCSVIntoTiles2d(csv_str, row_width):
-    '''Does same thing as 'DecodeIntoTiles2d', except it works on CSV data strings '''
+    '''Does same thing as 'DecodeBase64ZlibIntoTiles2d', except it works on CSV data strings '''
     numbers = [int(num_str) for num_str in csv_str.split(',')]
     result = []
     for i in range(0, len(numbers), row_width):
         result.append(numbers[i:i+row_width])
     return result
-
-
-
-def DecodeIntoTiles2d(encoded_str, row_width):
-    '''
-    Takes a TILED layer encoded string and converts it into a tiles2d
-      encoded_str - string containing a layer's 'data' in TILED, zlib-encoded and base64-compressed
-      row_width - integer indicating number of cells each row should contain
-      tiles2d - 2d array of Tile IDs, first row is at top
-      >>> DecodeIntoTiles2d("eAENw4cNACAMAKA66/r/XiGhRES12R1O0+X2eH1+BeAATw==", 4)
-      >>> [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
-    '''
-
-    # Convert the base64 string to a numpy array (uint32)
-    decoded_data = base64.b64decode(encoded_str)
-    decompressed_data = zlib.decompress(decoded_data)
-    array = numpy.frombuffer(decompressed_data, dtype=numpy.uint32)
-
-    # Reshape the array to the desired dimensions
-    tiles2d = array.reshape(-1, row_width)
-    return tiles2d.tolist()
-
+    
 
 
 def EncodeIntoZlibString64(tiles2d):

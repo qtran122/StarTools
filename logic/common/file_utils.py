@@ -19,6 +19,14 @@ def GetInputFolder():
         return root_dirs["Q_INPUT"]
     elif (os.path.exists(root_dirs["T_INPUT"])):
         return root_dirs["T_INPUT"]
+        
+
+def GetGfxFolder():
+    root_dirs = toml.load("input/root_dir.toml")
+    if (os.path.exists(root_dirs["Q_GFX"])):
+        return root_dirs["Q_GFX"]
+    elif (os.path.exists(root_dirs["T_GFX"])):
+        return root_dirs["T_GFX"]
 
 
 def GetAllLevelFiles():

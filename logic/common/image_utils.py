@@ -7,22 +7,25 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 
-def SliceTileSheetIntoNpArray(png_image_path, tile_size = 16):
-    '''Slice a tilesheet png into tiles and return them as a list of NP.Arrays.'''
+
+def SliceTileSheet(png_image_path, make_into_np_array = False, tile_size = 16):
+    '''Slice a tilesheet png into tiles and return them as a list of images or NP.Arrays.'''
     
     # np.arrays provide fast, flexible, and efficient ways to store and manipulate large datasets
     with Image.open(png_image_path) as img:
-        img_tiles_np_array = []
+        img_tiles = []
         for y in range(0, img.height, tile_size):
             for x in range(0, img.width, tile_size):
                 tile = img.crop((x, y, x + tile_size, y + tile_size))
-                img_tiles_np_array.append(np.array(tile))
-        return img_tiles_np_array
-        
-        
-          
+                if make_into_np_array : img_tiles.append(np.array(tile))
+                else : img_tiles.append(tile)
+        return img_tiles
+
+
+
 def NpArrayToImage(np_array):
     return Image.fromarray(np_array, 'RGBA')
+
 
 
 def AddHeaderToImage(image, title):
@@ -49,7 +52,8 @@ def AddHeaderToImage(image, title):
     new_image.paste(image, (0, header_height), mask=image)  # Paste the original image below the header
     
     return new_image
-    
+
+
 
 def CreateTilesCollage(image_title, tiles_n_images, output_path, open_on_complete=True):
     '''Given a list of (tile_id, Image) tuples, will create a collage for study & visualization purposes

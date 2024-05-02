@@ -9,3 +9,6 @@ T_INPUT = '/Users/Jimmy/20-GitHub/StarTools/input/'
 T_OUTPUT = '/Users/Jimmy/20-GitHub/StarTools/output/'
 
 T_ROOT1 = '/Users/Jimmy/Library/Application Support/Steam/steamapps/common/Whale Nebula/Contents/Resources/Data/StreamingAssets/levels/'
+
+Q_GFX = 'C:/Users/qtran/Desktop/PROJECT Whale Nebula/WhaleNebula/Assets/Graphics/'
+T_GFX = 'INSERT'
