@@ -123,19 +123,11 @@ class LevelPlayDo():
 
 
     def GetAllObjectsWithName(self, object_name):
-        '''Searches all object groups to find objects with the given object_name'''
+        '''Searches all objectgroups to find objects with the given object_name'''
         objects_w_matching_names = []
-
-        # Can search in object_layer outside fodlers and 1 layer of folders
-        obj_layer_list = self.level_root.findall('objectgroup')
-        for folder in self.level_root.findall('group'):
-            obj_layer_list += folder.findall('objectgroup')
-
-        # Search in each object_layer/object_group
-        for object_group in obj_layer_list:
-            for object in object_group.findall('object'):
-                if object.get('name') == object_name:
-                    objects_w_matching_names.append(object)
+        for obj in self.level_root.findall(".//object"):
+            if obj.get("name") == object_name:
+                objects_w_matching_names.append(obj)
         return objects_w_matching_names
 
 
@@ -179,11 +171,10 @@ class LevelPlayDo():
 
         
 #--------------------------------------------------#
-'''...'''        
+'''Private Helper Functions'''
 
 def _AddPropertiesToObject(tiled_object, properties):
-    '''Helper function. Adds properties to a tiled object
-    '''
+    '''Helper function. Adds properties to a tiled object'''
     prop_elem = tiled_object.find('properties')
     if prop_elem is None:
         prop_elem = ET.SubElement(tiled_object, 'properties')

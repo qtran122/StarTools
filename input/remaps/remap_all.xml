@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="32" height="19" tilewidth="16" tileheight="16" infinite="0" nextlayerid="92" nextobjectid="679">
+ <tileset firstgid="1" source="WhaleNebulaTileset.tsx"/>
+ <layer id="88" name="1" width="32" height="19" opacity="0.6">
+  <data encoding="base64" compression="zlib">
+   eAHt1NsOwUAQgOHRZ+AJUVSrBPfOvCcJqgdnt/7GNqm9bSsSJvnMTDdmspUQ+ceYVzDBFDPMscASK/xaOOrCrnbxvtbn1VoMOsBXAwNyiAhHnHDGBUWEx9B2ScRGHA65o+ouuafq12n+n5Y2P9D6/De+T7QM7g/bkFF84lDH4ar86kT6Wp88z5o95h7gq/0Bdah2HVXOuuObv7/m966hDhMNNNGK6w/cv8qODbuS2FLvsIf5gf3J3l/NYZn/OUQ44YwLrrjhjgeKik5FpAsX6RjQD7Vn6fN/nf0NPAExzjFc
+  </data>
+ </layer>
+ <layer id="89" name="2" width="32" height="19" offsetx="224" offsety="0">
+  <data encoding="base64" compression="zlib">
+   eAHtlNtOg0AQhicqT1DfUBMVORn0XmttfU+VVk5Cq/bWjzAkm72lmzSRSb78/wzZmewuIDLF05nIHJ5hAS+whBW8wn+L8LTfcaw67D+18qE+Vn36FlBq/wqt4QsaaGELO3AROX1vuedA7zpEI/UJeqfexeyup2/1r6zc1dyhr++xfwg8eexqIb6LWLXPRFIrH+pjNadvAaXOr/C1zmpUx8445vUXvH/vJyIfkMEaNvDZeUfvvHkeb8y4NOZc4a/hBjKjbq6Z/OFOoJ7xr4MGWtjCDr7hB35hD64iOudbhwTMuCd/sGrm88mPP4E/M6Qz5g==
+  </data>
+ </layer>
+</map>
