@@ -1,0 +1,112 @@
+
+--------------------------------------------------
+  /Users/Jimmy/20-GitHub/StarTools
+  Verbosity = 2
+--------------------------------------------------
+
+-- level_playdo.py : initialized j04-ref.xml ...
+
+--- Checking for sort value conflicts ---
+
+# of "AT_linear": 11
+# of "AT_radial": 19
+# of "env_particles": 11
+# of "AT_reflect": 4
+# of "AT_ray": 7
+# of "AT_bilinear": 3
+
+--- Finished checking conflicts! ---
+
+--------------------------------------------------
+bg_tiles,-1 has 3 elements
+   [global]           AT_linear       at (0, 20),    [96 ☓ 20]   #f47dff/0.9  |
+   [global]           AT_linear       at (96, 20),   [96 ☓ 20]   #f47dff/0.8  |
+   [wind]             env_particles   at (3, 7),     [10 ☓ 2]    #            |
+--------------------------------------------------
+fg_tiles,122 has 5 elements
+   [global]           AT_linear       at (-3, 28),   [99 ☓ 113]  #05a7ff/0.1  |
+   [global]           AT_linear       at (99, 12),   [99 ☓ 113]  #05a7ff/0.2  |
+   [mesh_smog]        env_particles   at (77, 23),   [11 ☓ 23]   #            |
+   [mesh_smog]        env_particles   at (-4, -2),   [11 ☓ 27]   #            |
+   [wind]             AT_reflect      at (99, 15),   [100 ☓ 5]   #            |
+--------------------------------------------------
+bg_tiles,23 has 2 elements
+   [global]           AT_linear       at (-2, 31),   [98 ☓ 8]    #009dff/0.4  |
+   [global]           AT_linear       at (98, 9),    [98 ☓ 8]    #00eaff/0.4  |
+--------------------------------------------------
+bg_tiles,36 has 2 elements
+   [mesh_smog]        AT_linear       at (68, 21),   [20 ☓ 13]   #0072a3/1    |
+   [mesh_smog]        AT_linear       at (7, 0),     [25 ☓ 14]   #0072a3/1    |
+--------------------------------------------------
+bg_tiles,11 has 2 elements
+   [mesh_smog]        AT_linear       at (62, 20),   [18 ☓ 19]   #00ff40/1    |
+   [mesh_smog]        AT_linear       at (10, 1),    [24 ☓ 17]   #00ff40/1    |
+--------------------------------------------------
+fg_tiles,101 has 1 elements
+   [gravity_barrier]  AT_linear       at (-1, 13),   [99 ☓ 6]    #ffffff/0.8  |
+--------------------------------------------------
+bg_tiles,32 has 7 elements
+   [areal]            AT_radial       at (-2, 22),   [25 ☓ 20]   #ff0055/0.5  |
+   [areal]            AT_radial       at (11, -9),   [47 ☓ 28]   #dd45ff/0.25 |
+   [areal]            AT_radial       at (15, 15),   [22 ☓ 14]   #ff0055/0.4  |
+   [areal]            AT_radial       at (43, -2),   [36 ☓ 22]   #ff0055/0.6  |
+   [areal]            AT_radial       at (25, -4),   [16 ☓ 15]   #006aff/0.2  |
+   [areal]            AT_radial       at (34, 26),   [17 ☓ 16]   #006aff/0.2  |
+   [global]           AT_reflect      at (-1, 7),    [97 ☓ 25]   #fc47de/0.4  |
+--------------------------------------------------
+fg_tiles,34 has 6 elements
+   [areal]            AT_radial       at (49, 29),   [17 ☓ 8]    #f74e00/0.4  |
+   [areal]            AT_radial       at (68, 28),   [23 ☓ 12]   #f74e00/0.5  |
+   [areal]            AT_radial       at (75, 21),   [17 ☓ 8]    #f74e00/0.4  |
+   [areal]            AT_radial       at (58, 20),   [13 ☓ 8]    #f74e00/0.4  |
+   [spice]            AT_radial       at (72, 21),   [10 ☓ 9]    #ffedc1/0.3  |
+   [spice]            AT_radial       at (28, 19),   [11 ☓ 10]   #ffedc1/0.5  |
+--------------------------------------------------
+bg_tiles,42 has 13 elements
+   [areal]            AT_radial       at (57, 17),   [51 ☓ 29]   #f74e00/0.4  |
+   [areal]            AT_radial       at (7, 13),    [61 ☓ 32]   #dd45ff/0.25 |
+   [areal]            AT_radial       at (43, 21),   [34 ☓ 22]   #f74e00/0.25 |
+   [skell_backdrop]   AT_radial       at (17, 23),   [25 ☓ 20]   #260a4f/0.3  |
+   [skell_backdrop]   AT_radial       at (81, 25),   [17 ☓ 17]   #260a4f/0.2  |
+   [skell_backdrop]   AT_radial       at (-2, 23),   [17 ☓ 17]   #260a4f/0.2  |
+   [spice]            AT_ray          at (84, 326)   [190 ☓ 117] #            |
+   [spice]            AT_ray          at (-306, 25)  [104 ☓ 124] #            |
+   [spice]            AT_ray          at (-33, 23)   [29 ☓ 163]  #            |
+   [spice]            AT_ray          at (16, 80)    [-35 ☓ 105] #            |
+   [spice]            AT_ray          at (337, 288)  [53 ☓ 139]  #            |
+   [spice]            AT_ray          at (-23, 6)    [7 ☓ 106]   #            |
+   [spice]            AT_ray          at (-148, 53)  [-95 ☓ 147] #            |
+--------------------------------------------------
+fg_tiles,132 has 1 elements
+   [mesh_smog]        AT_radial       at (67, -5),   [21 ☓ 30]   #0098a3/0.4  |
+--------------------------------------------------
+bg_tiles,38 has 4 elements
+   [mesh_smog]        env_particles   at (64, 6),    [6 ☓ 9]     #            |
+   [mesh_smog]        env_particles   at (64, 21),   [3 ☓ 13]    #            |
+   [mesh_smog]        env_particles   at (-3, 7),    [3 ☓ 11]    #            |
+   [mesh_smog]        env_particles   at (-3, 26),   [9 ☓ 8]     #            |
+--------------------------------------------------
+bg_tiles,67 has 2 elements
+   [mesh_smog]        env_particles   at (74, 19),   [11 ☓ 16]   #            |
+   [mesh_smog]        env_particles   at (-1, 2),    [11 ☓ 23]   #            |
+--------------------------------------------------
+fg_tiles,38 has 1 elements
+   [wind]             env_particles   at (2, 6),     [12 ☓ 2]    #            |
+--------------------------------------------------
+fg_tiles,121 has 3 elements
+   [wind]             env_particles   at (1, 5),     [14 ☓ 2]    #            |
+   [gravity_barrier]  AT_reflect      at (-3, 16),   [100 ☓ 7]   #ff9100/0.4  |
+   [gravity_barrier]  AT_bilinear     at (-3, 17),   [102 ☓ 5]   #ff7573/1    |
+--------------------------------------------------
+bg_tiles,51 has 1 elements
+   [wind]             AT_reflect      at (97, 16),   [101 ☓ 8]   #            |
+--------------------------------------------------
+fg_tiles,111 has 1 elements
+   [gravity_barrier]  AT_bilinear     at (-3, 18),   [103 ☓ 2]   #ffd996/1    |
+--------------------------------------------------
+fg_tiles,125 has 1 elements
+   [gravity_barrier]  AT_bilinear     at (-4, 19),   [1056 ☓ 1]  #ffffff/1    |
+--------------------------------------------------
+
+--- Finished printing conflicts! ---
+

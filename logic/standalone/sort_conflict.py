@@ -61,13 +61,13 @@ def PrintPotentialConflicts(playdo, dict, list_scan_obj):
 		name_len = len( tiled_utils.GetNameFromObject(obj_layer) )
 		if max_layer_name_len < name_len: max_layer_name_len = name_len
 
-	log.Info('')
 	for key, value in dict.items():
 		log.Extra( '--------------------------------------------------' )
 		log.Info( f"{key} has {len(value)} elements" )
 		for obj in value:
 			log.Extra( f'  {PrintObjInfo(obj, GetParentName(obj, playdo), max_obj_name_len, max_layer_name_len)}' )
 	log.Extra( '--------------------------------------------------' )
+	log.Must("\n--- Finished printing conflicts! ---\n")
 
 
 

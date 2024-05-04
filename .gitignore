@@ -1,5 +1,4 @@
 *.pyc 
 .DS_Store
 output/
-*.log
 input/remaps/WhaleNebulaTileset.tsx

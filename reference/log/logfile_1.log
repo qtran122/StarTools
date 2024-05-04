@@ -1,0 +1,39 @@
+
+--------------------------------------------------
+  /Users/Jimmy/20-GitHub/StarTools
+  Verbosity = 1
+--------------------------------------------------
+
+-- level_playdo.py : initialized j04-ref.xml ...
+
+--- Checking for sort value conflicts ---
+
+# of "AT_linear": 11
+# of "AT_radial": 19
+# of "env_particles": 11
+# of "AT_reflect": 4
+# of "AT_ray": 7
+# of "AT_bilinear": 3
+
+--- Finished checking conflicts! ---
+
+bg_tiles,-1 has 3 elements
+fg_tiles,122 has 5 elements
+bg_tiles,23 has 2 elements
+bg_tiles,36 has 2 elements
+bg_tiles,11 has 2 elements
+fg_tiles,101 has 1 elements
+bg_tiles,32 has 7 elements
+fg_tiles,34 has 6 elements
+bg_tiles,42 has 13 elements
+fg_tiles,132 has 1 elements
+bg_tiles,38 has 4 elements
+bg_tiles,67 has 2 elements
+fg_tiles,38 has 1 elements
+fg_tiles,121 has 3 elements
+bg_tiles,51 has 1 elements
+fg_tiles,111 has 1 elements
+fg_tiles,125 has 1 elements
+
+--- Finished printing conflicts! ---
+

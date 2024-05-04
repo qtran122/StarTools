@@ -19,7 +19,7 @@ import logic.common.file_utils as file_utils
 #--------------------------------------------------#
 '''Logger Settings'''
 
-DEFAULT_FILENAME = 'logfile.log'
+DEFAULT_FILENAME = 'logfile'
 DEFAULT_FORMAT = '%(message)s'   # Without extra indentation
 DEFAULT_DIVIDER = '--------------------------------------------------'
 
@@ -48,7 +48,9 @@ def SetVerbosityLevel(log_lv_num, file_name = DEFAULT_FILENAME, format = DEFAULT
 
     # Create a file handler to log messages to a file
     file_utils.EnsureFolderExists(FOLDER_PATH)
-    file_handler = logging.FileHandler(FOLDER_PATH+file_name, 'w')
+    if file_name == DEFAULT_FILENAME:
+        file_name = file_name + '_' + str(log_lv_num) + '.log'
+    file_handler = logging.FileHandler(FOLDER_PATH + file_name, 'w')
     file_handler.setLevel(log_level)
     file_handler.setFormatter(logging.Formatter(format))
     logger.addHandler(file_handler)

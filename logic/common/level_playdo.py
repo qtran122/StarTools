@@ -13,6 +13,7 @@ An example usage of LevelPlayDo would be as follows:
     playdo.write()                                      # Write back our changes to the tiled xml
     
 '''
+import os
 import random
 import copy
 import xml.etree.ElementTree as ET
@@ -43,8 +44,9 @@ class LevelPlayDo():
         
         # Map for tile_layer_name to a Hashset (for quick checking tile matches). This is created & cached w/  GetTilemapAs2DList()
         self._2D_tiles_hash = {}
-        
-        log.Info(f"-- level_playdo.py : initialized {file_name} ...")
+
+#        log.Info(f"-- level_playdo.py : initialized {file_name} ...")
+        log.Info(f"-- level_playdo.py : initialized {os.path.basename(file_name)} ...")
 
 
 
