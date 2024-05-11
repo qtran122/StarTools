@@ -24,8 +24,8 @@ bg_tiles,-1 has 3 elements
    [wind]             env_particles   at (3, 7),     [10 ☓ 2]    #            |
 --------------------------------------------------
 fg_tiles,122 has 5 elements
-   [global]           AT_linear       at (-3, 28),   [99 ☓ 113]  #05a7ff/0.1  |
-   [global]           AT_linear       at (99, 12),   [99 ☓ 113]  #05a7ff/0.2  |
+   [global]           AT_linear       at (-3, 28),   [99 ☓ 11]   #05a7ff/0.1  |
+   [global]           AT_linear       at (99, 12),   [99 ☓ 11]   #05a7ff/0.2  |
    [mesh_smog]        env_particles   at (77, 23),   [11 ☓ 23]   #            |
    [mesh_smog]        env_particles   at (-4, -2),   [11 ☓ 27]   #            |
    [wind]             AT_reflect      at (99, 15),   [100 ☓ 5]   #            |
@@ -41,9 +41,6 @@ bg_tiles,36 has 2 elements
 bg_tiles,11 has 2 elements
    [mesh_smog]        AT_linear       at (62, 20),   [18 ☓ 19]   #00ff40/1    |
    [mesh_smog]        AT_linear       at (10, 1),    [24 ☓ 17]   #00ff40/1    |
---------------------------------------------------
-fg_tiles,101 has 1 elements
-   [gravity_barrier]  AT_linear       at (-1, 13),   [99 ☓ 6]    #ffffff/0.8  |
 --------------------------------------------------
 bg_tiles,32 has 7 elements
    [areal]            AT_radial       at (-2, 22),   [25 ☓ 20]   #ff0055/0.5  |
@@ -69,16 +66,13 @@ bg_tiles,42 has 13 elements
    [skell_backdrop]   AT_radial       at (17, 23),   [25 ☓ 20]   #260a4f/0.3  |
    [skell_backdrop]   AT_radial       at (81, 25),   [17 ☓ 17]   #260a4f/0.2  |
    [skell_backdrop]   AT_radial       at (-2, 23),   [17 ☓ 17]   #260a4f/0.2  |
-   [spice]            AT_ray          at (84, 326)   [190 ☓ 117] #            |
+   [spice]            AT_ray          at (84, 96)    [190 ☓ 117] #            |
    [spice]            AT_ray          at (-306, 25)  [104 ☓ 124] #            |
    [spice]            AT_ray          at (-33, 23)   [29 ☓ 163]  #            |
    [spice]            AT_ray          at (16, 80)    [-35 ☓ 105] #            |
-   [spice]            AT_ray          at (337, 288)  [53 ☓ 139]  #            |
+   [spice]            AT_ray          at (-6, 13)    [53 ☓ 139]  #            |
    [spice]            AT_ray          at (-23, 6)    [7 ☓ 106]   #            |
    [spice]            AT_ray          at (-148, 53)  [-95 ☓ 147] #            |
---------------------------------------------------
-fg_tiles,132 has 1 elements
-   [mesh_smog]        AT_radial       at (67, -5),   [21 ☓ 30]   #0098a3/0.4  |
 --------------------------------------------------
 bg_tiles,38 has 4 elements
    [mesh_smog]        env_particles   at (64, 6),    [6 ☓ 9]     #            |
@@ -90,23 +84,76 @@ bg_tiles,67 has 2 elements
    [mesh_smog]        env_particles   at (74, 19),   [11 ☓ 16]   #            |
    [mesh_smog]        env_particles   at (-1, 2),    [11 ☓ 23]   #            |
 --------------------------------------------------
-fg_tiles,38 has 1 elements
-   [wind]             env_particles   at (2, 6),     [12 ☓ 2]    #            |
---------------------------------------------------
 fg_tiles,121 has 3 elements
    [wind]             env_particles   at (1, 5),     [14 ☓ 2]    #            |
    [gravity_barrier]  AT_reflect      at (-3, 16),   [100 ☓ 7]   #ff9100/0.4  |
    [gravity_barrier]  AT_bilinear     at (-3, 17),   [102 ☓ 5]   #ff7573/1    |
 --------------------------------------------------
-bg_tiles,51 has 1 elements
-   [wind]             AT_reflect      at (97, 16),   [101 ☓ 8]   #            |
---------------------------------------------------
-fg_tiles,111 has 1 elements
-   [gravity_barrier]  AT_bilinear     at (-3, 18),   [103 ☓ 2]   #ffd996/1    |
---------------------------------------------------
-fg_tiles,125 has 1 elements
-   [gravity_barrier]  AT_bilinear     at (-4, 19),   [1056 ☓ 1]  #ffffff/1    |
---------------------------------------------------
 
 --- Finished printing conflicts! ---
 
+--------------------------------------------------
+AT_linear       : bg_tiles,-1 -> bg_tiles,-1.02  
+AT_linear       : bg_tiles,-1 -> bg_tiles,-1.04  
+env_particles   : bg_tiles,-1 -> bg_tiles,-1.06  
+--------------------------------------------------
+AT_linear       : fg_tiles,122 -> fg_tiles,122.02  
+AT_linear       : fg_tiles,122 -> fg_tiles,122.04  
+env_particles   : fg_tiles,122 -> fg_tiles,122.06  
+env_particles   : fg_tiles,122 -> fg_tiles,122.08  
+AT_reflect      : fg_tiles,122 -> fg_tiles,122.12  
+--------------------------------------------------
+AT_linear       : bg_tiles,23 -> bg_tiles,23.02  
+AT_linear       : bg_tiles,23 -> bg_tiles,23.04  
+--------------------------------------------------
+AT_linear       : bg_tiles,36 -> bg_tiles,36.02  
+AT_linear       : bg_tiles,36 -> bg_tiles,36.04  
+--------------------------------------------------
+AT_linear       : bg_tiles,11 -> bg_tiles,11.02  
+AT_linear       : bg_tiles,11 -> bg_tiles,11.04  
+--------------------------------------------------
+AT_radial       : bg_tiles,32 -> bg_tiles,32.02  
+AT_radial       : bg_tiles,32 -> bg_tiles,32.04  
+AT_radial       : bg_tiles,32 -> bg_tiles,32.06  
+AT_radial       : bg_tiles,32 -> bg_tiles,32.08  
+AT_radial       : bg_tiles,32 -> bg_tiles,32.12  
+AT_radial       : bg_tiles,32 -> bg_tiles,32.14  
+AT_reflect      : bg_tiles,32 -> bg_tiles,32.16  
+--------------------------------------------------
+AT_radial       : fg_tiles,34 -> fg_tiles,34.02  
+AT_radial       : fg_tiles,34 -> fg_tiles,34.04  
+AT_radial       : fg_tiles,34 -> fg_tiles,34.06  
+AT_radial       : fg_tiles,34 -> fg_tiles,34.08  
+AT_radial       : fg_tiles,34 -> fg_tiles,34.12  
+AT_radial       : fg_tiles,34 -> fg_tiles,34.14  
+--------------------------------------------------
+AT_radial       : bg_tiles,42 -> bg_tiles,42.02  
+AT_radial       : bg_tiles,42 -> bg_tiles,42.04  
+AT_radial       : bg_tiles,42 -> bg_tiles,42.06  
+AT_radial       : bg_tiles,42 -> bg_tiles,42.08  
+AT_radial       : bg_tiles,42 -> bg_tiles,42.12  
+AT_radial       : bg_tiles,42 -> bg_tiles,42.14  
+AT_ray          : bg_tiles,42 -> bg_tiles,42.16  
+AT_ray          : bg_tiles,42 -> bg_tiles,42.18  
+AT_ray          : bg_tiles,42 -> bg_tiles,42.22  
+AT_ray          : bg_tiles,42 -> bg_tiles,42.24  
+AT_ray          : bg_tiles,42 -> bg_tiles,42.26  
+AT_ray          : bg_tiles,42 -> bg_tiles,42.28  
+AT_ray          : bg_tiles,42 -> bg_tiles,42.32  
+--------------------------------------------------
+env_particles   : bg_tiles,38 -> bg_tiles,38.02  
+env_particles   : bg_tiles,38 -> bg_tiles,38.04  
+env_particles   : bg_tiles,38 -> bg_tiles,38.06  
+env_particles   : bg_tiles,38 -> bg_tiles,38.08  
+--------------------------------------------------
+env_particles   : bg_tiles,67 -> bg_tiles,67.02  
+env_particles   : bg_tiles,67 -> bg_tiles,67.04  
+--------------------------------------------------
+env_particles   : fg_tiles,121 -> fg_tiles,121.02  
+AT_reflect      : fg_tiles,121 -> fg_tiles,121.04  
+AT_bilinear     : fg_tiles,121 -> fg_tiles,121.06  
+--------------------------------------------------
+
+--- Finished fixing conflicts! ---
+
+-- level_playdo.py : flushing changes...

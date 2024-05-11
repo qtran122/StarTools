@@ -162,12 +162,16 @@ _ROTATE_BIT_MAP = {
 
 
 #--------------------------------------------------#
-'''Object Properties'''
+'''Fetch object property'''
 
 def GetNameFromObject( tiled_object ):
     '''Obtain the name of object'''
     return tiled_object.get('name')
     return ''    # TODO check what would happen if the object does not contain a name somehow
+
+def GetName( tiled_object ):
+    return GetNameFromObject(tiled_object)
+
 
 
 def GetPropertyFromObject( tiled_object, property_name ):
@@ -176,6 +180,9 @@ def GetPropertyFromObject( tiled_object, property_name ):
         if curr_property.get('name') == property_name:
             return curr_property.get('value')
     return ''    # returning None would crash when attempted to be converted into string
+
+def GetProperty( tiled_object, property_name ):
+    return GetPropertyFromObject(tiled_object, property_name)
 
 
 
@@ -197,12 +204,44 @@ def GetPolyPointsFromObject( tiled_object ):
 
 
 
+
+
+#--------------------------------------------------#
+'''Set object property'''
+
+def SetProperty(tiled_object, property_name, new_value):
+    '''Change the value for the requested property, add new if not exist'''
+#    '''Helper function. Adds properties to a tiled object'''
+
+    # Get the properties of object, create new one if none exists yet
+    prop_elem = tiled_object.find('properties')
+    if prop_elem is None:
+        prop_elem = ET.SubElement(tiled_object, 'properties')
+
+    # Change property value if it's already present
+    for property in prop_elem.findall('property'):
+        if property.get('name') != property_name: continue
+        property.set('value', new_value)
+        return
+
+    # Add new property if it's originall absent in the tiled_obejct
+    ET.SubElement(prop_elem, 'property', attrib={'name': key, 'value': value})
+
+
+
+
+
+#--------------------------------------------------#
+''''''
+
 # Template, see sort_conflict.py for usage with Indent()
 def PrintObjInfo( curr_obj ):
     '''Default summary for the content of an object'''
     print_str = ""
     print_str += curr_obj.get('name')
     return print_str
+
+
 
 
 

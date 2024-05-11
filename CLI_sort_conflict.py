@@ -47,14 +47,17 @@ def main():
     # Use a playdo to read/process the XML
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
-    # ...
+    # Main Logic
     sortval_to_objects_map = sort_conflict.OrganizeObjectsBySortVal(playdo, _LIST_LIGHTING_OBJ)
     sort_conflict.PrintPotentialConflicts(playdo, sortval_to_objects_map, _LIST_LIGHTING_OBJ)
+    sort_conflict.FixConflicts(playdo, sortval_to_objects_map)
+
+    # TODO delete
 #    pruned_dict = sort_conflict.PruneConflicts(playdo, sortval_to_objects_map)
 #    sort_conflict.FixConflicts(playdo, pruned_dict)
 
     # Flush changes to File!
-#    playdo.Write()
+    playdo.Write()
 
 
 
