@@ -21,8 +21,8 @@ args = parser.parse_args()
 playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
 # Create a PatternMatcher and load in the patterns it'll scan for
-templates = ["good1", "good2", "good3", "good4", "bad1", "bad2",
-    "bad3", "bad4", "clam1", "clam2", "clam3", "clam4"]
+templates = ["good1", "good2", "good3", "good4", "bad1", "bad2", "bad3", "bad4",
+    "clam1", "clam2", "clam3", "clam4", "puzz1", "puzz2", "puzz3", "puzz4"]
 pattern_matcher = PM.PatternMatcher()
 for template_file in templates:
     file_path = file_utils.GetTemplateRoot() + f"{template_file}.xml"
@@ -39,11 +39,13 @@ pattern_matcher.FindAndCreateAll(playdo, "objects_natty_mark_ATs")
 generate_natty_blue_num = lambda: format(random.uniform(0, 2), '.1f')
 generate_natty_red_num = lambda: format(random.uniform(0, 3), '.1f')
 generate_natty_green_num = lambda: format(random.uniform(0, 4.5), '.1f')
+generate_natty_yellow_num = lambda: format(random.uniform(0, 4.5), '.1f')
 
 # Tell playdo to fill in the template using the random number generators
 playdo.RegexReplacePropertyValues("[GEN_NUM_GOOD]", generate_natty_blue_num)
 playdo.RegexReplacePropertyValues("[GEN_NUM_BAD]", generate_natty_red_num)
 playdo.RegexReplacePropertyValues("[GEN_NUM_CLAM]", generate_natty_green_num)
+playdo.RegexReplacePropertyValues("[GEN_NUM_PUZZ]", generate_natty_yellow_num)
 
 # Flush changes to File!
 playdo.Write()
