@@ -18,7 +18,8 @@ class TileRemapper():
         """Create a mapping of old tile IDs to new tile IDs to rebind the tile IDs of one level"""
 
         # Extract XML root and validate pattern has correct format (2 tile layers, no object groups)
-        root = ET.parse(pattern_file_path)
+        xml_tree = ET.parse(pattern_file_path)
+        root = xml_tree.getroot()
         map_width = int(root.get('width'))
         self._ValidateRemapXml(root, pattern_file_path)
         
