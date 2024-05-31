@@ -17,6 +17,7 @@ import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
+import logic.remapper.tile_remapper as TM
 
 #--------------------------------------------------#
 '''Pattern Lists'''
@@ -88,6 +89,11 @@ def main():
     # Use a playdo to read/process the XML
     pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
+
+    # Remap rotated & flipped solid greyblocks to not have any transformation applied
+    tile_remapper = TM.TileRemapper()
+    tile_remapper.LoadRemapXml(file_utils.GetFullRemapPath("remap_greyblocks"), False)
+    tile_remapper.Remap(playdo)
 
     # Create a PatternMatcher for "_BB" : Breakable Blocks and Skell Reefs
     pattern_matcher_bb = PM.PatternMatcher()
