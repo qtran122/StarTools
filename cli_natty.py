@@ -39,7 +39,7 @@ pattern_matcher.FindAndCreateAll(playdo, "objects_natty_mark_ATs")
 generate_natty_blue_num = lambda: format(random.uniform(0, 2), '.1f')
 generate_natty_red_num = lambda: format(random.uniform(0, 3), '.1f')
 generate_natty_green_num = lambda: format(random.uniform(0, 4.5), '.1f')
-generate_natty_yellow_num = lambda: format(random.uniform(0, 4.5), '.1f')
+generate_natty_yellow_num = lambda: format(random.uniform(0, 3.5), '.1f')
 
 # Tell playdo to fill in the template using the random number generators
 playdo.RegexReplacePropertyValues("[GEN_NUM_GOOD]", generate_natty_blue_num)

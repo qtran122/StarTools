@@ -14,10 +14,10 @@ class TileRemapper():
         self.A_to_B_map = {} # maps tile ID to another tile ID
         self.B_to_A_map = {} # maps tile ID to another tile ID (reversed direction)
         
-    def LoadRemapXml(self, pattern_file_path):
+    def LoadRemapXml(self, pattern_file_path, expand_map_bindings=True):
         """Create a mapping of old tile IDs to new tile IDs to rebind the tile IDs of one level"""
 
-        # Extract XML root and validate pattern has correct format (2 tile layers, no object groups)
+        # Extract XML root and validate pattern has correct format (2 tile layers)
         xml_tree = ET.parse(pattern_file_path)
         root = xml_tree.getroot()
         map_width = int(root.get('width'))
@@ -41,8 +41,9 @@ class TileRemapper():
                 self.B_to_A_map[tile_id_B] = tile_id_A
                 
         # Expand the remapping dictionary to include flips & rotations
-        _ExpandMapBindings(self.A_to_B_map)
-        _ExpandMapBindings(self.B_to_A_map)
+        if expand_map_bindings:
+            _ExpandMapBindings(self.A_to_B_map)
+            _ExpandMapBindings(self.B_to_A_map)
     
     
     def LoadMigrationMap(self, new_tiles_xml, tiles_png_path):
@@ -109,7 +110,16 @@ class TileRemapper():
         return unique_unseen_tile_ids
         
         
-    def Remap(self, playdo):
+    def Remap(self, playdo, force_A_to_B=False):
+        '''Remaps a level playdo according to previously loaded data (data that was loaded with 
+           LoadRemapXml or LoadMigrationMap).
+           
+           force_A_to_B: If this is true, we won't do the tiles counting thing to see which
+                direction had more, we go A to B, where B (the tile layer above) is the one
+                we want to map too
+        '''
+        
+    
         all_tile_layers = playdo.level_root.findall('.//layer')
         
         # TileRemapper contains 2 dicts to check which map (A_to_B or B_to_A) is more effective
@@ -150,6 +160,9 @@ class TileRemapper():
                             tiles2d_BA[i][j] = self.B_to_A_map[tiles2d[i][j]]
                             count_remapped_B_to_A += 1
                 
+                if force_A_to_B:
+                    count_remapped_A_to_B = sys.maxint
+                    
                 # Rewrite the original tile layer with the remapped data. We use whichever mapping had more matches
                 if count_remapped_A_to_B == 0 and count_remapped_B_to_A == 0:
                     continue
@@ -164,16 +177,11 @@ class TileRemapper():
     def _ValidateRemapXml(self, pattern_root, pattern_file_name):
         '''Check pattern file to ensure they are properly formatted'''
         
-        # Extracting all layers and objectgroups
+        # Extracting all layers
         layers = pattern_root.findall('.//layer')
         objectgroups = pattern_root.findall('.//objectgroup')
 
-        # 1. Check there are no objectgroups
-        if len(objectgroups) != 0:
-            log.Must(f"Error in '{pattern_file_name}' detected! There should be no object layers!")
-            sys.exit()
-            
-        # 2. Check if there are 2 tilelayers
+        # Check if there are 2 tilelayers
         if len(layers) != 2:
             log.Must(f"Error in '{pattern_file_name}' detected! Number of tile layers must be 2!")
             sys.exit()
