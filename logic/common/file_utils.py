@@ -62,7 +62,7 @@ def GetPatternRoot():
     if (os.path.exists(root_dirs["Q_ROOT"])):
         return root_dirs["Q_ROOT"] + "star_tools/patterns/"
     elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["Q_ROOT"] + "star_tools/patterns/"
+        return root_dirs["T_ROOT"] + "star_tools/patterns/"
     else:
         raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/patterns' folder")
@@ -74,7 +74,7 @@ def GetTemplateRoot():
     if (os.path.exists(root_dirs["Q_ROOT"])):
         return root_dirs["Q_ROOT"] + "star_tools/templates/"
     elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["Q_ROOT"] + "star_tools/templates/"
+        return root_dirs["T_ROOT"] + "star_tools/templates/"
     else:
         raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/templates' folder")
@@ -85,7 +85,7 @@ def GetRemapRoot():
     if (os.path.exists(root_dirs["Q_INPUT"])):
         return root_dirs["Q_ROOT"] + "star_tools/remaps/"
     elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["Q_ROOT"] + "star_tools/remaps/"
+        return root_dirs["T_ROOT"] + "star_tools/remaps/"
     else:
         raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/remaps' folder")
