@@ -208,8 +208,25 @@ def GetTileIdPermutations(tile_id):
         tile_id_list.append(FlipTileId(tile_id))
     return tile_id_list
 
+
+
 #--------------------------------------------------#
-'''Object Properties'''
+'''Fetch object property'''
+
+def GetNameFromObject( tiled_object ):
+    '''Obtain the name of object'''
+    obj_name = tiled_object.get('name')
+    if obj_name == None: return ''    # Return empty string for nameless object to avoid crash
+    return obj_name
+
+
+
+def GetPropertyFromObject( tiled_object, property_name ):
+    '''Extract the property as string, e.g. returns "20" from GetProperty('_sort')'''
+    for curr_property in tiled_object.find('properties').findall('property'):
+        if curr_property.get('name') == property_name:
+            return curr_property.get('value')
+    return ''    # returning None would crash when attempted to be converted into string
 
 
 
@@ -219,6 +236,38 @@ def GetPolyPoints( input_string ):
     point_pair_strings = [point_string.split(',') for point_string in point_strings]
     poly_points = [(float(x), float(y)) for x, y in point_pair_strings]
     return poly_points
+
+# TODO overload function with same name, but accept both string or object?
+def GetPolyPointsFromObject( tiled_object ):
+    '''Accept object as input instead'''
+    polyline_attribute = tiled_object.find('polyline')
+    if polyline_attribute == None : return None
+    points_string = polyline_attribute.get('points')
+    return GetPolyPoints(points_string)
+
+
+
+#--------------------------------------------------#
+'''Set object property'''
+
+def SetPropertyOnObject(tiled_object, property_name, new_value):
+    '''Change the value for the requested property, add new if not exist'''
+#    '''Helper function. Adds properties to a tiled object'''
+
+    # Get the properties of object, create new one if none exists yet
+    prop_elem = tiled_object.find('properties')
+    if prop_elem is None:
+        prop_elem = ET.SubElement(tiled_object, 'properties')
+
+    # Change property value if it's already present
+    for property in prop_elem.findall('property'):
+        if property.get('name') != property_name: continue
+        property.set('value', new_value)
+        return
+
+    # Add new property if it's originally absent in the tiled_obejct
+    ET.SubElement(prop_elem, 'property', attrib={'name': key, 'value': value})
+
 
 
 #--------------------------------------------------#
