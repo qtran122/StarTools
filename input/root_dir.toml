@@ -1,14 +1,14 @@
 # Contains the level root folders for all likely users
 
 Q_ROOT = 'C:/Users/qtran/Desktop/PROJECT Whale Nebula/WhaleNebula/Assets/StreamingAssets/levels/'
+Q_GFX = 'C:/Users/qtran/Desktop/PROJECT Whale Nebula/WhaleNebula/Assets/Graphics/'
 Q_INPUT = 'C:/Users/qtran/Desktop/Github Projects/StarTools/input/'
 Q_OUTPUT = 'C:/Users/qtran/Desktop/Github Projects/StarTools/output/'
 
+
 T_ROOT = '/Users/Jimmy/Documents/10 Star Iliad tasks/00-Tiling/10-workspace/levels/'
+T_GFX = '/Users/Jimmy/Documents/10 Star Iliad tasks/00-Tiling/10-workspace/'
 T_INPUT = '/Users/Jimmy/20-GitHub/StarTools/input/'
 T_OUTPUT = '/Users/Jimmy/20-GitHub/StarTools/output/'
 
 T_ROOT1 = '/Users/Jimmy/Library/Application Support/Steam/steamapps/common/Whale Nebula/Contents/Resources/Data/StreamingAssets/levels/'
-
-Q_GFX = 'C:/Users/qtran/Desktop/PROJECT Whale Nebula/WhaleNebula/Assets/Graphics/'
-T_GFX = 'INSERT'
