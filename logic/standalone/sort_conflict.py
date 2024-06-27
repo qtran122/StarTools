@@ -53,7 +53,12 @@ def OrganizeObjectsBySortVal(playdo, list_scan_obj):
 
 
 def PrintPotentialConflicts(playdo, sortval_to_objects_map, list_scan_obj):
-	'''Print the dictionary that has been checked and sorted by their sort values'''
+	'''Print the dictionary that has been checked and sorted by their sort values
+
+	playdo - The processed level
+	sortval_to_objects_map - Dictonary with all sort_value as keys, and object array as values
+	list_scan_obj - All applicable objects that need to have sort_values checked
+	'''
 
 	# Find the max length in object names and layer names for indentation
 	max_obj_name_len = len( max(list_scan_obj, key=len) )
@@ -71,7 +76,7 @@ def PrintPotentialConflicts(playdo, sortval_to_objects_map, list_scan_obj):
 		log.Extra( '\n--------------------------------------------------' )
 		log.Info( f"{key_sort} has {len(list_obj)} elements" )
 		for obj in list_obj:
-			log.Extra( f'  {PrintObjInfo(obj, GetParentName(obj, parent_map), max_obj_name_len, max_layer_name_len)}' )
+			log.Extra( f'  {MakeInfoString(obj, GetParentObjectgroupName(obj, parent_map), max_obj_name_len, max_layer_name_len)}' )
 	log.Extra('\n--------------------------------------------------')
 	log.Must('\n--- Finished printing conflicts! ---\n')
 
@@ -84,16 +89,37 @@ def PrintPotentialConflicts(playdo, sortval_to_objects_map, list_scan_obj):
 #--------------------------------------------------#
 '''Utility'''
 
-def _GetSort( tiled_object ):
-    return tiled_utils.GetPropertyFromObject(tiled_object, '_sort')
-
-def GetParentName(obj, parent_map):
-	return parent_map[obj].get('name')[8:]
+# Unused for now
+#def _GetSort( tiled_object ):
+#    return tiled_utils.GetPropertyFromObject(tiled_object, '_sort')
 
 
 
-def PrintObjInfo(obj, p_name, max_obj_name_len = 0, max_layer_name_len = 0):
-	'''Prints various properties of an object'''
+def GetParentObjectgroupName(curr_obj, parent_map):
+	'''Find the parent object of the current object, which should be an objectgroup.
+	    Then extract the name property of the parent object.
+	    Finally return the name of objectgroup, after removing the "objects_" prefix
+	    e.g. objects_gravity_barrier -> gravity_barrier
+	'''
+	return parent_map[curr_obj].get('name')[8:]
+
+
+
+def MakeInfoString(obj, parent_layer_name, max_obj_name_len = 0, max_layer_name_len = 0):
+	'''Returns a string that contains various properties of an object.
+	obj - The object with info listed
+	parent_layer_name - Name of the parent object layer (objectgroup)
+	max_obj_name_len - Maximum length of object names in the whole level
+	max_layer_name_len - Maximum length of object layer names in the whole level
+
+	The following info is included:
+	  - Parent object layer name (trimmed)
+	  - Object type
+	  - Coordinates
+	  - Size
+	  - Color and alpha value
+	e.g.   [gravity_barrier]  AT_bilinear     at (-3, 17),   [102 ☓ 5]   #ff7573/1    |
+	'''
 
 	# Extract object-specific data
 	position_str = '   '
@@ -119,7 +145,7 @@ def PrintObjInfo(obj, p_name, max_obj_name_len = 0, max_layer_name_len = 0):
 
 	# Construct printed string
 	print_str = ''
-	print_str += _Indent(' [' + p_name + ']', max_layer_name_len-4)
+	print_str += _Indent(' [' + parent_layer_name + ']', max_layer_name_len-4)
 	print_str += _Indent(' ' + tiled_utils.GetNameFromObject(obj), max_obj_name_len+1)
 	print_str += _Indent(position_str,17)
 	print_str += _Indent(dimension_str,12)
@@ -144,35 +170,6 @@ def _FormatNumS2TU(num_in_str):
 	return str(int( round(float(num_in_str))/16 ))
 
 
-
-
-
-#--------------------------------------------------#
-
-# TODO Delete?
-
-def GetParentNameOld(obj, playdo):
-	parent = GetParent(obj, playdo)
-	if parent == None: return '...'
-	return parent.get('name')[8:]    # Remove beginning, i.e. 'objects_'
-
-
-# TODO relocate to tiled_utils?
-# TODO List comprehension?
-def GetParent(obj, playdo):
-	'''Return the name of the layer that the object is in'''
-	root = playdo.level_root
-
-	# Check all object layers that are in 0~1 layer of folder
-	all_objectgroup = root.findall('objectgroup')
-	for folder in root.findall('group'):
-		all_objectgroup += folder.findall('objectgroup')
-
-	# Check which objectgroup contains the obj
-	for group in all_objectgroup:
-		for child in group:
-			if child == obj: return group
-	return None
 
 
 

@@ -213,6 +213,15 @@ def GetTileIdPermutations(tile_id):
 #--------------------------------------------------#
 '''Fetch object property'''
 
+# Currently unused
+def GetParentObject(obj, playdo):
+    '''Return the parent of any XML tree object, e.g. the objectgroup for a given TILED object'''
+    parent_map = {child: parent for parent in playdo.level_root.iter() for child in parent}
+    parent_obj = parent_map[curr_obj]
+    return parent_obj
+
+
+
 def GetNameFromObject( tiled_object ):
     '''Obtain the name of object'''
     obj_name = tiled_object.get('name')
@@ -230,20 +239,18 @@ def GetPropertyFromObject( tiled_object, property_name ):
 
 
 
-def GetPolyPoints( input_string ):
-    '''Convert string into list of tuples: [ (x1,y1), (x2,y2), ... ]'''
-    point_strings = input_string.split()
-    point_pair_strings = [point_string.split(',') for point_string in point_strings]
-    poly_points = [(float(x), float(y)) for x, y in point_pair_strings]
-    return poly_points
-
-# TODO overload function with same name, but accept both string or object?
 def GetPolyPointsFromObject( tiled_object ):
-    '''Accept object as input instead'''
+    '''Obtain the polypoints from object and return a list of tuples: [ (x1,y1), (x2,y2), ... ]'''
+
+    # Obtain data as string
     polyline_attribute = tiled_object.find('polyline')
     if polyline_attribute == None : return None
     points_string = polyline_attribute.get('points')
-    return GetPolyPoints(points_string)
+
+    # Convert string into list of tuples
+    point_pair_strings = [pair.split(',') for pair in points_string.split()]
+    poly_points = [(float(x), float(y)) for x, y in point_pair_strings]
+    return poly_points
 
 
 
