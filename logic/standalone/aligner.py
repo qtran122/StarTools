@@ -36,10 +36,8 @@ def AlignWater(playdo):
             log.Extra("--------------------------------------------------")
 
         # Obtain vertice data
-        polyline_attribute = water_line_obj.find('polyline')
-        if polyline_attribute == None : continue
-        points_string = polyline_attribute.get('points')
-        line_points = tiled_utils.GetPolyPoints(points_string)
+        line_points = tiled_utils.GetPolyPointsFromObject(water_line_obj)
+        if line_points == None : continue
 
         # Check
         new_vertice_str = MakeNewAlignment(line_points)
