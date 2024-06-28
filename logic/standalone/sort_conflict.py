@@ -18,7 +18,8 @@ import logic.common.tiled_utils as tiled_utils
 #--------------------------------------------------#
 '''Variables'''
 
-# TODO delete the whole section since there is no variable/constants here
+SORT_DIFFERENCE_IN_LAYER = 10000	# An unreasonably large number
+
 
 
 
@@ -49,6 +50,30 @@ def OrganizeObjectsBySortVal(playdo, list_scan_obj):
 
 	log.Must("\n--- Finished checking conflicts! ---\n")
 	return sortval_to_objects_map
+
+
+
+def SortByAscendingOrder( unsorted_map ):
+	'''Return the same map but with sort_value sorted in ascending order'''
+	log.Info("\n--- Sorting map by sort_value in ascending order ---\n")
+
+	# Sort the sort_value of all existing layers by index
+	unsorted_index = []
+	index_map = {}
+	for key_sort, list_obj in unsorted_map.items():
+		sort_tuple = key_sort.split(",")
+		sort_value = int(sort_tuple[1])
+		if sort_tuple[0] == "fg_tiles" : sort_value += SORT_DIFFERENCE_IN_LAYER
+		unsorted_index.append(sort_value)
+		index_map[sort_value] = key_sort
+	sorted_index = [x for x in unsorted_index]
+	sorted_index.sort()
+
+	# Recreate the map, but items are added in the new order (ascending)
+	sorted_map = {}
+	for index in sorted_index:
+		sorted_map[index_map[index]] = unsorted_map[index_map[index]]
+	return sorted_map
 
 
 

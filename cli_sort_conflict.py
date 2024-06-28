@@ -49,6 +49,7 @@ def main():
 
     # Main Logic
     sortval_to_objects_map = sort_conflict.OrganizeObjectsBySortVal(playdo, _LIST_LIGHTING_OBJ)
+    sortval_to_objects_map = sort_conflict.SortByAscendingOrder(sortval_to_objects_map)
     sort_conflict.PrintPotentialConflicts(playdo, sortval_to_objects_map, _LIST_LIGHTING_OBJ)
 #    pruned_dict = sort_conflict.PruneConflicts(playdo, sortval_to_objects_map)
 #    sort_conflict.FixConflicts(playdo, pruned_dict)
