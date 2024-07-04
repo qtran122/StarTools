@@ -1,5 +1,5 @@
 '''
-Whenever builds are swapped and you need  to get a quick stock of which files have changed, run 
+aWhenever builds are swapped and you need  to get a quick stock of which files have changed, run 
 this script! It will diff the XML level and CS script files and inform which ones have changed.
 
 You need only specify the name of the 2 directories by updating the 2 variables below:
@@ -7,7 +7,7 @@ DIR_NAME_1 & DIR_NAME_2
 '''
 
 DIR_NAME_1 = 'WhaleNebula'
-DIR_NAME_2 = 'WhaleNebula(TriedAddingShockwaveFail)'
+DIR_NAME_2 = 'WhaleNebula(CURR)'
 
 
 import os
