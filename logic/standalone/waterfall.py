@@ -12,15 +12,16 @@ import logic.common.tiled_utils as tiled_utils
 #--------------------------------------------------#
 '''Variables'''
 
-FG_PREFIX = "fg"		# Prefix of fg tilelayers
-BG_PREFIX = "bg"		# Prefix of bg tilelayers
-BLOCKOUT_PREFIX = "_FALLS_"	# Prefix of tilelayers with waterfall blockout
-OBJECTGROUP_PREFIX = "objects_waterfall_"
+# Template settings
+OBJECT_SUFFIX_FG = " fg"
+OBJECT_SUFFIX_BG = " bg"
 
+
+# Session settings
 LAYER_SORT_DIFF = 10	# Difference of sort_value between consecutive tilelayers
 LAYER_SORT_ADDON = 1	# Add to sort_value
-
-
+BLOCKOUT_PREFIX = "_FALLS_"	# Prefix of tilelayers with waterfall blockout
+OBJECTGROUP_PREFIX = "objects_waterfall_"
 
 
 
@@ -29,50 +30,75 @@ LAYER_SORT_ADDON = 1	# Add to sort_value
 
 def ScanForWaterFalls(playdo):
 	'''
-	For each applicable tilelayer:
-	 - Check layer name for sort_value used
-	 - Check layer name for template used
-	  e.g. _FALLS_meadow => uses either the "meadow bg" or "meadow fg" template object
-	 - Process the tile2D for waterfall coordinates
-
-	Then return a list of tuples that contain all of the above informations
-	  Each tuple represents a new waterfall object layer to be added
+	Returns a list of tuples, where each tuple contains the data needed to create a waterfall.
+	Each tuple contains the following data: (start_position, end_position, sort_layer, theme)
+	 - start_position - a tuple of x,y coordinates signifying where the waterfall starts
+	 - end_position - a tuple of x,y coordinates signifying where the waterfall ends
+	 - sort_layer - a string specifying the sort layer and order of the waterfall. For example, "bg_tiles,15"
+	 - theme - a string referencing the object template, e.g. "lava" or "meadow", for properties such as color, alpha, and speed
 	'''
 
-	''' =====[Pseudo-code]=====
+	list_all_tilelayer_name = playdo.GetAllTileLayerNames()
+	log.Extra("")
+	log.Info("︽ Scanning for waterfalls ︽")
+	log.Extra("")
 
-	list_waterfall_layer = []
+	list_all_waterfalls = []
+	curr_sort_str = "bg_tiles,"
+	curr_sort_num = LAYER_SORT_ADDON - LAYER_SORT_DIFF
 
-	Get all tilelayer objects
-	Get all tilelayer names
-	for tilelayer in list_all_tilelayer:
-		# Check if current layer is a viable waterfall layer
-		curr_layer_name = tiled_utils.GetNameFromObject ( tilelayer ) 
-		if curr_layer_name doesn't start with BLOCKOUT_PREFIX : continue
+	for tilelayer_name in list_all_tilelayer_name:
+		# Update the current sort string & number
+		if tilelayer_name.startswith("bg"):
+			curr_sort_num += LAYER_SORT_DIFF
+		elif tilelayer_name.startswith("fg"):
+			curr_sort_num += LAYER_SORT_DIFF
+			if curr_sort_str.startswith("bg"):
+				curr_sort_str = "fg_tiles,"
+				curr_sort_num = LAYER_SORT_ADDON
+		full_sort_str = curr_sort_str + str(curr_sort_num)
+#		print(f'{tilelayer_name}\t\t{full_sort_str}')    # Debug, to be deleted
+		if not tilelayer_name.startswith(BLOCKOUT_PREFIX): continue
 
-		# Make the new sort_value string for property
-		sort_value = _CountSortInLayer( curr_layer_name, list_all_layer_names )
 
 		# Determines the template used, partly based on sort_value
-		template_name = substitute( curr_layer_name, BLOCKOUT_PREFIX, "" )
-		if sort_value starts with "fg" : template_name += " fg"
-		else : template_name += " bg"
+		theme = tilelayer_name.replace( BLOCKOUT_PREFIX, "" )
+		if curr_sort_str.startswith("bg"): theme += OBJECT_SUFFIX_BG
+		else : theme += OBJECT_SUFFIX_FG
+		log.Info(f'  Creating \"{theme}\" waterfalls at \"{full_sort_str}\"')
 
-		# Process the tile2D and find the coordinates
-		list_coordinates = _MakeListOfWaterfallCoordinates( get tile2D() )
 
-		# Group all the info into a tuple, then append to the list
-		list_waterfall_layer.append( (curr_layer_name, template_name, sort_value, list_coordinates) )
+		# Process the tile2D to find the coordinates, then add to the full list
+		list_curr_waterfalls = _MakeListOfWaterfallCoordinates( playdo.GetTiles2d(tilelayer_name, True) )
+		for waterfall in list_curr_waterfalls:
+			list_all_waterfalls.append( (
+				waterfall[0],
+				waterfall[1],
+				full_sort_str,
+				theme
+			) )
 
-	return list_waterfall_layer
-	'''
+	# Debug, to be deleted
+	log.Extra("\n  Printing waterfalls")
+	for waterfall in list_all_waterfalls:
+		for tuple_value in waterfall: log.Extra("    " + str(tuple_value))
+		log.Extra("")
+ 
+	log.Info(f'︾ Total of {len(list_all_waterfalls)} waterfalls scanned ︾')
+	log.Extra("")
+	return list_all_waterfalls
 
-	return []
+
 
 
 
 def CreateWaterfalls(waterfall_template, playdo, list_waterfall_layer):
-	'''Read and convert each tuple in the list into a waterfalls object layer'''
+	'''
+	Generate new object layer(s) that contains the new waterfall objects after process the following:
+	 - XML containing the pre-made waterfall templates
+	 - XML of the current level to have new waterfalls created for
+	 - list of tuples from ScanForWaterFalls(); Each tuple contains coordinates, sort values, and template name
+	'''
 
 	''' =====[Pseudo-code]=====
 
@@ -109,40 +135,16 @@ def CreateWaterfalls(waterfall_template, playdo, list_waterfall_layer):
 #--------------------------------------------------#
 '''Utility Functions'''
 
-def _CountSortInLayer( curr_layer_name, list_all_layer_names ):
-	'''Return the sort_value if an object is to insert between layers
-	e.g. Input - "arg" & ["bg_0", "bg_1", "arg", "bg_2", "fg_1"]
-	     Output - "bg_tiles,15"
-	'''
-
-	''' =====[Pseudo-code]=====
-
-	new_index = find index of curr_layer_name in list_all_layer_names
-
-	sort_value = ""
-	sort_num = new_index
-	if list_all_layer_names[new_index-1] contains "fg":
-		sort_value = "fg_tiles_"
-		for( int i = 0; i < num_layer; ++i )
-			if layer is bg : sort_num -= 1
-			else break
-	else:
-		sort_value = "bg_tiles_"
-
-	sort_value += sort_num * LAYER_SORT_DIFF + LAYER_SORT_ADDON
-	return sort_value
-	'''
-
-	return ""
-
-
-
 def _MakeListOfWaterfallCoordinates(tile2D):
 	'''Process the tile2D, then find the coordinates and width of each waterfall'''
 
-	# TODO
+	list_waterfalls = []
 
-	return []
+	# TODO
+	list_waterfalls.append( ((1,2),(3,4)) )
+	list_waterfalls.append( ((5,6),(7,8)) )
+
+	return list_waterfalls
 
 
 
@@ -150,7 +152,7 @@ def _MakeListOfWaterfallCoordinates(tile2D):
 
 
 def _MakePolypoints( coordinates ):
-	'''Converts [ (x1,y1), (x2,y2) ] into a polypoint string
+	'''Converts coorinate (tuple of int tuples) into polypoint (string)
 	 e.g. [ (64,32), (0, 128) ] => "0,0 -64,96"
 	'''
 
@@ -164,7 +166,7 @@ def _MakePolypoints( coordinates ):
 
 # TODO relocate to tiled_utils?
 def _CopyXMLObject(obj):
-	'''Deep-copy an XML objects'''
+	'''Deep-copy an XML objects, mostly for making new objects from a duplicated template'''
 
 	# TODO
 
