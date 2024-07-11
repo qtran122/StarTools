@@ -3,7 +3,9 @@
   Verbosity = 1
 --------------------------------------------------
 
-︽ Scanning for waterfalls ︽
-  Creating "meadow bg" waterfalls at "bg_tiles,1"
-  Creating "meadow fg" waterfalls at "fg_tiles,11"
-︾ Total of 4 waterfalls scanned ︾
+Scanning for waterfalls...
+  Theme: "meadow bg", at "bg_tiles,5"
+  Total of 6 waterfalls found
+  Theme: "meadow fg", at "fg_tiles,15"
+  Total of 1 waterfalls found
+Total of 7 waterfalls found in all layers

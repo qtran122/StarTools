@@ -60,7 +60,8 @@ class LevelPlayDo():
                 
         log.Extra(f'-- level_playdo.py : number tile layers found : {len(tile_layer_names)}')
         return tile_layer_names
-        
+
+
 
     def GetTiles2d(self, tile_layer_name, ignore_dupe_warnings = False):
         '''Retrieves Tiles2d by name (2D array of Tile Ids).
@@ -94,7 +95,25 @@ class LevelPlayDo():
                 "which did not exist!")
         
         return tiles2d
-        
+
+
+
+    def GetAllTiles2d(self):
+        '''Fetches all graphic tile layers and returns them as a list of Tiles2d'''
+        list_tiles2d = []
+        # Search using an XPath query so that tile_layers tucked within folders will not be missed
+        for layer in self.level_root.findall(".//layer"):
+            data = layer.find('data').text.strip()
+            tile_2d_map = tiled_utils.DecodeIntoTiles2d(data, self.map_width)
+            if tile_2d_map is None: continue
+            list_tiles2d.append(tile_2d_map)
+                
+        log.Extra(f'-- level_playdo.py : number tile layers found : {len(list_tiles2d)}')
+        return list_tiles2d
+
+
+
+
 
     def SetTiles2d(self, tile_layer_name, new_tiles2d):
         '''Overwrites a LEVEL XML's tile layer with new data - usually after edits have been made

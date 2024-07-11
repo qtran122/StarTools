@@ -4,33 +4,22 @@
 --------------------------------------------------
 
 -- level_playdo.py : initialized _waterfall_example.xml ...
--- level_playdo.py : number tile layers found : 15
+-- level_playdo.py : number tile layers found : 14
+-- level_playdo.py : number tile layers found : 14
 
-︽ Scanning for waterfalls ︽
+Scanning for waterfalls...
 
-  Creating "meadow bg" waterfalls at "bg_tiles,1"
-  Creating "meadow fg" waterfalls at "fg_tiles,11"
+  Theme: "meadow bg", at "bg_tiles,5"
+    At (53.5, 15), len = 18, width = 1
+    At (34.375, 29), len = 4, width = 0.75
+    At (11.25, 44), len = 7, width = 0.5
+    At (10.125, 45), len = 4, width = 0.25
+    At (25.75, 45), len = 5, width = 0.5
+    At (20.375, 47), len = 5, width = 0.75
+  Total of 6 waterfalls found
 
-  Printing waterfalls
-    (1, 2)
-    (3, 4)
-    bg_tiles,1
-    meadow bg
-
-    (5, 6)
-    (7, 8)
-    bg_tiles,1
-    meadow bg
-
-    (1, 2)
-    (3, 4)
-    fg_tiles,11
-    meadow fg
-
-    (5, 6)
-    (7, 8)
-    fg_tiles,11
-    meadow fg
-
-︾ Total of 4 waterfalls scanned ︾
+  Theme: "meadow fg", at "fg_tiles,15"
+    At (53.5, 15), len = 18, width = 1
+  Total of 1 waterfalls found
+Total of 7 waterfalls found in all layers
 

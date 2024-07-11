@@ -13,7 +13,7 @@ import logic.common.tiled_utils as tiled_utils
 '''Variables'''
 
 # For logging
-CHAR_TRUE  = "  o "
+CHAR_TRUE  = "  O "
 CHAR_FALSE = "  X "
 
 
@@ -45,7 +45,8 @@ def AlignWater(playdo):
         count_need_alignment += 1
 
         # Apply changes
-        polyline_attribute.set('points', new_vertice_str)
+        polyline_attribute = water_line_obj.find('polyline')
+        water_line_obj.find('polyline').set('points', new_vertice_str)
 
     # End messages
     log.Info("--------------------------------------------------")
