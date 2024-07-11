@@ -45,6 +45,7 @@ def AlignWater(playdo):
         count_need_alignment += 1
 
         # Apply changes
+        polyline_attribute = water_line_obj.find('polyline')
         polyline_attribute.set('points', new_vertice_str)
 
     # End messages
