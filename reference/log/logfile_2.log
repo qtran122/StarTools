@@ -1,0 +1,25 @@
+
+--------------------------------------------------
+  Verbosity = 2
+--------------------------------------------------
+
+-- level_playdo.py : initialized _waterfall_example.xml ...
+-- level_playdo.py : number tile layers found : 14
+-- level_playdo.py : number tile layers found : 14
+
+Scanning for waterfalls...
+
+  Theme: "meadow bg", at "bg_tiles,5"
+    At (53.5, 15), len = 18, width = 1
+    At (34.375, 29), len = 4, width = 0.75
+    At (11.25, 44), len = 7, width = 0.5
+    At (10.125, 45), len = 4, width = 0.25
+    At (25.75, 45), len = 5, width = 0.5
+    At (20.375, 47), len = 5, width = 0.75
+  Total of 6 waterfalls found
+
+  Theme: "meadow fg", at "fg_tiles,15"
+    At (53.5, 15), len = 18, width = 1
+  Total of 1 waterfalls found
+Total of 7 waterfalls found in all layers
+

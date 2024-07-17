@@ -13,7 +13,7 @@ import logic.common.tiled_utils as tiled_utils
 '''Variables'''
 
 # For logging
-CHAR_TRUE  = "  o "
+CHAR_TRUE  = "  O "
 CHAR_FALSE = "  X "
 
 
