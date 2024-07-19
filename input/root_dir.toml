@@ -12,7 +12,7 @@ T_INPUT = '/Users/Jimmy/20-GitHub/StarTools/input/'
 T_OUTPUT = '/Users/Jimmy/20-GitHub/StarTools/output/'
 
 T_ROOT1 = '/Users/Jimmy/Library/Application Support/Steam/steamapps/common/Whale Nebula/Contents/Resources/Data/StreamingAssets/levels/'
-Andy_ROOT = '/Users/nguye/Desktop/levels'
+Andy_ROOT = '/Users/nguye/Desktop/levels/'
 Andy_GFX = '/Users/nguye/Documents/10 Star Iliad tasks/00-Tiling/10-workspace/'
 Andy_INPUT = '/Users/nguye/20-GitHub/StarTools/input/'
 Andy_OUTPUT = '/Users/nguye/20-GitHub/StarTools/output/'

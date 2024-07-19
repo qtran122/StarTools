@@ -98,11 +98,9 @@ def GetRemapRoot():
         return root_dirs["Q_ROOT"] + "star_tools/remaps/"
     elif (os.path.exists(root_dirs["T_INPUT"])):
         return root_dirs["T_ROOT"] + "star_tools/remaps/"
-    elif (os.path.exists(root_dirs["Andy_INPUT"])):
-        return root_dirs["Andy_ROOT"] + "star_tools/remaps/"
     else:
-        raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
-            "Level directory needs to have a '/star_tools/remaps' folder")
+       return root_dirs["Andy_ROOT"] + "star_tools/remaps/"
+
             
 def GeGfxRoot():
     root_dirs = toml.load("input/root_dir.toml")
