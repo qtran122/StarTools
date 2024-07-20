@@ -6,6 +6,7 @@ USAGE EXAMPLE:
 
 '''
 
+import copy
 import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
 
@@ -21,12 +22,12 @@ LIST_WATERFALL_TILE_ID = [2560, 2561, 2562, 2563]
 LAYER_SORT_DIFF = 10	# Difference of sort_value between consecutive tilelayers
 LAYER_SORT_ADDON = 5	# Difference of sort_value between waterfalls and tilelayers
 BLOCKOUT_PREFIX = "_FALLS_"	# Prefix of tilelayers with waterfall blockout
-OBJECTGROUP_PREFIX = "objects_waterfall_"
+NEW_OBJECT_LAYER_NAME = "objects_waterfall_auto"
 
 
 
 # DEBUG, to be deleted when done
-PRINT_SCAN_OUTPUT = not True	# Switch between True or False here, this toggles the printing of return value
+PRINT_SCAN_OUTPUT = not True	# Toggle between True or False to print return values
 
 
 
@@ -54,7 +55,6 @@ def ScanForWaterFalls(playdo):
 	curr_sort_str = "bg_tiles,"
 	curr_sort_num = LAYER_SORT_ADDON - LAYER_SORT_DIFF
 
-#	for tilelayer_name in list_all_tilelayer_name:	# Doesn't work when 2 layers have same name, to be deleted
 	for i in range( len(list_all_tilelayer_name) ):
 		tilelayer_name = list_all_tilelayer_name[i]
 
@@ -101,49 +101,60 @@ def ScanForWaterFalls(playdo):
 
 
 	log.Info(f'Total of {len(list_all_waterfalls)} waterfalls found in all layers')
-	log.Extra("")
 	return list_all_waterfalls
 
 
 
 
 
-def CreateWaterfalls(waterfall_template, playdo, list_waterfall_layer):
+def CreateWaterfalls(playdo_template, playdo, list_all_waterfalls):
 	'''
-	Generate new object layer(s) that contains the new waterfall objects after process the following:
+	Generate new object layer that contains the new waterfall objects after process the following:
 	 - XML containing the pre-made waterfall templates
-	 - XML of the current level to have new waterfalls created for
-	 - list of tuples from ScanForWaterFalls(); Each tuple contains coordinates, sort values, and template name
+	 - XML of the current level, where new waterfalls are created at
+	 - list of tuples from ScanForWaterFalls()
 	'''
+	log.Extra("")
+	log.Info("Creating waterfall obejcts...")
 
-	''' =====[Pseudo-code]=====
-
-	get all objects from waterfall_template
+	# Use the name of each objectgroup as key, and the first object as value
+	log.Info("  Registering waterfall templates...")
 	dictionary_waterfall = {}
-	  make a dictionary, key is object layer name & value is object itself
+	for objectgroup in playdo_template.GetAllObjectgroup(False):
+		layer_name = tiled_utils.GetNameFromObject(objectgroup)
+		dictionary_waterfall[layer_name] = objectgroup[0]
+		log.Extra(f'    - {layer_name} - {dictionary_waterfall[layer_name]}')
 
-	for waterfall_layer in list_waterfall_layer:
+	# Create waterfalls in a new object layer
+	log.Info("  Creating new waterfall objects...")
+	new_objectgroup = playdo.GetObjectGroup(NEW_OBJECT_LAYER_NAME)
+	count_new = 0
+	for waterfall in list_all_waterfalls:
+		# Unpack info in each tuple
+		start_pos = waterfall[0]
+		end_pos = waterfall[1]
+		thickness = waterfall[2]
+		sort_str = waterfall[3]
+		theme = waterfall[4]
 
-		# Unpack info in each waterfall_layer
-		object_layer_name = OBJECTGROUP_PREFIX + waterfall_layer[0]
-		template_object = dictionary_waterfall[ waterfall_layer[1] ]
-		new_sort_value = waterfall_layer[2]
-		list_coordinates = waterfall_layer[3]
+		# Modify from template
+		new_obj = copy.deepcopy( dictionary_waterfall[theme] )
+		# TODO add failsafe if a template cannot be found
 
-		# Creating the new object layer
-		new_object_layer = make_layer(object_layer_name)
-		for coordinates in curr_waterfall_layer:
-			new_polypoint = _MakePolypoints( coordinates )
+		# Modify from template
+		new_obj.set( "x", str(start_pos[0]*16) )
+		new_obj.set( "y", str(start_pos[1]*16) )
+		tiled_utils.SetPolyPointsOnObject( new_obj, "0,0 " + end_pos )
+		tiled_utils.SetPropertyOnObject( new_obj, "thickness", str(thickness) )
+		tiled_utils.SetPropertyOnObject( new_obj, "_sort", sort_str )
+#		print( tiled_utils.GetPolyPointsFromObject(new_obj) )
 
-			new_object = _CopyXMLObject( template_object )
-			new_object.set( "x", coordinates[0] )
-			new_object.set( "y", coordinates[2] )
-			new_object.SetProperty( "thickness", ??? )
-			new_object.SetPolypoint( new_polypoint )
+		# Add to level
+		new_objectgroup.append( new_obj )
+		log.Extra(f'    - {theme} at ({start_pos[0]}, {start_pos[1]})')
+		count_new += 1
 
-			new_object_layer.add_object( new_object )
-	'''
-
+	log.Info(f'Total of {count_new} waterfalls created')
 
 
 
@@ -183,16 +194,18 @@ def _MakeListOfWaterfallCoordinates(tiles2d):
 			# Set waterfall values
 			start_y = i
 			start_x = j + _GetWaterfallOffsetX(curr_id, curr_or)
-			length = waterfall_len
+#			length = waterfall_len
+			length_str = "0," + str(waterfall_len*16)	# TODO horizontal waterfall
 			thickness = _GetWaterfallThickness(curr_id)
-			log.Extra(f'    At ({start_x}, {start_y}), len = {length}, width = {thickness}')
+			log.Extra(f'    At ({start_x}, {start_y}), len = {length_str}, width = {thickness}')
 
 			# Check if this waterfall can merge into any existing one
 			#   this allows waterfall with thickness greater than 1
 			# TODO 
 
 			# Append new waterfall to list
-			list_waterfalls.append( ((start_x, start_y), length, thickness) )
+#			list_waterfalls.append( ((start_x, start_y), length, thickness) )
+			list_waterfalls.append( ((start_x, start_y), length_str, thickness) )
 
 	log.Info( f'  Total of {len(list_waterfalls)} waterfalls found' )
 	return list_waterfalls

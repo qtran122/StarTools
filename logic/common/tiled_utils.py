@@ -277,6 +277,17 @@ def SetPropertyOnObject(tiled_object, property_name, new_value):
 
 
 
+def SetPolyPointsOnObject( tiled_object, new_value ):
+    '''Set a new polypoint value for object, create new one if none exists yet'''
+    polyline_tag = tiled_object.find('polyline')
+    if tiled_object.find('polyline') is None:
+        polyline_tag = ET.SubElement(tiled_object, 'polyline')
+    polyline_tag.set('points', new_value)
+
+
+
+
+
 #--------------------------------------------------#
 
 
