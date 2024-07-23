@@ -20,7 +20,8 @@ import logic.pattern.pattern_matcher as PM
 import logic.remapper.tile_remapper as TM
 
 #--------------------------------------------------#
-'''Pattern Lists'''
+# Pattern Lists
+
 
 # Breakable Blocks and Skell Reefs
 _LIST_PATTERN_BB = [
@@ -72,17 +73,17 @@ _LIST_ASTEROIDS = [
 #--------------------------------------------------#
 '''Main'''
 
-arg_description = 'Process a tiled level XML and add BB + reef objects to a "_BB" layer.'
-arg_help1 = 'Name of the tiled level XML to add BB & reef objects to'
-arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
+ARG_DESCRIPTION = 'Process a tiled level XML and add BB + reef objects to a "_BB" layer.'
+ARG_HELP1 = 'Name of the tiled level XML to add BB & reef objects to'
+ARG_HELP2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
 
 
 
 def main():
-    # Use argparse to get the filename & other optional arguments from the command line
-    parser = argparse.ArgumentParser(description = arg_description)
-    parser.add_argument('filename', type=str, help = arg_help1)
-    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+    ''' Use argparse to get the filename & other optional arguments from the command line'''
+    parser = argparse.ArgumentParser(description = ARG_DESCRIPTION )
+    parser.add_argument('filename', type=str, help = ARG_HELP1)
+    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = ARG_HELP2)
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
@@ -104,7 +105,7 @@ def main():
     pattern_matcher_ground = PM.PatternMatcher()
     for pattern in _LIST_PATTERN_GROUND:
         pattern_matcher_ground.LoadPattern(pattern_root + pattern + ".xml")
-    
+
     # Create a PatternMatcher for "fg_crystal" : Crystals
     pattern_matcher_crystal = PM.PatternMatcher()
     for pattern in _LIST_CRYSTAL:
@@ -114,13 +115,15 @@ def main():
     pattern_matcher_asteroid = PM.PatternMatcher()
     for pattern in _LIST_ASTEROIDS:
         pattern_matcher_asteroid.LoadPattern(pattern_root + pattern + ".xml")
-    
+
     # Perform the matching - mold the playdo
     pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_overlap = False)
     pattern_matcher_ground.FindAndCreate(playdo, "fg_raw", "collisions", allow_overlap = False)
-    pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_overlap = False)
-    pattern_matcher_asteroid.FindAndCreate(playdo, "_asteroids", "objects_asteroids", allow_overlap = False)
-    
+    pattern_matcher_crystal.FindAndCreate(
+        playdo, "fg_crystal", "collisions_crystal", allow_overlap = False)
+    pattern_matcher_asteroid.FindAndCreate(
+        playdo, "_asteroids", "objects_asteroids", allow_overlap = False)
+
     # Flush changes to File!
     playdo.Write()
 

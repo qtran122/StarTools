@@ -31,19 +31,21 @@ class LevelPlayDo():
         self.full_file_name = file_name
         self.my_xml_tree = ET.parse(self.full_file_name)
         self.level_root = self.my_xml_tree.getroot()
-        
+
         # Extract map dimensions and tile size from the level
         self.map_width = int(self.level_root.get('width'))
         self.map_height = int(self.level_root.get('height'))
         self.tile_width = int(self.level_root.get('tilewidth'))
         self.tile_height = int(self.level_root.get('tileheight'))
-        
-        # Map for tile_layer_name to a tiles2d (A 2d array of tile IDs). This is created & cached w/ GetTiles2d()
+
+        # Map for tile_layer_name to a tiles2d (A 2d array of tile IDs).
+        # This is created & cached w/ GetTiles2d()
         self._tiles2d_map = {}
-        
-        # Map for tile_layer_name to a Hashset (for quick checking tile matches). This is created & cached w/  GetTiles2d()
+
+        # Map for tile_layer_name to a Hashset (for quick checking tile matches).
+        # This is created & cached w/  GetTiles2d()
         self._tiles2d_hash = {}
-        
+
         log.Extra(f"-- level_playdo.py : initialized {file_name} ...")
 
 
@@ -57,10 +59,10 @@ class LevelPlayDo():
                 tile_layer_names.append('unnamed_tile_layer')
             else:
                 tile_layer_names.append(tile_layer_name)
-                
+
         log.Extra(f'-- level_playdo.py : number tile layers found : {len(tile_layer_names)}')
         return tile_layer_names
-        
+
 
     def GetTiles2d(self, tile_layer_name, ignore_dupe_warnings = False):
         '''Retrieves Tiles2d by name (2D array of Tile Ids).
@@ -76,25 +78,27 @@ class LevelPlayDo():
         '''
         if tile_layer_name in self._tiles2d_map:
             return self._tiles2d_map[tile_layer_name]
-        
+
         tiles2d = None
         for layer in self.level_root.findall('.//layer'):
             if layer.get('name') == tile_layer_name:
                 self._ProcessLayer(layer, tile_layer_name)
                 if tiles2d is None:
                     tiles2d = self._tiles2d_map[tile_layer_name]
-                    if ignore_dupe_warnings: return tiles2d
+                    if ignore_dupe_warnings:
+                        return tiles2d
                 else:
-                    log.Extra(f"level_playdo.py : GetTiles2d was called for a layer '{tile_layer_name}'" + 
+                    log.Extra
+                    (f"level_playdo.py : GetTiles2d was called for a layer '{tile_layer_name}'" +
                         ", but multiple tile layers with that name exists!")
-                
-        
+
+
         if tiles2d is None:
-            log.Extra(f"level_playdo.py : GetTiles2d was called for a layer '{tile_layer_name}' " + 
+            log.Extra(f"level_playdo.py : GetTiles2d was called for a layer '{tile_layer_name}' " +
                 "which did not exist!")
-        
+
         return tiles2d
-        
+
 
     def SetTiles2d(self, tile_layer_name, new_tiles2d):
         '''Overwrites a LEVEL XML's tile layer with new data - usually after edits have been made
@@ -108,7 +112,7 @@ class LevelPlayDo():
                 tile_layer_to_rewrite = layer
                 break
         if tile_layer_to_rewrite is None:
-            raise Exception(f"level_playdo.py : SetTiles2d was called for '{tile_layer_name}'," 
+            raise Exception(f"level_playdo.py : SetTiles2d was called for '{tile_layer_name}',"
                 + f" but '{tile_layer_name}' does not exist!")
 
         tile_layer_to_rewrite.find('data').text = tiled_utils.EncodeIntoZlibString64(new_tiles2d)
@@ -117,7 +121,8 @@ class LevelPlayDo():
     def GetTilesHashSet(self, tile_layer_name):
         #log.Info(f"-- level_playdo.py : GetTilemapAsHashSet {tile_layer_name}")
         if tile_layer_name not in self._tiles2d_hash:
-            raise Exception(f"level_playdo.py : tile_layer hashset '{tile_layer_name}' was requested," + 
+          raise Exception (
+              f"level_playdo.py : tile_layer hashset '{tile_layer_name}' was requested," +
             " but does not exist! Call GetTiles2d() first - that will force its creation.")
         return self._tiles2d_hash[tile_layer_name]
 
@@ -131,32 +136,35 @@ class LevelPlayDo():
             
             If "discard_old" is specified, the object_group (if found) will be emptied
         '''
-        
+
         # Check if object group already exists in the level. If so, return that one for editing
-        
+
         for object_group in self.level_root.findall('objectgroup'):
             if object_group_name is None or object_group.get('name') == object_group_name:
-                if (discard_old):
+                if discard_old:
                     for object in object_group.findall('object'):
                         object_group.remove(object)
                 return object_group
-        
-        # If the object group does NOT exists in the level, create a new one and return it for editing
-        new_object_group = ET.SubElement(self.level_root, 'objectgroup', {'name': object_group_name})
+
+        # If the object group does NOT exists in the level,
+        # create a new one and return it for editing
+        new_object_group = ET.SubElement(
+            self.level_root, 'objectgroup', {'name': object_group_name})
         return new_object_group
 
 
 
-    def DuplicateObjectGroup(self, object_group_to_copy, new_object_group_name, attrib_properties = None):
+    def DuplicateObjectGroup(self, object_group_to_copy,
+                             new_object_group_name, attrib_properties = None):
         '''Given an object group, create a copy of it into our own level root structures'''
 
         new_object_group = copy.deepcopy(object_group_to_copy)
         new_object_group.set('name', new_object_group_name)
-        
+
         if attrib_properties is not None:
             for obj in new_object_group.findall('object'):
                 _AddPropertiesToObject(obj, attrib_properties)
-        
+
         self.level_root.append(new_object_group)
 
 
@@ -191,8 +199,11 @@ class LevelPlayDo():
 
 
     def RegexReplacePropertyValues(self, target_text, generate_replacement_fn):
-        '''Searches through all objects (in all object layers) and looks for object property "values" that contain text
-           matching target_text. If found, it will replace target_text with the value generated by generate_replacement_fn.
+        '''Searches through all objects (in all object layers)
+           and looks for object property "values" that contain text
+           matching target_text. 
+           If found, it will replace target_text 
+           with the value generated by generate_replacement_fn.
            See example usage of this function in cli_natty.py
         '''
         for elem in self.level_root.iter('property'):
@@ -233,25 +244,26 @@ class LevelPlayDo():
             if tile_layer_name is None:
                 tile_layer_name = 'unnamed_tile_layer'
             self._ProcessLayer(tile_layer, tile_layer_name)
-        
+
         return self._tiles2d_map, self._tiles2d_hash
-    
-    
-    
+
+
+
     def _ProcessLayer(self, layer, tile_layer_name):
-        '''Process a tile layer element tree object, and fill our internal data structures for future ops'''
-        
+        '''Process a tile layer element tree object, 
+        and fill our internal data structures for future ops'''
+
         # Create and store the Tile2d map
         data = layer.find('data').text.strip()
         tile_2d_map = tiled_utils.DecodeIntoTiles2d(data, self.map_width)
         self._tiles2d_map[tile_layer_name] = tile_2d_map
-        
+
         # Also maintain hash of the Tile Ids to facililate quicker lookups in the future
         self._tiles2d_hash[tile_layer_name] = set()
         for tile_row in tile_2d_map:
             self._tiles2d_hash[tile_layer_name].update(tile_row)
 #--------------------------------------------------#
-'''...'''        
+'''...'''
 
 def _AddPropertiesToObject(tiled_object, properties):
     '''Helper function. Adds properties to a tiled object
@@ -259,7 +271,7 @@ def _AddPropertiesToObject(tiled_object, properties):
     prop_elem = tiled_object.find('properties')
     if prop_elem is None:
         prop_elem = ET.SubElement(tiled_object, 'properties')
-    
+
     # Iterate through each key-value pair in the properties dictionary
     for key, value in properties.items():
         # Check if this property already exists
@@ -268,7 +280,7 @@ def _AddPropertiesToObject(tiled_object, properties):
             if prop.get('name') == key:
                 existing_prop = prop
                 break
-        
+
         # Update the existing property, or create a new one if it doesn't exist
         if existing_prop is not None:
             existing_prop.set('value', value)
