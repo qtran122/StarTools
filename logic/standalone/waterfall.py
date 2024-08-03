@@ -43,7 +43,8 @@ def ScanForWaterFalls(playdo):
 	 - start_position - a tuple of x,y coordinates signifying where the waterfall starts
 	 - end_position - a tuple of x,y coordinates signifying where the waterfall ends
 	 - sort_layer - a string specifying the sort layer and order of the waterfall. For example, "bg_tiles,15"
-	 - theme - a string referencing the object template, e.g. "lava" or "meadow", for properties such as color, alpha, and speed
+	 - theme - a string referencing the object template, e.g. "lava" or "meadow",
+	     properties (e.g. color, alpha, speed) are copied from object template
 	'''
 
 	list_all_tilelayer_name = playdo.GetAllTileLayerNames()
@@ -117,13 +118,34 @@ def CreateWaterfalls(playdo_template, playdo, list_all_waterfalls):
 	log.Extra("")
 	log.Info("Creating waterfall obejcts...")
 
+
 	# Use the name of each objectgroup as key, and the first object as value
 	log.Info("  Registering waterfall templates...")
 	dictionary_waterfall = {}
+	dictionary_particles = {}
 	for objectgroup in playdo_template.GetAllObjectgroup(False):
+		# Check if the water_line object exists
+		water_line_obj = None
+		for object in objectgroup:
+			if tiled_utils.GetNameFromObject(object) == 'water_line':
+				water_line_obj = object
+				break
+		if water_line_obj == None: continue
+#		else: continue	# DEBUG, enable this line to simulate when no template is found
 		layer_name = tiled_utils.GetNameFromObject(objectgroup)
-		dictionary_waterfall[layer_name] = objectgroup[0]
+		dictionary_waterfall[layer_name] = water_line_obj
+
+		# Check if associated env_particles object exists
+		particles_obj = None
+		for object in objectgroup:
+			if tiled_utils.GetNameFromObject(object) == 'env_particles':
+				particles_obj = object
+				break
+		if particles_obj != None:
+			dictionary_particles[layer_name] = particles_obj
+
 		log.Extra(f'    - {layer_name} - {dictionary_waterfall[layer_name]}')
+
 
 	# Create waterfalls in a new object layer
 	log.Info("  Creating new waterfall objects...")
@@ -132,25 +154,41 @@ def CreateWaterfalls(playdo_template, playdo, list_all_waterfalls):
 	for waterfall in list_all_waterfalls:
 		# Unpack info in each tuple
 		start_pos = waterfall[0]
-		end_pos = waterfall[1]
+		end_pos = "0," + str(waterfall[1]*16)
+#		end_pos = (start_pos[0], start_pos[1] + waterfall[1]) # DEBUG
+#		end_pos_str = _MakePolypoints( start_pos, end_pos ) # DEBUG
+#		if True: continue # DEBUG
+
 		thickness = waterfall[2]
 		sort_str = waterfall[3]
 		theme = waterfall[4]
+		if not theme in dictionary_waterfall:
+			log.Must(f'WATERFALL TEMPLATE NOT FOUND - \'{theme}\'')
+			continue
 
-		# Modify from template
+		# Modify water_line from template
 		new_obj = copy.deepcopy( dictionary_waterfall[theme] )
-		# TODO add failsafe if a template cannot be found
-
-		# Modify from template
 		new_obj.set( "x", str(start_pos[0]*16) )
 		new_obj.set( "y", str(start_pos[1]*16) )
-		tiled_utils.SetPolyPointsOnObject( new_obj, "0,0 " + end_pos )
+#		tiled_utils.SetPolyPointsOnObject( new_obj, "0,0 " + end_pos ) # TBD, this causes reversed waterfall flow
+		tiled_utils.SetPolyPointsOnObject( new_obj, end_pos + " 0,0" )
 		tiled_utils.SetPropertyOnObject( new_obj, "thickness", str(thickness) )
 		tiled_utils.SetPropertyOnObject( new_obj, "_sort", sort_str )
-#		print( tiled_utils.GetPolyPointsFromObject(new_obj) )
+#		print( tiled_utils.GetPolyPointsFromObject(new_obj) ) # DEBUG
+
+		# Add env_particles if exists
+		particle_obj = None
+		if theme in dictionary_particles:
+			particle_obj = copy.deepcopy( dictionary_particles[theme] )
+			end_pos_x = start_pos[0] - float(particle_obj.get('width'))/2 / 16
+			end_pos_y = start_pos[1] + waterfall[1]
+			particle_obj.set( "x", str(end_pos_x*16) )
+			particle_obj.set( "y", str(end_pos_y*16) )
 
 		# Add to level
 		new_objectgroup.append( new_obj )
+		if particle_obj != None:
+			new_objectgroup.append( particle_obj )
 		log.Extra(f'    - {theme} at ({start_pos[0]}, {start_pos[1]})')
 		count_new += 1
 
@@ -194,18 +232,19 @@ def _MakeListOfWaterfallCoordinates(tiles2d):
 			# Set waterfall values
 			start_y = i
 			start_x = j + _GetWaterfallOffsetX(curr_id, curr_or)
-#			length = waterfall_len
-			length_str = "0," + str(waterfall_len*16)	# TODO horizontal waterfall
+			length = waterfall_len
+			length_str = "0," + str(waterfall_len*16)	# TBD
 			thickness = _GetWaterfallThickness(curr_id)
 			log.Extra(f'    At ({start_x}, {start_y}), len = {length_str}, width = {thickness}')
 
 			# Check if this waterfall can merge into any existing one
 			#   this allows waterfall with thickness greater than 1
 			# TODO 
+			# TODO horizontal waterfall?
 
 			# Append new waterfall to list
-#			list_waterfalls.append( ((start_x, start_y), length, thickness) )
-			list_waterfalls.append( ((start_x, start_y), length_str, thickness) )
+			list_waterfalls.append( ((start_x, start_y), length, thickness) )
+#			list_waterfalls.append( ((start_x, start_y), length_str, thickness) )
 
 	log.Info( f'  Total of {len(list_waterfalls)} waterfalls found' )
 	return list_waterfalls
@@ -242,26 +281,38 @@ def _GetWaterfallThickness(curr_id):
 
 
 #--------------------------------------------------#
-'''Utility for Object Creation'''
+'''Utility TODO'''
 
-def _MakePolypoints( coordinates ):
-	'''Converts coorinate (tuple of int tuples) into polypoint (string)
-	 e.g. [ (64,32), (0, 128) ] => "0,0 -64,96"
-	'''
-
-	# TODO
-
-	return ""
-
-
-
-# TODO relocate to tiled_utils?
+# TODO I'm planning to relocate this to tiled_utils,
+# This way we don't have to import the "copy" module each time in our logic file
 def _CopyXMLObject(obj):
 	'''Deep-copy an XML objects, mostly for making new objects from a duplicated template'''
+	return copy.deepcopy(obj)
 
-	# TODO
 
-	return obj
+
+# TBD... I tried packaging the process into its own function,
+#  but it's getting annoying so I'll likely delete the entire function in the end
+def _MakePolypoints( pos_beg, pos_end, is_reversed = False ):
+	'''
+	Converts coordinates (2 tuples of int), into polypoint (string)
+	Inputs are in Tiled units, output are in pixel units.
+	Inputs reset at 0,0
+	  e.g. (4,2), (0, 8) => "0,0 -64,96"
+	'''
+	pos_beg_str = f'{str(pos_beg[0]*16)},{str(pos_beg[1]*16)}'
+	pos_end_str = f'{str(pos_end[0]*16)},{str(pos_end[1]*16)}'
+	if not is_reversed:
+		polypoint_str = f'{pos_beg_str} {pos_end_str}'
+	else:
+		polypoint_str = f'{pos_end_str} {pos_beg_str}'
+
+#	log.Extra( f'{pos_beg} & {pos_end} -> {polypoint_str}' )
+	log.Extra(pos_beg)
+	log.Extra(pos_end)
+	log.Extra(polypoint_str)
+
+	return polypoint_str
 
 
 
