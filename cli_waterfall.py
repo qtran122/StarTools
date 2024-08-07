@@ -14,7 +14,7 @@ import logic.standalone.waterfall as waterfall
 #--------------------------------------------------#
 '''Variables'''
 
-WATERFALL_TEMPLATE = "patterns/waterfalls"
+WATERFALL_TEMPLATE = "waterfalls.xml"
 
 
 
@@ -37,19 +37,20 @@ def main():
     log.SetVerbosityLevel(args.v)
 
     # Read the waterfall template
-    pattern_root = file_utils.GetPatternRoot()
-    waterfall_template = None	# load the template from WATERFALL_TEMPLATE
-#    if waterfall_template == None : return
+    template_filepath = file_utils.GetTemplateRoot() + WATERFALL_TEMPLATE
+    playdo_template = play.LevelPlayDo(template_filepath)
+    if playdo_template == None : return
 
     # Use a playdo to read/process the XML
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
     # Main Logic - Process
     list_waterfall = waterfall.ScanForWaterFalls(playdo)
-    waterfall.CreateWaterfalls(waterfall_template, playdo, list_waterfall)
+    waterfall.CreateWaterfalls(playdo_template, playdo, list_waterfall)
 
     # Flush changes to File!
-#    playdo.Write()
+    log.Extra("")
+    playdo.Write()
 
 
 

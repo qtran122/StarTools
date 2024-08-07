@@ -3,23 +3,41 @@
   Verbosity = 2
 --------------------------------------------------
 
+-- level_playdo.py : initialized star_tools/templates/waterfalls.xml ...
 -- level_playdo.py : initialized _waterfall_example.xml ...
--- level_playdo.py : number tile layers found : 14
--- level_playdo.py : number tile layers found : 14
+-- level_playdo.py : number tile layers found : 15
+-- level_playdo.py : number tile layers found : 15
 
 Scanning for waterfalls...
 
   Theme: "meadow bg", at "bg_tiles,5"
-    At (53.5, 15), len = 18, width = 1
-    At (34.375, 29), len = 4, width = 0.75
-    At (11.25, 44), len = 7, width = 0.5
-    At (10.125, 45), len = 4, width = 0.25
-    At (25.75, 45), len = 5, width = 0.5
-    At (20.375, 47), len = 5, width = 0.75
+    At (53.5, 15), len = 0,288, width = 1
+    At (34.375, 29), len = 0,64, width = 0.75
+    At (11.25, 44), len = 0,112, width = 0.5
+    At (10.125, 45), len = 0,64, width = 0.25
+    At (25.75, 45), len = 0,80, width = 0.5
+    At (20.375, 47), len = 0,80, width = 0.75
   Total of 6 waterfalls found
 
   Theme: "meadow fg", at "fg_tiles,15"
-    At (53.5, 15), len = 18, width = 1
+    At (53.5, 15), len = 0,288, width = 1
   Total of 1 waterfalls found
 Total of 7 waterfalls found in all layers
 
+Creating waterfall obejcts...
+  Registering waterfall templates...
+    - meadow bg - <Element 'object' at 0x7fc2f46b69a0>
+    - meadow fg - <Element 'object' at 0x7fc2f4668310>
+    - lava bg - <Element 'object' at 0x7fc2f46687c0>
+    - lava fg - <Element 'object' at 0x7fc2f4668c70>
+  Creating new waterfall objects...
+    - meadow bg at (53.5, 15)
+    - meadow bg at (34.375, 29)
+    - meadow bg at (11.25, 44)
+    - meadow bg at (10.125, 45)
+    - meadow bg at (25.75, 45)
+    - meadow bg at (20.375, 47)
+    - meadow fg at (53.5, 15)
+Total of 7 waterfalls created
+
+-- level_playdo.py : flushing changes...

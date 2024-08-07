@@ -107,9 +107,18 @@ class LevelPlayDo():
             tile_2d_map = tiled_utils.DecodeIntoTiles2d(data, self.map_width)
             if tile_2d_map is None: continue
             list_tiles2d.append(tile_2d_map)
-                
         log.Extra(f'-- level_playdo.py : number tile layers found : {len(list_tiles2d)}')
         return list_tiles2d
+
+    def GetAllObjectgroup(self, is_print = True):
+        '''Fetches all object layers and returns them as a list of XML objects'''
+        list_objectgroup = []
+        # Search using an XPath query so that tile_layers tucked within folders will not be missed
+        for objectgroup in self.level_root.findall(".//objectgroup"):
+            list_objectgroup.append(objectgroup)
+        if is_print:
+            log.Extra(f'-- level_playdo.py : objectgroup found : {len(list_objectgroup)}')
+        return list_objectgroup
 
 
 
