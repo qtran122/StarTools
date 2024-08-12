@@ -1,8 +1,8 @@
 '''
-Command-Line Tool for creating new waterfalls, based on input tiles.
+Command-Line Tool for creating waterfalls, based on input tiles and its tilelayer name.
     
 USAGE EXAMPLE:
-    python cli_waterfall.py __test --v 2
+    python cli_waterfall.py _waterfall_example --v 2
 
 '''
 import argparse
