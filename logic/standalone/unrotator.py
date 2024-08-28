@@ -54,9 +54,9 @@ def Unrotate(playdo):
 	# Remove rotation properties, and then update the vertex coordinates accordingly
 	for object in list_of_all_object:
 		# Fetch the necessary data
-		center_rotation_x = int( object.get("x") )
-		center_rotation_y = int( object.get("y") )
-		rotation_in_degree = int( object.get("rotation") )
+		center_rotation_x = float( object.get("x") )
+		center_rotation_y = float( object.get("y") )
+		rotation_in_degree = float( object.get("rotation") )
 		old_vertices = tiled_utils.GetPolyPointsFromObject(object)
 
 		# Process and update coordinates to new value
@@ -68,14 +68,18 @@ def Unrotate(playdo):
 		# Reset rotation value
 #		object.set("x", str(new_center[0]))
 #		object.set("y", str(new_center[1]))
-		object.set("rotation", "0")
+#		object.set("rotation", "0")
+		object.attrib.pop("rotation")
 		tiled_utils.SetPolyPointsOnObject(object, new_poly_str)
-
-
 
 	log.Info(f"  All polylines have been fixed\n")
 
 
+
+
+
+#--------------------------------------------------#
+'''Utility'''
 
 def UpdateVertices( center_rotation, rotation_in_radian, old_vertices ):
 	'''Returns string'''
@@ -113,11 +117,6 @@ def UpdateVertices( center_rotation, rotation_in_radian, old_vertices ):
 
 
 
-
-
-
-#--------------------------------------------------#
-'''Utility'''
 
 # https://stackoverflow.com/questions/34372480/rotate-point-about-another-point-in-degrees-python
 def rotate(origin, point, angle):
