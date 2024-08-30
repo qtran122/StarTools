@@ -241,10 +241,15 @@ def GetPropertyFromObject( tiled_object, property_name ):
 
 
 def GetPolyPointsFromObject( tiled_object ):
-    '''Obtain the polypoints from object and return a list of tuples: [ (x1,y1), (x2,y2), ... ]'''
+    '''
+    Obtain the polypoints from object
+    Applicable to both "polyline" and "polygon"
+    Return a list of tuples: [ (x1,y1), (x2,y2), ... ]
+    '''
 
     # Obtain data as string
     polyline_attribute = tiled_object.find('polyline')
+    if polyline_attribute == None : polyline_attribute = tiled_object.find('polygon')
     if polyline_attribute == None : return None
     points_string = polyline_attribute.get('points')
 
@@ -285,12 +290,15 @@ def SetPropertyOnObject(tiled_object, property_name, new_value):
 
 
 
-def SetPolyPointsOnObject( tiled_object, new_value ):
+def SetPolyPointsOnObject( tiled_object, new_value, object_type = 'polyline' ):
     '''Set a new polypoint value for object, create new one if none exists yet'''
-    polyline_tag = tiled_object.find('polyline')
-    if tiled_object.find('polyline') is None:
-        polyline_tag = ET.SubElement(tiled_object, 'polyline')
-    polyline_tag.set('points', new_value)
+    polypoint_tag = tiled_object.find('polyline')
+    if polypoint_tag == None: polypoint_tag = tiled_object.find('polygon')
+    if polypoint_tag == None:
+        polypoint_tag = ET.SubElement(tiled_object, object_type)
+    polypoint_tag.set('points', new_value)
+
+    # TODO auto-detect object_type, is 'polygon' only if vertex[0] == vertex[-1]
 
 
 

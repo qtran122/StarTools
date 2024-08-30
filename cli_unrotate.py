@@ -22,6 +22,7 @@ import logic.standalone.unrotator as unrotator
 '''Main'''
 
 arg_description = 'Process a tiled level XML and <TBA>'
+arg_description = 'Process a tiled level XML and remove rotation attributes in objects'
 arg_help1 = 'Name of the tiled level XML'
 arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
 
@@ -39,7 +40,6 @@ def main():
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
     # Main Logic
-    unrotator.SetConfigurations()
     unrotator.Unrotate(playdo)
 
     # Flush changes to File!
@@ -51,7 +51,6 @@ def main():
 
 #--------------------------------------------------#
 
-# logging_test()
 main()
 
 
