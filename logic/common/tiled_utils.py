@@ -3,8 +3,9 @@
 import base64
 import zlib
 import numpy
-
-
+import copy
+import xml.etree.ElementTree as ET
+import logic.common.log_utils as log
 
 #--------------------------------------------------#
 '''Base64 string <-> Array'''
@@ -240,10 +241,15 @@ def GetPropertyFromObject( tiled_object, property_name ):
 
 
 def GetPolyPointsFromObject( tiled_object ):
-    '''Obtain the polypoints from object and return a list of tuples: [ (x1,y1), (x2,y2), ... ]'''
+    '''
+    Obtain the polypoints from object
+    Applicable to both "polyline" and "polygon"
+    Return a list of tuples: [ (x1,y1), (x2,y2), ... ]
+    '''
 
     # Obtain data as string
     polyline_attribute = tiled_object.find('polyline')
+    if polyline_attribute == None : polyline_attribute = tiled_object.find('polygon')
     if polyline_attribute == None : return None
     points_string = polyline_attribute.get('points')
 
@@ -256,6 +262,13 @@ def GetPolyPointsFromObject( tiled_object ):
 
 #--------------------------------------------------#
 '''Set object property'''
+
+# Deep-copy is needed before object copied from templates can be modified
+def CopyXMLObject(obj):
+    '''Deep-copy an XML objects, mostly for making new objects from a duplicated template'''
+    return copy.deepcopy(obj)
+
+
 
 def SetPropertyOnObject(tiled_object, property_name, new_value):
     '''Change the value for the requested property, add new if not exist'''
@@ -277,12 +290,48 @@ def SetPropertyOnObject(tiled_object, property_name, new_value):
 
 
 
-def SetPolyPointsOnObject( tiled_object, new_value ):
+def SetPolyPointsOnObject( tiled_object, new_value, object_type = 'polyline' ):
     '''Set a new polypoint value for object, create new one if none exists yet'''
-    polyline_tag = tiled_object.find('polyline')
-    if tiled_object.find('polyline') is None:
-        polyline_tag = ET.SubElement(tiled_object, 'polyline')
-    polyline_tag.set('points', new_value)
+    polypoint_tag = tiled_object.find('polyline')
+    if polypoint_tag == None: polypoint_tag = tiled_object.find('polygon')
+    if polypoint_tag == None:
+        polypoint_tag = ET.SubElement(tiled_object, object_type)
+    polypoint_tag.set('points', new_value)
+
+    # TODO auto-detect object_type, is 'polygon' only if vertex[0] == vertex[-1]
+
+
+
+def MakePolypoints( list_pos, is_reversed = False, polygon_xy = (0,0) ):
+    '''
+    Converts coordinates (list of tuples of 2 int), into polypoint (string)
+    Inputs are in Tiled units, output are in pixel units.
+      e.g. (4,2), (0, 8) => "64,32 0,128"
+    If is_reversed, the order of vertices is reversed
+    By default, output Polygon is assumed to be at x = 0 and y = 0
+      Set polygon_xy = list_pos[0] for output string to start with 0,0
+    '''
+
+    polypoint_str = ''
+    for i,pos in enumerate(list_pos):
+        # Choose the current vertex
+        curr_pos = pos
+        if is_reversed: curr_pos = list_pos[len(list_pos)-1 - i]
+
+        # Add vertex's position to string
+        pos_x = curr_pos[0] - polygon_xy[0]
+        pos_y = curr_pos[1] - polygon_xy[1]
+
+        # Convert to Tiled unit, rounded to nearest int, i.e. pixel unit
+        pos_x = int(pos_x * 16)
+        pos_y = int(pos_y * 16)
+        polypoint_str += f'{str(pos_x)},{str(pos_y)} '
+
+    # Trim last character in string
+    polypoint_str = polypoint_str[:-1]
+
+    log.Extra(f'      - {list_pos} -> \"{polypoint_str}\"')
+    return polypoint_str
 
 
 
