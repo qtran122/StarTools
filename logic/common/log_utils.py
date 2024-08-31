@@ -19,7 +19,8 @@ import logic.common.file_utils as file_utils
 #--------------------------------------------------#
 '''Logger Settings'''
 
-DEFAULT_FILENAME = 'logfile.log'
+DEFAULT_FILENAME = 'logfile'
+DEFAULT_EXTENSION = '.log'
 DEFAULT_FORMAT = '%(message)s'   # Without extra indentation
 DEFAULT_DIVIDER = '--------------------------------------------------'
 
@@ -35,6 +36,10 @@ def SetVerbosityLevel(log_lv_num, file_name = DEFAULT_FILENAME, format = DEFAULT
     log_level = logging.WARNING # Default to Warning
     if log_lv_num == 1: log_level = logging.INFO
     elif log_lv_num == 2: log_level = logging.DEBUG
+
+    # Change file_name based on verbosity level
+    file_name += "_" + str(log_lv_num)
+    file_name += DEFAULT_EXTENSION
 
     # Create a custom logger
     logger = logging.getLogger()
@@ -60,7 +65,7 @@ def SetVerbosityLevel(log_lv_num, file_name = DEFAULT_FILENAME, format = DEFAULT
 
 def _WriteHeaderToLog(log_lv_num):
     print_msg  = '\n' + DEFAULT_DIVIDER                 # Divider before meta data
-    print_msg += '\n  ' + os.getcwd()                   # Current OS
+#    print_msg += '\n  ' + os.getcwd()                   # Current filepath
     print_msg += '\n  Verbosity = ' + str(log_lv_num)   # Verbosity Level
     print_msg += '\n' + DEFAULT_DIVIDER + '\n'          # Divider between meta data & tool content
     # print_msg += '' # TODO DateTime
