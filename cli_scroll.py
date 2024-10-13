@@ -1,8 +1,9 @@
-''' Command-Line Tool for testing features in isolation.
-    Can also be used as template for creating new files
+'''
+Command-Line Tool template when new tools are being created.
+Can also be used to test features in isolation.
     
 USAGE EXAMPLE:
-    python cli_test.py __test --v 0
+    python cli_scroll.py _scroll --v 2
 
 '''
 import argparse
@@ -10,10 +11,17 @@ import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
+import logic.standalone.scroll_adder as scroll_adder
 
 #--------------------------------------------------#
 '''Variables'''
 # Delete section if unneeded
+
+input_layer = '_scroll'
+output_layer = 'bg_0/fx'
+default_values = (1, 2, 3, 4)
+default_values = (0.1, 0.1, -2, -2)	# scroll_x, scroll_y, add_x, add_y
+default_values = (0, 0, 0, 0)
 
 
 
@@ -35,11 +43,10 @@ def main():
     log.SetVerbosityLevel(args.v)
 
     # Use a playdo to read/process the XML
-    pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
-    # Main Logic - ...
-#    do_the_thing()
+    # Main Logic
+    scroll_adder.AddScroll(playdo, input_layer, output_layer, default_values)
 
     # Flush changes to File!
     playdo.Write()
