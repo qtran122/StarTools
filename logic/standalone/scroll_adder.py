@@ -24,23 +24,35 @@ DEFAULT_COLOR = 'ffffff/0.7'
 #--------------------------------------------------#
 '''Public Functions'''
 
-def AddScroll(playdo, input_layer, output_layer, default_values):
+def AddScroll(playdo, input_prefix, output_layer, default_values):
 	'''Main Logic'''
 	log.Info("\nAdjusting tilelayer when added scrolling values...")
 
+	# Detect the correct tilelayer to be processed
+	list_all_layer_name = playdo.GetAllTileLayerNames()
+	applicable_layer_name = None
+	for name in list_all_layer_name:
+		if not name.startswith( input_prefix ): continue
+		applicable_layer_name = name
+		break
+	if applicable_layer_name == None: return
+	log.Info(f"  Layer \"{applicable_layer_name}\" will be processed")
+
 	# Fetch the input tilelayer
-	tilelayer_obj = playdo.GetTilelayerObject(input_layer)
-	if tilelayer_obj == None: return
-	tiles2d = playdo.GetTiles2d(input_layer)
+	tilelayer_obj = playdo.GetTilelayerObject(applicable_layer_name)
+	tiles2d = playdo.GetTiles2d(applicable_layer_name)
 	tiles2d_new = tiled_utils.MakeTiles2D(tiles2d)
 #	tiles2d_new = tiled_utils.CopyXMLObject(tiles2d)	# Technically not an object
+	map_height = len(tiles2d)
+	map_width  = len(tiles2d[0])
 
 	# Register the property values
 	scroll_x, scroll_y, add_x, add_y = default_values
-	scroll_x = ToNum( GetProperty( tilelayer_obj, 'scroll_x', scroll_x ) )
-	scroll_y = ToNum( GetProperty( tilelayer_obj, 'scroll_y', scroll_y ) )
+	scroll_x, scroll_y = ExtractScrollFromName( applicable_layer_name, input_prefix )
+	log.Info(f"  Scroll Values: {scroll_x}, {scroll_y}")
 	add_x = ToNum( GetProperty( tilelayer_obj, 'add_x', add_x ) )
 	add_y = ToNum( GetProperty( tilelayer_obj, 'add_y', add_y ) )
+	add_y -= map_height * scroll_y
 
 	# Create the list of properties to be added to output tilelayer
 	list_properties = []
@@ -52,19 +64,15 @@ def AddScroll(playdo, input_layer, output_layer, default_values):
 		list_properties.append( ('color', DEFAULT_COLOR) )
 
 	# Process tilelayer data (tiles2d)
-	multiplier_x = 1 * ( 1 + scroll_x )
-	multiplier_y = 1 * ( 1 + scroll_y )
-	map_height = len(tiles2d)
-	map_width  = len(tiles2d[0])
+	multiplier_x = 1 / ( 1 - scroll_x )
+	multiplier_y = 1 / ( 1 - scroll_y )
 	for i in range(map_height):
 		ref_y = int( i * multiplier_y )
 		if ref_y >= map_height: continue
 		for j in range(map_width):
 			ref_x = int( j * multiplier_x )
 			if ref_x >= map_width: continue
-#			tiles2d_new[new_y][new_x] = 10
 			tiles2d_new[i][j] = tiles2d[ref_y][ref_x]
-#			tiles2d_new[i][j] = 10
 
 	# Create the output tilelayer
 	log.Info(f"  Creating output layer \'{output_layer}\'...")
@@ -78,6 +86,36 @@ def AddScroll(playdo, input_layer, output_layer, default_values):
 
 #--------------------------------------------------#
 '''Utility'''
+
+def ExtractScrollFromName( layer_name, input_prefix ):
+	'''
+	(overrides default values)
+	Return 2 float values from layer name string
+	  e.g.
+		_scroll          -> (  0,    0)
+		_scroll_         -> (  0,    0)
+		_scroll_0.1      -> (0.1,  0.1)
+		_scroll_0.1_-0.2 -> (0.1, -0.2)
+	'''
+
+	# Remove unnecessary characters
+	trimmed_str = layer_name.replace( input_prefix, "" )
+	if len(trimmed_str) <= 0: return (0,0)
+	if trimmed_str[0] == '_': trimmed_str = trimmed_str[1:]
+	if len(trimmed_str) <= 0: return (0,0)
+
+	# Extract values from the remaining string
+	value_tuple = trimmed_str.split('_')
+	value1, value2 = 0, 0
+	if len(value_tuple) <= 1:
+		value1 = float( value_tuple[0] )
+		value2 = value1
+	else:
+		value1 = float( value_tuple[0] )
+		value2 = float( value_tuple[1] )
+	return ( value1, value2 )
+
+
 
 def GetProperty(obj, prop_name, default_value = ''):
 	'''Return the property value from an object, or the default value if there's none'''
