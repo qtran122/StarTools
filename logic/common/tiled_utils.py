@@ -223,7 +223,7 @@ def MakeTiles2D( tiles2d_template, default_fill = 0 ):
 
 
 
-def AddTilelayer( playdo, layer_name, tiles2d, list_properties = [], is_overwrite = True ):
+def AddTilelayer( playdo, layer_name, tiles2d, list_properties = [], list_info = [], is_overwrite = True ):
 	'''
 	Add a tilelayer to playdo by directly inputting a tiles2D
 	If is_overwrite is true, no new layer would be created if one already exists in level
@@ -237,9 +237,13 @@ def AddTilelayer( playdo, layer_name, tiles2d, list_properties = [], is_overwrit
 		playdo.AddNewTileLayer( layer_name, EncodeToTiledFormat(tiles2d) )
 	tilelayer_obj = playdo.GetTilelayerObject(layer_name)
 
-	# Append properties to new tilelayer`
+	# Append "Custom Properties" to layer, e.g. in-game view
 	for property_tuple in list_properties:
 		SetPropertyOnObject(tilelayer_obj, property_tuple[0], property_tuple[1])
+
+	# Add additional "Default Properties" to layer, e.g. in-game view
+	for info_tuple in list_info:
+		tilelayer_obj.set( info_tuple[0], info_tuple[1] )
 
 
 

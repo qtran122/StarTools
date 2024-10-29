@@ -12,11 +12,16 @@ import logic.common.tiled_utils as tiled_utils
 #--------------------------------------------------#
 '''Variables'''
 
+DEFAULT_COLOR = 'ffffff/1'	# In-Game View
+DEFAULT_OPACITY = '0.4'		# In-Editor View
+
+# TODO Eventually be setting these in the CLI instead
 # Default values for the configurations
 config_add_transparency = True
+config_color = DEFAULT_COLOR
+config_opacity = DEFAULT_OPACITY
 config_ = True
 
-DEFAULT_COLOR = 'ffffff/0.7'
 
 
 
@@ -50,18 +55,11 @@ def AddScroll(playdo, input_prefix, output_layer, default_values):
 	scroll_x, scroll_y, add_x, add_y = default_values
 	scroll_x, scroll_y = ExtractScrollFromName( applicable_layer_name, input_prefix )
 	log.Info(f"  Scroll Values: {scroll_x}, {scroll_y}")
-	add_x = ToNum( GetProperty( tilelayer_obj, 'add_x', add_x ) )
-	add_y = ToNum( GetProperty( tilelayer_obj, 'add_y', add_y ) )
+#	add_x = ToNum( GetProperty( tilelayer_obj, 'add_x', add_x ) )
+#	add_y = ToNum( GetProperty( tilelayer_obj, 'add_y', add_y ) )
+	add_x = 0
+	add_y = 0
 	add_y -= map_height * scroll_y
-
-	# Create the list of properties to be added to output tilelayer
-	list_properties = []
-	list_properties.append( ('scroll_x', str(scroll_x)) )
-	list_properties.append( ('scroll_y', str(scroll_y)) )
-	list_properties.append( ('add_x', str(add_x)) )
-	list_properties.append( ('add_y', str(add_y)) )
-	if config_add_transparency:
-		list_properties.append( ('color', DEFAULT_COLOR) )
 
 	# Process tilelayer data (tiles2d)
 	multiplier_x = 1 / ( 1 - scroll_x )
@@ -74,9 +72,30 @@ def AddScroll(playdo, input_prefix, output_layer, default_values):
 			if ref_x >= map_width: continue
 			tiles2d_new[i][j] = tiles2d[ref_y][ref_x]
 
+
+
+	# Create the list of properties to be added to output tilelayer (in-game view)
+	list_properties = []
+	list_properties.append( ('add_x', str(add_x)) )
+	list_properties.append( ('add_y', str(add_y)) )
+	list_properties.append( ('scroll_x', str(scroll_x)) )
+	list_properties.append( ('scroll_y', str(scroll_y)) )
+	if config_add_transparency:
+		list_properties.append( ('color', config_color) )
+
+	# Create the list of info for the output tilelayer tile (in-editor view)
+	list_info = []
+	list_info.append( ('opacity', config_opacity) )
+	list_info.append( ('offsetx', str(16 * add_x)) )
+	list_info.append( ('offsety', str(16 * (add_y + map_height * scroll_y))) )
+	list_info.append( ('parallaxx', str(1/multiplier_x)) )
+	list_info.append( ('parallaxy', str(1/multiplier_y)) )
+	# Tiled automatically clean up the data if any of the value is same as default,
+	#   e.g. offset == 0 or parallax == 1
+
 	# Create the output tilelayer
 	log.Info(f"  Creating output layer \'{output_layer}\'...")
-	tiled_utils.AddTilelayer( playdo, output_layer, tiles2d_new, list_properties )
+	tiled_utils.AddTilelayer( playdo, output_layer, tiles2d_new, list_properties, list_info )
 
 	log.Info(f"~~End of All Procedures~~\n")
 
