@@ -20,7 +20,91 @@ DEFAULT_OPACITY = '0.4'		# In-Editor View
 config_add_transparency = True
 config_color = DEFAULT_COLOR
 config_opacity = DEFAULT_OPACITY
+config_backup_scroll2 = not True
 config_ = True
+
+
+
+
+
+#--------------------------------------------------#
+'''Scroll 2 very scuffed code'''
+
+def AddScroll2(playdo):
+	'''Main Logic, for Scroll 2, also very rough'''
+	log.Info("\nScanning all tilelayers to check if Scroll2 values need to be added...")
+	count = 0
+
+	# Get all tilelayer as objects, put into a single list
+	list_all_tilelayer_object = []
+	for layer_name in playdo.GetAllTileLayerNames():
+		list_all_tilelayer_object.append( playdo.GetTilelayerObject(layer_name) )
+
+	# Check if any layer need to add Scroll 2 values
+	#   e.g. has only the old Scroll 1 values
+	log.Info(f"  Scanning {len(list_all_tilelayer_object)} tilelayers...")
+	for obj in list_all_tilelayer_object:
+		properties = obj.find("properties")
+		if properties == None: continue
+
+		# Check if scroll2 is needed
+		# Cannot use GetPropertyFromObject() because it never returns None
+		has_scroll2 = False
+		add_x, add_y, scroll_x, scroll_y = 0,0,0,0
+		for property in properties:
+			if property.get("name") == "scroll2":
+				has_scroll2 = True
+		if not has_scroll2: continue
+
+		# Fetch old Scroll 1 values and process
+		add_x = tiled_utils.GetPropertyFromObject(obj, "add_x")
+		add_y = tiled_utils.GetPropertyFromObject(obj, "add_y")
+		scroll_x = tiled_utils.GetPropertyFromObject(obj, "scroll_x")
+		scroll_y = tiled_utils.GetPropertyFromObject(obj, "scroll_y")
+
+		# Set the new Scroll 2 values to layer
+		SetScroll2ToObject( obj, add_x, add_y, scroll_x, scroll_y )
+
+	log.Info(f"~~End of All Procedures~~\n")
+	return
+
+# TODO relocate below
+def SetScroll2ToObject( obj, add_x, add_y, scroll_x, scroll_y ):
+	'''Input the old Scroll 2 values, add the new for Scroll 2 for in-editor view'''
+
+	# Convert values into float, from either string or None (when no value is specified)
+	add_x = ToNum2(add_x)
+	add_y = ToNum2(add_y)
+	scroll_x = ToNum2(scroll_x)
+	scroll_y = ToNum2(scroll_y)
+	layer_height = ToNum2(obj.get("height"))
+
+	# Conversion formula
+	factor_x = 1 - scroll_x
+	factor_y = 1 - scroll_y
+	offset_x = 16 * add_x
+	offset_y = -16 * ( add_y + layer_height * scroll_y )
+
+	# Set the Scroll2 values
+	obj.set('parallaxx', str(factor_x) )
+	obj.set('parallaxy', str(factor_y) )
+	obj.set('offsetx', str(offset_x) )
+	obj.set('offsety', str(offset_y) )
+
+	# Set backup values
+	#   When level is resized, Tiled may delete any existing Scroll 2 values
+	#   Backing them up in Custom Property allow them to be easily restored later
+	if not config_backup_scroll2: return
+	tiled_utils.SetPropertyOnObject(obj, 'zbackup_parallaxx', str(factor_x))
+	tiled_utils.SetPropertyOnObject(obj, 'zbackup_parallaxy', str(factor_y))
+	tiled_utils.SetPropertyOnObject(obj, 'zbackup_offsetx', str(offset_x))
+	tiled_utils.SetPropertyOnObject(obj, 'zbackup_offsety', str(offset_y))
+
+# TODO relocate and rename, maybe merge with the other ToNum function?
+def ToNum2(value):
+#	print(value)
+	if value == None: return 0
+	return float(value)
 
 
 
@@ -88,6 +172,7 @@ def AddScroll(playdo, input_prefix, output_layer, default_values):
 	list_info.append( ('opacity', config_opacity) )
 	list_info.append( ('offsetx', str(16 * add_x)) )
 	list_info.append( ('offsety', str(16 * (add_y + map_height * scroll_y))) )
+	# TODO check if 1-scroll_x is ok
 	list_info.append( ('parallaxx', str(1/multiplier_x)) )
 	list_info.append( ('parallaxy', str(1/multiplier_y)) )
 	# Tiled automatically clean up the data if any of the value is same as default,

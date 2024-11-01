@@ -1,10 +1,11 @@
 '''
-Command-Line Tool for adding both Default and Custom Properties for scrolling,
-  i.e. Scroll 1 values (add_x, add_y, scroll_x, scroll_y), and Scroll 2 values
+Command-Line Tool for quickly adding Default Properties (Scroll 2) of Tiled tilelayers.
+The values are calculated based on existing Custom Properties created prior (Scroll 1),
+  i.e. add_x, add_y, scroll_x, scroll_y
 
     
 USAGE EXAMPLE:
-    python cli_scroll.py _scroll --v 2
+    python cli_scroll2.py e02 --v 2
 
 '''
 import argparse
@@ -15,11 +16,7 @@ import logic.standalone.scroll_adder as scroll_adder
 
 #--------------------------------------------------#
 '''Variables'''
-
-input_layer = '_scroll'			# PREFIX of the tilelayer, scroll values specified here
-					# e.g. _scroll, _scroll_0.1, _scroll_0.1_-0.2
-output_layer = '_bg/fx'
-default_values = (0, 0, 0, 0)		# scroll_x, scroll_y, add_x, add_y
+# Delete section if unneeded
 
 
 
@@ -40,11 +37,12 @@ def main():
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
+    # TODO scan through all levels in folder?
     # Use a playdo to read/process the XML
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
     # Main Logic
-    scroll_adder.AddScroll(playdo, input_layer, output_layer, default_values)
+    scroll_adder.AddScroll2(playdo)
 
     # Flush changes to File!
     playdo.Write()
