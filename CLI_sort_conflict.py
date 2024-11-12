@@ -3,7 +3,7 @@ Command-Line Tool for detecting objects with the same "sort value" within a leve
 
     
 USAGE EXAMPLE:
-	python cli_sort_conflict.py j04 --v 2
+    python cli_sort_conflict.py j04 --v 2
 
 '''
 import argparse

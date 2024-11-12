@@ -53,7 +53,7 @@ def main():
 
 
 def disabled_code_tab():
-	x = 1
+    x = 1
 
 def disabled_code_space():
     x = 1
