@@ -1,15 +1,18 @@
-''' Command-Line Tool for testing features in isolation.
-    Can also be used as template for creating new files
+'''
+Command-Line Tool for quickly adding Default Properties (Scroll 2) of Tiled tilelayers.
+The values are calculated based on existing Custom Properties created prior (Scroll 1),
+  i.e. add_x, add_y, scroll_x, scroll_y
+
     
 USAGE EXAMPLE:
-    python cli_test.py __test --v 0
+    python cli_scroll2.py e02 --v 2
 
 '''
 import argparse
 import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
-import logic.pattern.pattern_matcher as PM
+import logic.standalone.scroll_adder as scroll_adder
 
 #--------------------------------------------------#
 '''Variables'''
@@ -34,12 +37,12 @@ def main():
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
+    # TODO scan through all levels in folder?
     # Use a playdo to read/process the XML
-    pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
-    # Main Logic - ...
-#    do_the_thing()
+    # Main Logic
+    scroll_adder.AddScroll2(playdo)
 
     # Flush changes to File!
     playdo.Write()

@@ -3,6 +3,7 @@
 import base64
 import zlib
 import numpy
+import xml.etree.ElementTree as ET
 
 
 
@@ -211,6 +212,44 @@ def GetTileIdPermutations(tile_id):
 
 
 #--------------------------------------------------#
+'''Tilelayer'''
+
+def MakeTiles2D( tiles2d_template, default_fill = 0 ):
+    '''Return a tiles2d that has the same dimension as the input tiles2D'''
+    map_height = len(tiles2d_template)
+    map_width  = len(tiles2d_template[0])
+    tiles2d_new = [ [default_fill for i in range(map_width)] for j in range(map_height) ]
+    return tiles2d_new
+
+
+
+def AddTilelayer( playdo, layer_name, tiles2d, list_properties = [], list_info = [], is_overwrite = True ):
+    '''
+    Add a tilelayer to playdo by directly inputting a tiles2D
+    If is_overwrite is true, no new layer would be created if one already exists in level
+    Allow adding properties directly, as list of tuples (2 strings), e.g.
+        [ ("Property 1", "Value 1"), ("Property 2", "Value 2") ]
+    '''
+
+    if playdo.GetTilelayerObject(layer_name) != None and is_overwrite:
+        playdo.SetTiles2d( layer_name, tiles2d )
+    else:
+        playdo.AddNewTileLayer( layer_name, EncodeToTiledFormat(tiles2d) )
+    tilelayer_obj = playdo.GetTilelayerObject(layer_name)
+
+    # Append "Custom Properties" to layer, e.g. in-game view
+    for property_tuple in list_properties:
+        SetPropertyOnObject(tilelayer_obj, property_tuple[0], property_tuple[1])
+
+    # Add additional "Default Properties" to layer, e.g. in-game view
+    for info_tuple in list_info:
+        tilelayer_obj.set( info_tuple[0], info_tuple[1] )
+
+
+
+
+
+#--------------------------------------------------#
 '''Fetch object property'''
 
 # Currently unused
@@ -273,7 +312,7 @@ def SetPropertyOnObject(tiled_object, property_name, new_value):
         return
 
     # Add new property if it's originally absent in the tiled_obejct
-    ET.SubElement(prop_elem, 'property', attrib={'name': key, 'value': value})
+    ET.SubElement(prop_elem, 'property', attrib={'name': property_name, 'value': new_value})
 
 
 

@@ -98,6 +98,18 @@ class LevelPlayDo():
 
 
 
+    def GetTilelayerObject(self, layer_name):
+        '''Retrieve the tilelayer as an object in order to read the properties as well'''
+        # Search using an XPath query so that tile_layers tucked within folders will not be missed
+        for tile_layer in self.level_root.findall(".//layer"):
+            tile_layer_name = tile_layer.get('name')
+            if tile_layer_name == layer_name: return tile_layer
+        return None
+
+
+
+
+
     def GetAllTiles2d(self):
         '''Fetches all graphic tile layers and returns them as a list of Tiles2d'''
         list_tiles2d = []
@@ -278,6 +290,9 @@ class LevelPlayDo():
         self._tiles2d_hash[tile_layer_name] = set()
         for tile_row in tile_2d_map:
             self._tiles2d_hash[tile_layer_name].update(tile_row)
+
+
+
 #--------------------------------------------------#
 '''...'''        
 
