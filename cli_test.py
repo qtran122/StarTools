@@ -11,7 +11,7 @@ import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
-#	import logic.standalone.x as x
+#    import logic.standalone.x as x
 
 #--------------------------------------------------#
 '''Variables'''
@@ -54,7 +54,7 @@ def main():
 
 
 def disabled_code_tab():
-	x = 1
+    x = 1
 
 def disabled_code_space():
     x = 1
