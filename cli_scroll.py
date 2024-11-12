@@ -16,10 +16,10 @@ import logic.standalone.scroll_adder as scroll_adder
 #--------------------------------------------------#
 '''Variables'''
 
-input_layer = '_scroll'			# PREFIX of the tilelayer, scroll values specified here
-					# e.g. _scroll, _scroll_0.1, _scroll_0.1_-0.2
+input_layer = '_scroll'            # PREFIX of the tilelayer, scroll values specified here
+                                   # e.g. _scroll, _scroll_0.1, _scroll_0.1_-0.2
 output_layer = '_bg/fx'
-default_values = (0, 0, 0, 0)		# scroll_x, scroll_y, add_x, add_y
+default_values = (0, 0, 0, 0)        # scroll_x, scroll_y, add_x, add_y
 
 
 
