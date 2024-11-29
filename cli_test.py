@@ -1,5 +1,6 @@
-''' Command-Line Tool for testing features in isolation.
-    Can also be used as template for creating new files
+'''
+Command-Line Tool template when new tools are being created.
+Can also be used to test features in isolation.
     
 USAGE EXAMPLE:
     python cli_test.py __test --v 0
@@ -10,6 +11,7 @@ import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
+#    import logic.standalone.x as x
 
 #--------------------------------------------------#
 '''Variables'''
@@ -38,7 +40,7 @@ def main():
     pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
-    # Main Logic - ...
+    # Main Logic
 #    do_the_thing()
 
     # Flush changes to File!
@@ -52,7 +54,7 @@ def main():
 
 
 def disabled_code_tab():
-	x = 1
+    x = 1
 
 def disabled_code_space():
     x = 1
