@@ -7,8 +7,8 @@ But if only 1 value is provided, it's applied to both height and width.
 
 
 USAGE EXAMPLE:
-	python cli_image_upscale.py 5
-	python cli_image_upscale.py 9.5 5
+	python tool_image_upscale.py 5
+	python tool_image_upscale.py 9.5 5
 
 '''
 import argparse
