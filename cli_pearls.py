@@ -20,7 +20,7 @@ args = parser.parse_args()
 playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
 # Create a PatternMatcher and load in the patterns it'll scan for
-patterns = ["pearls0", "pearls1", "pearls2", "pearls3"]
+patterns = ["pearls0", "pearls1", "pearls2", "pearls3", "pearls4"]
 pattern_matcher = PM.PatternMatcher()
 for pattern_file in patterns:
     file_path = file_utils.GetPatternRoot() + f"{pattern_file}.xml"
