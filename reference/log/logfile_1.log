@@ -1,0 +1,15 @@
+
+--------------------------------------------------
+  Verbosity = 1
+--------------------------------------------------
+
+Scanning for waterfalls...
+  Theme: "meadow bg", at "bg_tiles,5"
+  Total of 6 waterfalls found
+  Theme: "meadow fg", at "fg_tiles,15"
+  Total of 1 waterfalls found
+Total of 7 waterfalls found in all layers
+Creating waterfall obejcts...
+  Registering waterfall templates...
+  Creating new waterfall objects...
+Total of 7 waterfalls created
