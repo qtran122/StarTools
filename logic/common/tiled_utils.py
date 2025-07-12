@@ -241,17 +241,56 @@ def GetPropertyFromObject( tiled_object, property_name ):
 
 
 def GetPolyPointsFromObject( tiled_object ):
-    '''Obtain the polypoints from object and return a list of tuples: [ (x1,y1), (x2,y2), ... ]'''
+    '''Obtain the polypoints from object (polygon or polyline) and return a list of tuples: [ (x1,y1), (x2,y2), ... ]'''
+
+    is_polygon = False
 
     # Obtain data as string
     polyline_attribute = tiled_object.find('polyline')
+    if polyline_attribute == None :
+        polyline_attribute = tiled_object.find('polygon')
+        is_polygon = True
     if polyline_attribute == None : return None
     points_string = polyline_attribute.get('points')
 
     # Convert string into list of tuples
     point_pair_strings = [pair.split(',') for pair in points_string.split()]
     poly_points = [(float(x), float(y)) for x, y in point_pair_strings]
+    if is_polygon: poly_points.append(poly_points[0]) # For "closing" the polygon, TBD?
     return poly_points
+
+
+
+
+def GetVerticesFromObject( tiled_object ):
+    '''Create polypoints from rectangular objects and return a list of tuples: [ (x1,y1), (x2,y2), ... ]'''
+
+    x = int(tiled_object.get('x'))
+    y = int(tiled_object.get('y'))
+
+
+    # For polygons and polylines
+    polypoints = GetPolyPointsFromObject(tiled_object)
+    if polypoints != None:
+        new_pts = []
+        for pt in polypoints: new_pts.append( (pt[0]+x, pt[1]+y) )
+        return new_pts
+
+
+    # Returns a single point if object has no width
+    if tiled_object.get('width') == None: return [(x,y)]
+
+
+    # Otherwise treat as rectangular objects
+    w = int(tiled_object.get('width'))
+    h = int(tiled_object.get('height'))
+    pt1 = ( x  , y+h )
+    pt2 = ( x+w, y+h )
+    pt3 = ( x+w, y   )
+    pt4 = ( x  , y   )
+    return [pt1, pt2, pt3, pt4]
+
+
 
 
 
@@ -281,7 +320,7 @@ def SetPropertyOnObject(tiled_object, property_name, new_value):
         return
 
     # Add new property if it's originally absent in the tiled_obejct
-    ET.SubElement(prop_elem, 'property', attrib={'name': key, 'value': value})
+    ET.SubElement(prop_elem, 'property', attrib={'name': property_name, 'value': new_value})
 
 
 
