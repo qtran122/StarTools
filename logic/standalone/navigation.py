@@ -40,13 +40,17 @@ list_object_name = [
 # Threshold value for determining redundant routes
 threshold_redundance = 0.9
 
+# Exported Object & Layer
+obj_name_default = "TRAVEL_ROUTES_MAP"
+layer_name_export = "navigation"
+
 
 
 
 
 '''Other Variables'''
-OBJ_NAME_EXPORT = "ROUTE_DATA"
-LAYER_NAME_EXPORT = "meta"
+CONFIG_SHOW_REDUNDANT = False	# Whether redundant routes are shown
+CONFIG_PRINT_NODE     = False	# Whether meta-data for nodes are generated
 
 list_nodes = []		# (int, int) for coordinates
 list_polygon1 = []	# (vertex1, vertex2, ...), where vertex = (int, int) for coordinates
@@ -85,12 +89,16 @@ def _SetCliArgumentsToGlobal(passed_arguments):
 	global layer_name_collision
 	global list_object_name
 	global threshold_redundance
+	global obj_name_default
+	global layer_name_export
 
 	layer_name_node      = passed_arguments[0]
 	layer_name_route     = passed_arguments[1]
 	layer_name_collision = passed_arguments[2]
 	list_object_name     = passed_arguments[3]
 	threshold_redundance = passed_arguments[4]
+	obj_name_default     = passed_arguments[5]
+	layer_name_export    = passed_arguments[6]
 
 
 
@@ -122,7 +130,13 @@ def _ParseLevel(playdo):
 	for layer in list_object_layers:
 		# Nodes
 		if layer.get('name') == layer_name_node:
-			for obj in layer: list_nodes.append( (int(obj.get("x")), int(obj.get("y"))) )
+			for obj in layer:
+				if obj.find('ellipse') is None: continue
+				new_x = int(obj.get("x"))
+				new_y = int(obj.get("y"))
+				if 'width'  in obj.attrib: new_x += int(obj.get("width"))/2
+				if 'height' in obj.attrib: new_y += int(obj.get("height"))/2
+				list_nodes.append( (new_x, new_y) )
 
 		# Solid Collision
 		if layer.get('name') == layer_name_collision:
@@ -270,19 +284,25 @@ def _VisualiseNodesAndRoutes(playdo):
 
 	# Color nodes green and assign number, iff nothing is assigned yet
 	layer_node  = playdo.GetObjectGroup(layer_name_node,  False)
+	node_id = 0	# Has to be counted separately, for skipping non-node object
 	for i in range(len(layer_node)):
 		node = layer_node[i]
-		if node.get("name") == None: node.set("name", str(i))
-		if node.get("type") == None: node.set("type", "3")
+		if node.find('ellipse') is None: continue
+		node.set("name", _NodeId2Name(node_id))	# Always overwrite existing names
+		node_id += 1
+		if node.get("type") == None: node.set("type", "3")	# Does not overwrite existing color/type
 
-	# Color nodes green and assign number, iff nothing is assigned yet
-	layer_route = playdo.GetObjectGroup(layer_name_route, True)
+	# Color routes green and assign number, iff nothing is assigned yet
+	layer_route = playdo.GetObjectGroup(layer_name_route, False)
+	for obj in list(layer_route):
+		if obj.find('polyline') is None: continue	# Skip if object is not route
+		layer_route.remove(obj)				# Removes all existing routes
 	for i in range(len(list_route)):
 		pt_beg = list_nodes[ list_route[i][0] ]
 		pt_end = list_nodes[ list_route[i][1] ]
 		attributes = {
 			'id': "0", # TODO?
-			'name' : str(i), 
+#			'name' : str(i), 
 			'type' : "4", 
 			'x': "0",
 			'y': "0"
@@ -292,7 +312,11 @@ def _VisualiseNodesAndRoutes(playdo):
 		tiled_utils.SetPolyPointsOnObject( new_route_obj, str_polypoint )
 
 		if is_route_closed[i]:  new_route_obj.set('type', "1")
-		if is_route_overlap[i]: new_route_obj.set('type', "0")
+		if is_route_overlap[i]:
+			if CONFIG_SHOW_REDUNDANT:
+				new_route_obj.set('type', "0")
+			else:
+				continue
 
 		layer_route.append(new_route_obj)
 
@@ -317,46 +341,68 @@ def _ExportCondenseData(playdo):
 	'''
 	log.Must(f"  Exporting data in condensed form for Unity-parsing...")
 
-	# Create new object
-	temp_list = playdo.GetAllObjectsWithName(OBJ_NAME_EXPORT)
+
+	# Add route data as properties
+	obj_route = _MakeXmlObject(playdo, f"{obj_name_default}_{len(list_nodes)}")
+	for i in range(len(list_route)):
+		if is_route_overlap[i]: continue	# Skip entirely if is redundant
+		new_name = f"{_NodeId2Name(list_route[i][0])}_{_NodeId2Name(list_route[i][1])}"
+		x1 = list_nodes[ list_route[i][0] ][0]
+		y1 = list_nodes[ list_route[i][0] ][1]
+		x2 = list_nodes[ list_route[i][1] ][0]
+		y2 = list_nodes[ list_route[i][1] ][1]
+		str_dist = ""
+		if is_route_closed[i]: str_dist = "-"	# Negative for Maybe-Routes
+		str_dist += f"{int( math.sqrt((x2 - x1)**2 + (y2 - y1)**2) / 16 + 0.5 )}"
+		tiled_utils.SetPropertyOnObject(obj_route, new_name, str_dist)
+	log.Must(f"    Data for Routes exported successfully")
+
+	if not CONFIG_PRINT_NODE: return
+	# Add node data as properties
+	obj_node = _MakeXmlObject(playdo, "TRAVEL_NODE_LOCATIONS")
+	obj_node.set("y", "32")
+	for i in range(len(list_nodes)):
+		new_name = f"{i}"
+		# TODO modify the values into Unity units, i.e. based on level's width & height
+		str_vertices = f"{list_nodes[i][0]},{list_nodes[i][1]}"
+		tiled_utils.SetPropertyOnObject(obj_node, new_name, str_vertices)
+	log.Must(f"    Data for Nodes exported successfully")
+
+
+
+def _NodeId2Name(id):
+	if id >= 100: log.Must("\n\n\n\t\tERROR! Node exceeds limit of 100!\n\n\n")
+	if id < 10: return f"0{id}"
+	return f"{id}"
+
+def _MakeXmlObject(playdo, obj_name):
+	# Create new object, TODO just delete the old one outright, instead of replacing?
+	temp_list = playdo.GetAllObjectsWithName(obj_name)
+	obj_layer = playdo.GetObjectGroup(layer_name_export, False)
 	new_data_obj = None
 	if len(temp_list) == 0:
 		log.Info(f"    Creating new meta object...")
 		new_data_obj = ET.Element('object', {})
-		playdo.GetObjectGroup(LAYER_NAME_EXPORT, False).append(new_data_obj)
+		attributes = {
+			'id': "0", 
+			'type': "9", 
+			'x': "-32",
+			'y': "0", 
+			'width': "16",
+			'height': "16"
+		}
+		for key, value in attributes.items(): new_data_obj.set(key, value)
 	else:
 		new_data_obj = temp_list[0]
-		new_data_obj.clear()
+		for old_property in list(new_data_obj): # Clears properties without removing old attributes
+			new_data_obj.remove(old_property)
+		obj_layer.remove(new_data_obj)	# Remove the element temporarily
 
+	obj_layer.insert(0, new_data_obj)	# Insert it back at the top
+	new_data_obj.set('name', obj_name)
 
 	# Set attributes
-	attributes = {
-		'id': "0", 
-		'name': OBJ_NAME_EXPORT, 
-		'type': "9", 
-		'x': "-32",
-		'y': "0", 
-		'width': "16",
-		'height': "16"
-	}
-	for key, value in attributes.items(): new_data_obj.set(key, value)
-
-
-	# Add node data as properties
-	for i in range(len(list_nodes)):
-		new_name = f"node_{i}"
-		str_vertices = f"{list_nodes[i][0]},{list_nodes[i][1]}"
-		tiled_utils.SetPropertyOnObject(new_data_obj, new_name, str_vertices)
-
-	# Add route data as properties
-	for i in range(len(list_route)):
-		if is_route_overlap[i]: continue	# Skip entirely if is redundant
-		new_name = f"route_{i}"
-		str_vertices = f"{list_route[i][0]},{list_route[i][1]}"
-		if is_route_closed[i]: str_vertices += f",{is_route_closed[i]}"	# Add extra for Maybe-Routes
-		tiled_utils.SetPropertyOnObject(new_data_obj, new_name, str_vertices)
-
-	log.Must(f"    Data exported successfully")
+	return new_data_obj
 
 
 

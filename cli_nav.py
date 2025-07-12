@@ -17,8 +17,8 @@ import logic.standalone.navigation as main_logic
 '''Adjustable Configurations'''
 
 # In-editor object layers for nodes & routes
-layer_name_node  = "_nav_nodes"
-layer_name_route = "_nav_routes"
+layer_name_node  = "navigation"
+layer_name_route = "navigation"
 
 
 # All objects in this layer cannot be passed through
@@ -36,6 +36,10 @@ list_object_name = [
 # Threshold value for determining redundant routes
 threshold_redundance = 0.9
 
+# Exported Object & Layer
+obj_name_default = "TRAVEL_ROUTES_MAP"
+layer_name_export = "navigation"
+
 
 
 
@@ -46,7 +50,9 @@ passed_arguments = (
 	layer_name_route, 
 	layer_name_collision, 
 	list_object_name, 
-	threshold_redundance
+	threshold_redundance, 
+	obj_name_default, 
+	layer_name_export
 )
 
 
