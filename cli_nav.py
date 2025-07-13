@@ -55,7 +55,7 @@ passed_arguments = (
 	layer_name_export
 )
 
-config_calculate_dist = False
+config_calculate_dist = True
 
 
 
