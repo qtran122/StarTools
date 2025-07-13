@@ -55,6 +55,8 @@ passed_arguments = (
 	layer_name_export
 )
 
+config_calculate_dist = False
+
 
 
 
@@ -62,9 +64,10 @@ passed_arguments = (
 #--------------------------------------------------#
 '''Main'''
 
-arg_description = 'Process a tiled level XML and <TBA>'
+arg_description = 'Process a tiled level XML and generate routes for NavigationLogic.cs'
 arg_help1 = 'Name of the tiled level XML'
 arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
+arg_help3 = 'If provided, OWP would be treated as solid polygon, otherwise ignore OWP'
 
 
 
@@ -73,6 +76,7 @@ def main():
 	parser = argparse.ArgumentParser(description = arg_description)
 	parser.add_argument('filename', type=str, help = arg_help1)
 	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+	parser.add_argument('--owp', action='store_true', help = arg_help3)
 	args = parser.parse_args()
 	log.SetVerbosityLevel(args.v)
 
@@ -80,6 +84,8 @@ def main():
 	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
 	# Main Logic
+	main_logic.ConfigIgnoreOWP(args.owp)
+	main_logic.ConfigCalculateRouteLength(config_calculate_dist)
 	main_logic.logic(playdo, passed_arguments)
 
 	# Flush changes to File!

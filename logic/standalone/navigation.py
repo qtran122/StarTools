@@ -49,6 +49,8 @@ layer_name_export = "navigation"
 
 
 '''Other Variables'''
+config_ignore_owp     = True	# Whether OWP are treated as solid obejcts/polygons
+config_calculate_dist = True	# Whether the meta-data calculate the length of each route
 CONFIG_SHOW_REDUNDANT = False	# Whether redundant routes are shown
 CONFIG_PRINT_NODE     = False	# Whether meta-data for nodes are generated
 
@@ -62,12 +64,31 @@ list_dist = []	# [ float ]
 is_route_closed = []	# [ bool ], for keepsing track of whether the route can be possible
 is_route_overlap = []	# [ bool ], for keepsing track of redundant routes
 
+default_exported_attribtue = {
+	'id': "0", 
+	'type': "9", 
+	'x': "0",
+	'y': "-80", 
+	'width': "64",
+	'height': "64"
+}
+
 
 
 
 
 #--------------------------------------------------#
 '''Public Functions'''
+
+def ConfigIgnoreOWP(b):
+	global config_ignore_owp
+	config_ignore_owp = b
+
+def ConfigCalculateRouteLength(b):
+	global config_calculate_dist
+	config_calculate_dist = b
+
+
 
 def logic(playdo, passed_arguments):
 	log.Must("Constructing paths...")
@@ -139,14 +160,19 @@ def _ParseLevel(playdo):
 				list_nodes.append( (new_x, new_y) )
 
 		# Solid Collision
-		if layer.get('name') == layer_name_collision:
-			for obj in layer: list_collision1.append(obj)
+		if layer.get('name').startswith(layer_name_collision):
+			for obj in layer:
+				if obj.get("name") in list_object_name:
+					list_collision2.append(obj)
+				else:
+					list_collision1.append(obj)
 
 		# Variable Collision, e.g. BB
-		if not layer.get('name').startswith('objects'): continue
-		for obj in layer:
-			if obj.get('name') in list_object_name:
-				list_collision2.append(obj)
+		if layer.get('name').startswith('objects'):
+			for obj in layer:
+				if obj.get('name') in list_object_name:
+					list_collision2.append(obj)
+
 	log.Info(f"    {len(list_nodes)} nodes found in \"{layer_name_node}\"")
 	log.Info(f"    {len(list_collision1)} collision found")
 	log.Info(f"    {len(list_collision2)} objects found")
@@ -156,7 +182,9 @@ def _ParseLevel(playdo):
 	log.Info(f"  Converting collision objects into vertices & polygon...")
 	for obj in list_collision1:
 		vertices = tiled_utils.GetVerticesFromObject(obj)
-		if len(vertices) <= 2: continue
+		if obj.find('polyline') is not None:
+			if not config_ignore_owp: continue
+			vertices = _LineToPolygon(vertices)
 		polygon = Polygon(vertices)
 		list_polygon1.append(polygon)
 		log.Extra(f"    {len(vertices)} pts - {vertices}")
@@ -168,6 +196,15 @@ def _ParseLevel(playdo):
 		polygon = Polygon(vertices)
 		list_polygon2.append(polygon)
 		log.Extra(f"    {len(vertices)} pts - {vertices}")
+
+def _LineToPolygon(vertices):
+	'''Effectively thicken the polyline so it's treated as a polygon'''
+	len_og = len(vertices)
+	for i in range(len_og):
+		new_x = vertices[len_og-i-1][0] + 0.1
+		new_y = vertices[len_og-i-1][1] + 0.1
+		vertices.append( (new_x, new_y) )
+	return vertices
 
 
 
@@ -353,7 +390,9 @@ def _ExportCondenseData(playdo):
 		y2 = list_nodes[ list_route[i][1] ][1]
 		str_dist = ""
 		if is_route_closed[i]: str_dist = "-"	# Negative for Maybe-Routes
-		str_dist += f"{int( math.sqrt((x2 - x1)**2 + (y2 - y1)**2) / 16 + 0.5 )}"
+		if config_calculate_dist:
+			str_dist += f"{int( math.sqrt((x2 - x1)**2 + (y2 - y1)**2) / 16 + 0.5 )}"
+		else:   str_dist += "100"
 		tiled_utils.SetPropertyOnObject(obj_route, new_name, str_dist)
 	log.Must(f"    Data for Routes exported successfully")
 
@@ -363,8 +402,7 @@ def _ExportCondenseData(playdo):
 	obj_node.set("y", "32")
 	for i in range(len(list_nodes)):
 		new_name = f"{i}"
-		# TODO modify the values into Unity units, i.e. based on level's width & height
-		str_vertices = f"{list_nodes[i][0]},{list_nodes[i][1]}"
+		str_vertices = f"{int( list_nodes[i][0]/16 )},{int( list_nodes[i][1]/16 )}"
 		tiled_utils.SetPropertyOnObject(obj_node, new_name, str_vertices)
 	log.Must(f"    Data for Nodes exported successfully")
 
@@ -383,14 +421,7 @@ def _MakeXmlObject(playdo, obj_name):
 	if len(temp_list) == 0:
 		log.Info(f"    Creating new meta object...")
 		new_data_obj = ET.Element('object', {})
-		attributes = {
-			'id': "0", 
-			'type': "9", 
-			'x': "-32",
-			'y': "0", 
-			'width': "16",
-			'height': "16"
-		}
+		attributes = default_exported_attribtue
 		for key, value in attributes.items(): new_data_obj.set(key, value)
 	else:
 		new_data_obj = temp_list[0]
