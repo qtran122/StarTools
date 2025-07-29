@@ -143,21 +143,36 @@ def _SetCliArgumentsToGlobal(passed_arguments):
 def _ParseLevel(playdo):
 	log.Must(f"  Checking for nodes & collisions in level...")
 
-
 	# Register all collision objects
+	list_duplicate  = []	# Temp array - Duplicated Nodes, would be automatically deleted
 	list_collision1 = []	# Temp array - Solid Collision
 	list_collision2 = []	# Temp array - Potential Collision, e.g. BB
 	list_object_layers = playdo.GetAllObjectgroup()
 	for layer in list_object_layers:
-		# Nodes
+		# Nodes & "Manual Blockage"
 		if layer.get('name') == layer_name_node:
 			for obj in layer:
-				if obj.find('ellipse') is None: continue
+				# All ellipses are treated as nodes,
+				#  polylines, 0-width and 0-height rectangles are ignored,
+				#  otherwise everything else are treated as solid collision
+				if obj.find('ellipse') is None:
+					if obj.find('polyline') is not None: continue
+					list_collision1.append(obj)
+					continue
+
+				# Register new nodes' coordinates
 				new_x = int(obj.get("x"))
 				new_y = int(obj.get("y"))
 				if 'width'  in obj.attrib: new_x += int(obj.get("width"))/2
 				if 'height' in obj.attrib: new_y += int(obj.get("height"))/2
-				list_nodes.append( (new_x, new_y) )
+
+				# Append only if it's not already in list, i.e. no duplicates at the same coordinate
+				is_duplicate = False
+				for node in list_nodes:
+					if node[0] == new_x and node[1] == new_y: is_duplicate = True
+				if is_duplicate: list_duplicate.append(obj)
+				else: list_nodes.append( (new_x, new_y) )
+			for obj in list_duplicate: layer.remove(obj)
 
 		# Solid Collision
 		if layer.get('name').startswith(layer_name_collision):
@@ -181,18 +196,21 @@ def _ParseLevel(playdo):
 	# Convert collisions into polygon for later uses
 	log.Info(f"  Converting collision objects into vertices & polygon...")
 	for obj in list_collision1:
+		if _ObjectOutOfBound(obj, playdo.map_width, playdo.map_height): continue
 		vertices = tiled_utils.GetVerticesFromObject(obj)
 		if obj.find('polyline') is not None:
 			if not config_ignore_owp: continue
 			vertices = _LineToPolygon(vertices)
+		if len(vertices) < 3: continue	# Single-point object is not accepted
 		polygon = Polygon(vertices)
 		list_polygon1.append(polygon)
 		log.Extra(f"    {len(vertices)} pts - {vertices}")
 
 	log.Info(f"  Converting BB objects into vertices & polygon...")
 	for obj in list_collision2:
+		if _ObjectOutOfBound(obj, playdo.map_width, playdo.map_height): continue
 		vertices = tiled_utils.GetVerticesFromObject(obj)
-		if len(vertices) <= 2: continue
+		if len(vertices) < 3: continue	# Single-point object is not accepted
 		polygon = Polygon(vertices)
 		list_polygon2.append(polygon)
 		log.Extra(f"    {len(vertices)} pts - {vertices}")
@@ -205,6 +223,33 @@ def _LineToPolygon(vertices):
 		new_y = vertices[len_og-i-1][1] + 0.1
 		vertices.append( (new_x, new_y) )
 	return vertices
+
+def _ObjectOutOfBound(obj, map_w, map_h):
+	'''It checks the 4 corners of each object to see if they are out of bound'''
+	return False # Turns out this function is not actually needed... orz
+
+	# Invalid object
+	if obj.get("x") == None or obj.get("y") == None: return True
+
+	# Set coordinate range, this tool uses pixels instead of Tiled units
+	map_w = map_w * 16
+	map_h = map_h * 16
+
+	# Coordinates is negative (top-left)
+	x1 = int(obj.get("x"))
+	y1 = int(obj.get("y"))
+	if not( 0 < x1 and x1 < map_w ): return True
+	if not( 0 < y1 and y1 < map_h ): return True
+
+	# Coordinates is negative (bottom-right)
+	if obj.get("width")  == None: return False
+	if obj.get("height") == None: return False
+	x2 = x1 + int(obj.get("width"))  * 16
+	y2 = y1 + int(obj.get("height")) * 16
+	if not( 0 < x2 and x2 < map_w ): return True
+	if not( 0 < y2 and y2 < map_h ): return True
+
+	return False
 
 
 
@@ -272,10 +317,17 @@ def _CheckRedundantRoutes():
 				dist2 = list_dist[j]
 				dist3 = list_dist[k]
 				longest_dist = _IsLongestSideRedundant(dist1, dist2, dist3)
+#				log.Extra(f'    {i} {j} {k} - {round(dist1)} {round(dist2)} {round(dist3)} - {round(longest_dist)}')
 				if longest_dist < 0: continue
 				elif longest_dist == dist1: is_route_overlap[i] = True
 				elif longest_dist == dist2: is_route_overlap[j] = True
 				elif longest_dist == dist3: is_route_overlap[k] = True
+
+				continue
+				if   longest_dist == dist1: log.Extra(f'{i} - {j},{k}')
+				elif longest_dist == dist2: log.Extra(f'{j} - {i},{k}')
+				elif longest_dist == dist3: log.Extra(f'{k} - {i},{j}')
+
 	log.Info(f'    Total of {sum(is_route_overlap)} routes are found redundant')
 
 
@@ -380,7 +432,7 @@ def _ExportCondenseData(playdo):
 
 
 	# Add route data as properties
-	obj_route = _MakeXmlObject(playdo, f"{obj_name_default}_{len(list_nodes)}")
+	obj_route = _MakeXmlObject(playdo, f"{obj_name_default}", f"_{len(list_nodes)}")
 	for i in range(len(list_route)):
 		if is_route_overlap[i]: continue	# Skip entirely if is redundant
 		new_name = f"{_NodeId2Name(list_route[i][0])}_{_NodeId2Name(list_route[i][1])}"
@@ -413,26 +465,25 @@ def _NodeId2Name(id):
 	if id < 10: return f"0{id}"
 	return f"{id}"
 
-def _MakeXmlObject(playdo, obj_name):
-	# Create new object, TODO just delete the old one outright, instead of replacing?
-	temp_list = playdo.GetAllObjectsWithName(obj_name)
+def _MakeXmlObject(playdo, name_prefix, num_suffix):
+	# If there is an existing meta-data object, delete it
 	obj_layer = playdo.GetObjectGroup(layer_name_export, False)
-	new_data_obj = None
-	if len(temp_list) == 0:
-		log.Info(f"    Creating new meta object...")
-		new_data_obj = ET.Element('object', {})
-		attributes = default_exported_attribtue
-		for key, value in attributes.items(): new_data_obj.set(key, value)
-	else:
-		new_data_obj = temp_list[0]
-		for old_property in list(new_data_obj): # Clears properties without removing old attributes
-			new_data_obj.remove(old_property)
-		obj_layer.remove(new_data_obj)	# Remove the element temporarily
+	for obj in obj_layer:
+		if obj.get("name") == None: continue
+		if not obj.get("name").startswith(name_prefix): continue
+		obj_layer.remove(obj)
+		log.Info(f"    Removing old meta-data object...")
 
-	obj_layer.insert(0, new_data_obj)	# Insert it back at the top
-	new_data_obj.set('name', obj_name)
+	# Create new object, TODO just delete the old one outright, instead of replacing?
+	log.Info(f"    Creating new meta-data object...")
+	new_data_obj = ET.Element('object', {})
+	attributes = default_exported_attribtue
+	for key, value in attributes.items(): new_data_obj.set(key, value)
 
-	# Set attributes
+	# Insert the object, NEEDS to be at the top
+	obj_layer.insert(0, new_data_obj)
+	new_data_obj.set('name', f'{name_prefix}{num_suffix}')
+
 	return new_data_obj
 
 
