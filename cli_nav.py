@@ -34,7 +34,7 @@ list_object_name = [
 ]
 
 # Threshold value for determining redundant routes
-threshold_redundance = 0.9
+threshold_redundance = 0.95
 
 # Exported Object & Layer
 obj_name_default = "TRAVEL_ROUTES_MAP"
