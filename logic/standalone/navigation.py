@@ -11,6 +11,7 @@ USAGE EXAMPLE:
 import math
 import xml.etree.ElementTree as ET
 from shapely.geometry import LineString, Polygon
+from shapely.affinity import translate
 
 import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
@@ -46,13 +47,8 @@ layer_name_export = "navigation"
 
 
 
-
-
-'''Other Variables'''
-config_ignore_owp     = True	# Whether OWP are treated as solid obejcts/polygons
-config_calculate_dist = True	# Whether the meta-data calculate the length of each route
-CONFIG_SHOW_REDUNDANT = False	# Whether redundant routes are shown
-CONFIG_PRINT_NODE     = False	# Whether meta-data for nodes are generated
+'''Local Variables'''
+route_thickness_radius = 1	# Raidus of the minimum thickness for all routes
 
 list_nodes = []		# (int, int) for coordinates
 list_polygon1 = []	# (vertex1, vertex2, ...), where vertex = (int, int) for coordinates
@@ -63,6 +59,15 @@ list_dist = []	# [ float ]
 
 is_route_closed = []	# [ bool ], for keepsing track of whether the route can be possible
 is_route_overlap = []	# [ bool ], for keepsing track of redundant routes
+
+
+
+'''Constants & Configurations'''
+config_ignore_owp      = True	# Whether OWP are treated as solid obejcts/polygons
+config_calculate_dist  = True	# Whether the meta-data calculate the length of each route
+config_route_thickness = True	# Whether the meta-data calculate the length of each route
+CONFIG_SHOW_REDUNDANT  = False	# Whether redundant routes are shown
+CONFIG_PRINT_NODE      = False	# Whether meta-data for nodes are generated
 
 default_exported_attribtue = {
 	'id': "0", 
@@ -126,18 +131,6 @@ def _SetCliArgumentsToGlobal(passed_arguments):
 
 
 #--------------------------------------------------#
-'''WS'''
-
-
-
-
-
-
-
-
-
-
-#--------------------------------------------------#
 '''Parsing the Level'''
 
 def _ParseLevel(playdo):
@@ -165,6 +158,10 @@ def _ParseLevel(playdo):
 				new_y = int(obj.get("y"))
 				if 'width'  in obj.attrib: new_x += int(obj.get("width"))/2
 				if 'height' in obj.attrib: new_y += int(obj.get("height"))/2
+
+				# Update thickness
+				if 'width'  in obj.attrib: _UpdateThickness(int(obj.get("width")))
+				if 'height' in obj.attrib: _UpdateThickness(int(obj.get("height")))
 
 				# Append only if it's not already in list, i.e. no duplicates at the same coordinate
 				is_duplicate = False
@@ -224,6 +221,13 @@ def _LineToPolygon(vertices):
 		vertices.append( (new_x, new_y) )
 	return vertices
 
+def _UpdateThickness(node_width):
+	global route_thickness_radius
+	new_thickness = node_width /2
+	if route_thickness_radius < new_thickness:
+		log.Extra(f'    ! Route thickness requirement updated: {route_thickness_radius} -> {new_thickness}')
+		route_thickness_radius = new_thickness
+
 def _ObjectOutOfBound(obj, map_w, map_h):
 	'''It checks the 4 corners of each object to see if they are out of bound'''
 	return False # Turns out this function is not actually needed... orz
@@ -266,11 +270,11 @@ def _CheckAllRoutes():
 		end_point = list_nodes[i]
 		for j in range(i):
 			start_point = list_nodes[j]
-			line = LineString([start_point, end_point])
-			# TODO makes the scanning line "thick"?
 
-			# This checks if line intersects with any solid collision
+			# Checks if line intersects with any solid collision
+			line = LineString([start_point, end_point])
 			if _CheckIntersectAnyPolygon(line, list_polygon1): continue
+
 			log.Extra(f"    {j},{i} - ({start_point} , {end_point})")
 			list_route.append((j,i))
 
@@ -281,8 +285,20 @@ def _CheckAllRoutes():
 	log.Info(f"     Among them, {sum(is_route_closed)} may be obstructed by BB, etc.")
 
 def _CheckIntersectAnyPolygon(line, list_curr_polygon):
-	for polygon in list_curr_polygon:
-		if polygon.intersects(line): return True
+	if not config_route_thickness:
+		for polygon in list_curr_polygon:
+			if polygon.intersects(line): return True
+	else:
+		# Do 4 checks to mimic the line being "thick"
+		line1 = translate(line, xoff =  route_thickness_radius)
+		line2 = translate(line, xoff = -route_thickness_radius)
+		line3 = translate(line, yoff =  route_thickness_radius)
+		line4 = translate(line, yoff = -route_thickness_radius)
+		for polygon in list_curr_polygon:
+			if polygon.intersects(line1): return True
+			if polygon.intersects(line2): return True
+			if polygon.intersects(line3): return True
+			if polygon.intersects(line4): return True
 	return False;
 
 
