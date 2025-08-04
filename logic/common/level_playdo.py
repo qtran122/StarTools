@@ -110,6 +110,27 @@ class LevelPlayDo():
         log.Extra(f'-- level_playdo.py : number tile layers found : {len(list_tiles2d)}')
         return list_tiles2d
 
+
+
+    def GetBlankTiles2d(self):
+        '''Return an empty Tiles2d that matches the current playdo's dimension'''
+        # Copy from GetAllTiles2d() to fetch valid graphic tilelayer
+        new_tiles2d = []
+        for layer in self.level_root.findall(".//layer"):
+            data = layer.find('data').text.strip()
+            tile_2d_map = tiled_utils.DecodeIntoTiles2d(data, self.map_width)
+            if tile_2d_map is None: continue
+            new_tiles2d = copy.deepcopy(tile_2d_map)
+            break
+
+        # Wipes it clean before returning
+        for row in range(self.map_height):
+          for col in range(self.map_width):
+            new_tiles2d[row][col] = 0
+        return new_tiles2d
+
+
+
     def GetAllObjectgroup(self, is_print = True):
         '''Fetches all object layers and returns them as a list of XML objects'''
         list_objectgroup = []
@@ -135,11 +156,14 @@ class LevelPlayDo():
             if tile_layer_name == layer.get('name'):
                 tile_layer_to_rewrite = layer
                 break
+
         if tile_layer_to_rewrite is None:
-            raise Exception(f"level_playdo.py : SetTiles2d was called for '{tile_layer_name}'," 
-                + f" but '{tile_layer_name}' does not exist!")
+            tile_layer_to_rewrite = self.AddNewTileLayer(tile_layer_name, "")
+#            raise Exception(f"level_playdo.py : SetTiles2d was called for '{tile_layer_name}'," 
+#                + f" but '{tile_layer_name}' does not exist!")
 
         tile_layer_to_rewrite.find('data').text = tiled_utils.EncodeIntoZlibString64(new_tiles2d)
+
 
 
     def GetTilesHashSet(self, tile_layer_name):
@@ -215,6 +239,7 @@ class LevelPlayDo():
         new_tile_layer_data = ET.SubElement(new_tile_layer, "data", data_attributes)
         new_tile_layer_data.text = encoded_data_str
         self.level_root.append(new_tile_layer)
+        return new_tile_layer
 
 
 
