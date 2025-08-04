@@ -207,7 +207,7 @@ class LevelPlayDo():
         
         if attrib_properties is not None:
             for obj in new_object_group.findall('object'):
-                _AddPropertiesToObject(obj, attrib_properties)
+                AddPropertiesToObject(obj, attrib_properties)
         
         self.level_root.append(new_object_group)
 
@@ -306,8 +306,14 @@ class LevelPlayDo():
 #--------------------------------------------------#
 '''...'''        
 
-def _AddPropertiesToObject(tiled_object, properties):
-    '''Helper function. Adds properties to a tiled object
+def AddPropertiesToObject(tiled_object, properties):
+    '''Helper function that adds properties into a tiled object.
+    Note that properties is a dictionary. Example Usage:
+    
+        properties_dict = {'A': '1', 'B':'2'}
+        play.AddPropertiesToObject(tiled_obj, properties_dict)
+        
+    The above two lines will give tiled_obj the properties A and B, which map to 1 & 2 respectively
     '''
     prop_elem = tiled_object.find('properties')
     if prop_elem is None:

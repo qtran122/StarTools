@@ -5,7 +5,7 @@ from PIL import Image
 # Take FOLDER and make it a GIF
 
 # User-configurable fields
-INPUT_FOLDER = r"C:\Users\qtran\Desktop\XX"  # Replace with your folder path
+INPUT_FOLDER = r"C:\Users\qtran\Desktop\PROJECT Whale Nebula\TexturePacking\SyncedFolder(Enemy1)\hazard\quake"  # Replace with your folder path
 FRAME_DURATION = 70  # Duration of each frame in milliseconds
 
 def extract_number(filename):
