@@ -16,7 +16,6 @@ import logic.standalone.text2tile as main_logic
 '''Adjustable Configurations'''
 
 # In-editor layer and object names
-layer_name_text      = "_text_notes"
 layer_name_export    = "fg_text2tile"
 object_name          = "TEXT_TO_TILES"
 property_name_string = "txt2tile_content"
@@ -27,7 +26,6 @@ property_name_string = "txt2tile_content"
 
 # Passing configurations to logic
 passed_arguments = (
-	layer_name_text, 
 	layer_name_export,
 	object_name,
 	property_name_string

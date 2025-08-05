@@ -36,7 +36,7 @@ def WriteSfxNameIntoTiledLevel():
         play.AddPropertiesToObject(txt2tile_obj, properties_dict)
     
     # Next, use text2tile library to process those object updates into graphical tile layer updates
-    t2t_args = ("_text_notes", "fg_text2tile", "TEXT_TO_TILES","txt2tile_content")
+    t2t_args = ("fg_text2tile", "TEXT_TO_TILES", "txt2tile_content")
     t2t.logic(playdo, t2t_args)
     
     # Flush changes
