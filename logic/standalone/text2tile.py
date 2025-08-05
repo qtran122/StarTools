@@ -11,16 +11,10 @@ import logic.common.tiled_utils as tiled_utils
 #--------------------------------------------------#
 '''Variables'''
 
-'''Default values for the CLI-passed arguments'''
-# In-editor layer and object names
-layer_name_text      = "_text_notes"
-layer_name_export    = "fg_text2tile"
-object_name          = "TEXT_TO_TILES"
-property_name_string = "txt2tile_content"
-
 
 
 '''Local Variables'''
+cli_arguments = []
 list_obj_data = []	# ( (x,y), width, text_string )
 dict_char_index = {}	# KVP: char - Tile ID
 
@@ -43,26 +37,13 @@ def logic(playdo, passed_arguments):
 	log.Must("Drawing characters into tilelayer from XML objects...")
 	start_time = time.time()
 
-	_SetCliArgumentsToGlobal(passed_arguments)
+	for arg in passed_arguments: cli_arguments.append(arg)
 	_ProcessPlaydo(playdo)
 	_SetCharacterIndex()
 	_MakeTilelayer(playdo)
 
 	log.Must(f"~~End of All Procedures~~ ({round( time.time()-start_time, 3 )}s)")
 	log.Extra("")
-
-
-
-def _SetCliArgumentsToGlobal(passed_arguments):
-	global layer_name_text
-	global layer_name_export
-	global object_name
-	global property_name_string
-
-	layer_name_text      = passed_arguments[0]
-	layer_name_export    = passed_arguments[1]
-	object_name          = passed_arguments[2]
-	property_name_string = passed_arguments[3]
 
 
 
@@ -74,10 +55,13 @@ def _SetCliArgumentsToGlobal(passed_arguments):
 def _ProcessPlaydo(playdo):
 	log.Must(f"  Processing playdo for text2file objects...")
 
+	# CLI Arguments
+	object_name          = cli_arguments[1]
+	property_name_string = cli_arguments[2]
+
 	# Register all valid objects
-	obj_layer = playdo.GetObjectGroup(layer_name_text, False)
-	for obj in obj_layer:
-		if obj.get("name") != object_name: continue
+	list_obj = playdo.GetAllObjectsWithName(object_name)
+	for obj in list_obj:
 		if obj.get("width") == None: continue
 
 		text_content = tiled_utils.GetPropertyFromObject(obj, property_name_string)
@@ -145,6 +129,9 @@ def _SetCharacterIndex():
 
 def _MakeTilelayer(playdo):
 	log.Must(f"  Printing characters onto playdo...")
+
+	# CLI Arguments
+	layer_name_export    = cli_arguments[0]
 
 	# Wipe the existing layer if already exists
 	new_tiles2d = playdo.GetBlankTiles2d()
