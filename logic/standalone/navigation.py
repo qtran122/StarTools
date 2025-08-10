@@ -31,6 +31,8 @@ list_polygon2 = []	#  ^
 
 list_route = []	# [ (int, int) ], where each int keeps track of the node ID
 list_dist = []	# [ float ]
+list_thick1 = []	# [ ( (int,int), (int,int) ) ], stores the start & end points coordinates
+list_thick2 = []	#  ^ same
 
 is_route_closed = []	# [ bool ], for keepsing track of whether the route can be possible
 is_route_overlap = []	# [ bool ], for keepsing track of redundant routes
@@ -38,7 +40,8 @@ is_route_overlap = []	# [ bool ], for keepsing track of redundant routes
 
 
 '''Constants & Configurations'''
-CONFIG_ROUTE_THICKNESS = True	# Whether the meta-data calculate the length of each route
+CONFIG_ROUTE_THICKNESS = True	# Whether the collision checks take "node width" into consideration
+CONFIG_SHOW_THICKNESS  = True	# Whether to visualise route-thickness in the output layer
 CONFIG_SHOW_REDUNDANT  = False	# Whether redundant routes are shown
 CONFIG_PRINT_NODE      = False	# Whether meta-data for nodes are generated
 
@@ -221,18 +224,18 @@ def _CheckAllRoutes():
 			start_point = list_nodes[j]
 
 			# Checks if line intersects with any solid collision
-			if _CheckIntersectAnyPolygon(start_point, end_point, list_polygon1): continue
+			if _CheckIntersectAnyPolygon(start_point, end_point, list_polygon1, True): continue
 
 			log.Extra(f"    {j},{i} - ({start_point} , {end_point})")
 			list_route.append((j,i))
 
 			# This checks if line intersects with any movable objects
-			is_route_closed.append(_CheckIntersectAnyPolygon(start_point, end_point, list_polygon2))
+			is_route_closed.append(_CheckIntersectAnyPolygon(start_point, end_point, list_polygon2, False))
 
 	log.Info(f"    Total of {len(list_route)} routes are viable")
 	log.Info(f"     Among them, {sum(is_route_closed)} may be obstructed by BB, etc.")
 
-def _CheckIntersectAnyPolygon(start_point, end_point, list_curr_polygon):
+def _CheckIntersectAnyPolygon(start_point, end_point, list_curr_polygon, is_append):
 	if not CONFIG_ROUTE_THICKNESS:
 		line = LineString([start_point, end_point])
 		for polygon in list_curr_polygon:
@@ -245,14 +248,14 @@ def _CheckIntersectAnyPolygon(start_point, end_point, list_curr_polygon):
 		perpendicular = (y_diff/magnitude, -x_diff/magnitude)
 
 		# Offset the nodes based on its width, this is less computational heavy than finding tangents
-		pt_1a_x = start_point[0] + perpendicular[0] * start_point[2]
-		pt_1a_y = start_point[1] + perpendicular[1] * start_point[2]
-		pt_1b_x = start_point[0] - perpendicular[0] * start_point[2]
-		pt_1b_y = start_point[1] - perpendicular[1] * start_point[2]
-		pt_2a_x = end_point[0] + perpendicular[0] * end_point[2]
-		pt_2a_y = end_point[1] + perpendicular[1] * end_point[2]
-		pt_2b_x = end_point[0] - perpendicular[0] * end_point[2]
-		pt_2b_y = end_point[1] - perpendicular[1] * end_point[2]
+		pt_1a_x = int(start_point[0] + perpendicular[0] * start_point[2])
+		pt_1a_y = int(start_point[1] + perpendicular[1] * start_point[2])
+		pt_1b_x = int(start_point[0] - perpendicular[0] * start_point[2])
+		pt_1b_y = int(start_point[1] - perpendicular[1] * start_point[2])
+		pt_2a_x = int(end_point[0] + perpendicular[0] * end_point[2])
+		pt_2a_y = int(end_point[1] + perpendicular[1] * end_point[2])
+		pt_2b_x = int(end_point[0] - perpendicular[0] * end_point[2])
+		pt_2b_y = int(end_point[1] - perpendicular[1] * end_point[2])
 		pt_1a = (pt_1a_x, pt_1a_y)
 		pt_1b = (pt_1b_x, pt_1b_y)
 		pt_2a = (pt_2a_x, pt_2a_y)
@@ -264,6 +267,12 @@ def _CheckIntersectAnyPolygon(start_point, end_point, list_curr_polygon):
 		for polygon in list_curr_polygon:
 			if polygon.intersects(line1): return True
 			if polygon.intersects(line2): return True
+
+		# Append the (viable) offset lines so that they can be visualised later
+		if is_append:
+			list_thick1.append( (pt_1a, pt_2a) )
+			list_thick2.append( (pt_1b, pt_2b) )
+
 	return False;
 
 
@@ -370,28 +379,51 @@ def _VisualiseNodesAndRoutes(playdo):
 	for obj in list(layer_route):
 		if obj.find('polyline') is None: continue	# Skip if object is not route
 		layer_route.remove(obj)				# Removes all existing routes
+
+	if CONFIG_ROUTE_THICKNESS and CONFIG_SHOW_THICKNESS:
+		_SetThickRouteObjects(layer_route)
+	else:
+		_SetLineRouteObjects(layer_route)
+
+
+
+def _SetLineRouteObjects(layer_route):
 	for i in range(len(list_route)):
 		pt_beg = list_nodes[ list_route[i][0] ]
 		pt_end = list_nodes[ list_route[i][1] ]
-		attributes = {
-			'id': "0", # TODO?
-#			'name' : str(i), 
-			'type' : "4", 
-			'x': "0",
-			'y': "0"
-		}
-		new_route_obj = ET.Element('object', attributes)
-		str_polypoint = f"{pt_beg[0]},{pt_beg[1]} {pt_end[0]},{pt_end[1]}"
-		tiled_utils.SetPolyPointsOnObject( new_route_obj, str_polypoint )
+		_SetIndividualRouteObject(layer_route, i, pt_beg, pt_end)
 
-		if is_route_closed[i]:  new_route_obj.set('type', "1")
-		if is_route_overlap[i]:
-			if CONFIG_SHOW_REDUNDANT:
-				new_route_obj.set('type', "0")
-			else:
-				continue
+def _SetThickRouteObjects(layer_route):
+	for i in range(len(list_route)):
+		pt_beg = list_thick1[i][0]
+		pt_end = list_thick1[i][1]
+		_SetIndividualRouteObject(layer_route, i, pt_beg, pt_end)
+		pt_beg = list_thick2[i][0]
+		pt_end = list_thick2[i][1]
+		_SetIndividualRouteObject(layer_route, i, pt_beg, pt_end)
 
-		layer_route.append(new_route_obj)
+def _SetIndividualRouteObject(layer_route, route_id, pt1, pt2):
+	pt_beg = pt1
+	pt_end = pt2
+	attributes = {
+		'id': "0", # TODO?
+#		'name' : str(route_id), 
+		'type' : "4", 
+		'x': "0",
+		'y': "0"
+	}
+	new_route_obj = ET.Element('object', attributes)
+	str_polypoint = f"{pt_beg[0]},{pt_beg[1]} {pt_end[0]},{pt_end[1]}"
+	tiled_utils.SetPolyPointsOnObject( new_route_obj, str_polypoint )
+
+	if is_route_closed[route_id]:  new_route_obj.set('type', "1")
+	if is_route_overlap[route_id]:
+		if CONFIG_SHOW_REDUNDANT:
+			new_route_obj.set('type', "0")
+		else:
+			return
+
+	layer_route.append(new_route_obj)
 
 
 
