@@ -8,6 +8,7 @@ USAGE EXAMPLE:
     navigation.logic(playdo, passed_arguments)
 '''
 
+import time
 import math
 import xml.etree.ElementTree as ET
 from shapely.geometry import LineString, Polygon
@@ -20,49 +21,29 @@ import logic.common.tiled_utils as tiled_utils
 
 
 
-'''Default values for the CLI-passed arguments'''
-# In-editor object layers for nodes & routes
-layer_name_node  = "_nav_nodes"
-layer_name_route = "_nav_routes"
+'''Local Variables'''
+cli_arguments = []
+cli_configs = []
 
-
-# All objects in this layer cannot be passed through
-# OWP/polylines are currently ignored, TODO mark as impassable?
-layer_name_collision = "collisions"
-
-
-# All objects across all object layers with the following names
-#  are treated as collision that may potentially block routes
-list_object_name = [
-]
-
-
-# Threshold value for determining redundant routes
-threshold_redundance = 0.9
-
-# Exported Object & Layer
-obj_name_default = "TRAVEL_ROUTES_MAP"
-layer_name_export = "navigation"
-
-
-
-
-
-'''Other Variables'''
-config_ignore_owp     = True	# Whether OWP are treated as solid obejcts/polygons
-config_calculate_dist = True	# Whether the meta-data calculate the length of each route
-CONFIG_SHOW_REDUNDANT = False	# Whether redundant routes are shown
-CONFIG_PRINT_NODE     = False	# Whether meta-data for nodes are generated
-
-list_nodes = []		# (int, int) for coordinates
+list_nodes = []		# (x-pos, y-pos, node-thickness), measured in pixels (i.e. int)
 list_polygon1 = []	# (vertex1, vertex2, ...), where vertex = (int, int) for coordinates
 list_polygon2 = []	#  ^
 
 list_route = []	# [ (int, int) ], where each int keeps track of the node ID
 list_dist = []	# [ float ]
+list_thick1 = []	# [ ( (int,int), (int,int) ) ], stores the start & end points coordinates
+list_thick2 = []	#  ^ same
 
 is_route_closed = []	# [ bool ], for keepsing track of whether the route can be possible
 is_route_overlap = []	# [ bool ], for keepsing track of redundant routes
+
+
+
+'''Constants & Configurations'''
+CONFIG_ROUTE_THICKNESS = True	# Whether the collision checks take "node width" into consideration
+CONFIG_SHOW_THICKNESS  = True	# Whether to visualise route-thickness in the output layer
+CONFIG_SHOW_REDUNDANT  = False	# Whether redundant routes are shown
+CONFIG_PRINT_NODE      = False	# Whether meta-data for nodes are generated
 
 default_exported_attribtue = {
 	'id': "0", 
@@ -80,58 +61,25 @@ default_exported_attribtue = {
 #--------------------------------------------------#
 '''Public Functions'''
 
-def ConfigIgnoreOWP(b):
-	global config_ignore_owp
-	config_ignore_owp = b
-
-def ConfigCalculateRouteLength(b):
-	global config_calculate_dist
-	config_calculate_dist = b
+def SetConfigs(passed_configurations):
+	for arg in passed_configurations: cli_configs.append(arg)
 
 
 
 def logic(playdo, passed_arguments):
-	log.Must("Constructing paths...")
-	_SetCliArgumentsToGlobal(passed_arguments)
+	log.Extra("")
+	log.Must("Constructing paths from provided nodes...")
+	start_time = time.time()
 
+	for arg in passed_arguments: cli_arguments.append(arg)
 	_ParseLevel(playdo)
 	_CheckAllRoutes()
 	_CheckRedundantRoutes()
 	_VisualiseNodesAndRoutes(playdo)
 	_ExportCondenseData(playdo)
 
-	log.Must("~~End of All Procedures~~")
-
-
-
-def _SetCliArgumentsToGlobal(passed_arguments):
-	global layer_name_node
-	global layer_name_route
-	global layer_name_collision
-	global list_object_name
-	global threshold_redundance
-	global obj_name_default
-	global layer_name_export
-
-	layer_name_node      = passed_arguments[0]
-	layer_name_route     = passed_arguments[1]
-	layer_name_collision = passed_arguments[2]
-	list_object_name     = passed_arguments[3]
-	threshold_redundance = passed_arguments[4]
-	obj_name_default     = passed_arguments[5]
-	layer_name_export    = passed_arguments[6]
-
-
-
-
-
-#--------------------------------------------------#
-'''WS'''
-
-
-
-
-
+	log.Must(f"~~End of All Procedures~~ ({round( time.time()-start_time, 3 )}s)")
+	log.Extra("")
 
 
 
@@ -142,6 +90,10 @@ def _SetCliArgumentsToGlobal(passed_arguments):
 
 def _ParseLevel(playdo):
 	log.Must(f"  Checking for nodes & collisions in level...")
+	layer_name_node      = cli_arguments[0]
+	layer_name_collision = cli_arguments[2]
+	list_object_name     = cli_arguments[3]
+	config_ignore_owp = cli_configs[1]
 
 	# Register all collision objects
 	list_duplicate  = []	# Temp array - Duplicated Nodes, would be automatically deleted
@@ -166,12 +118,16 @@ def _ParseLevel(playdo):
 				if 'width'  in obj.attrib: new_x += int(obj.get("width"))/2
 				if 'height' in obj.attrib: new_y += int(obj.get("height"))/2
 
+				# Update thickness
+				node_size = 16/2
+				if 'width'  in obj.attrib: node_size = int(obj.get("width"))/2
+
 				# Append only if it's not already in list, i.e. no duplicates at the same coordinate
 				is_duplicate = False
 				for node in list_nodes:
 					if node[0] == new_x and node[1] == new_y: is_duplicate = True
 				if is_duplicate: list_duplicate.append(obj)
-				else: list_nodes.append( (new_x, new_y) )
+				else: list_nodes.append( (new_x, new_y, node_size) )
 			for obj in list_duplicate: layer.remove(obj)
 
 		# Solid Collision
@@ -266,23 +222,57 @@ def _CheckAllRoutes():
 		end_point = list_nodes[i]
 		for j in range(i):
 			start_point = list_nodes[j]
-			line = LineString([start_point, end_point])
-			# TODO makes the scanning line "thick"?
 
-			# This checks if line intersects with any solid collision
-			if _CheckIntersectAnyPolygon(line, list_polygon1): continue
+			# Checks if line intersects with any solid collision
+			if _CheckIntersectAnyPolygon(start_point, end_point, list_polygon1, True): continue
+
 			log.Extra(f"    {j},{i} - ({start_point} , {end_point})")
 			list_route.append((j,i))
 
 			# This checks if line intersects with any movable objects
-			is_route_closed.append(_CheckIntersectAnyPolygon(line, list_polygon2))
+			is_route_closed.append(_CheckIntersectAnyPolygon(start_point, end_point, list_polygon2, False))
 
 	log.Info(f"    Total of {len(list_route)} routes are viable")
 	log.Info(f"     Among them, {sum(is_route_closed)} may be obstructed by BB, etc.")
 
-def _CheckIntersectAnyPolygon(line, list_curr_polygon):
-	for polygon in list_curr_polygon:
-		if polygon.intersects(line): return True
+def _CheckIntersectAnyPolygon(start_point, end_point, list_curr_polygon, is_append):
+	if not CONFIG_ROUTE_THICKNESS:
+		line = LineString([start_point, end_point])
+		for polygon in list_curr_polygon:
+			if polygon.intersects(line): return True
+	else:
+		# Find the perpendicular between 2 points
+		x_diff = end_point[0] - start_point[0]
+		y_diff = end_point[1] - start_point[1]
+		magnitude = math.sqrt(x_diff*x_diff + y_diff*y_diff)
+		perpendicular = (y_diff/magnitude, -x_diff/magnitude)
+
+		# Offset the nodes based on its width, this is less computational heavy than finding tangents
+		pt_1a_x = int(start_point[0] + perpendicular[0] * start_point[2])
+		pt_1a_y = int(start_point[1] + perpendicular[1] * start_point[2])
+		pt_1b_x = int(start_point[0] - perpendicular[0] * start_point[2])
+		pt_1b_y = int(start_point[1] - perpendicular[1] * start_point[2])
+		pt_2a_x = int(end_point[0] + perpendicular[0] * end_point[2])
+		pt_2a_y = int(end_point[1] + perpendicular[1] * end_point[2])
+		pt_2b_x = int(end_point[0] - perpendicular[0] * end_point[2])
+		pt_2b_y = int(end_point[1] - perpendicular[1] * end_point[2])
+		pt_1a = (pt_1a_x, pt_1a_y)
+		pt_1b = (pt_1b_x, pt_1b_y)
+		pt_2a = (pt_2a_x, pt_2a_y)
+		pt_2b = (pt_2b_x, pt_2b_y)
+
+		# Construct the new lines that simulate a "thick route"
+		line1 = LineString([pt_1a, pt_2a])
+		line2 = LineString([pt_1b, pt_2b])
+		for polygon in list_curr_polygon:
+			if polygon.intersects(line1): return True
+			if polygon.intersects(line2): return True
+
+		# Append the (viable) offset lines so that they can be visualised later
+		if is_append:
+			list_thick1.append( (pt_1a, pt_2a) )
+			list_thick2.append( (pt_1b, pt_2b) )
+
 	return False;
 
 
@@ -334,6 +324,7 @@ def _CheckRedundantRoutes():
 
 def _IsLongestSideRedundant(s1, s2, s3):
 	'''(AI) Returns -1 if no redundant side, otherwise returns length of longest side'''
+	threshold_redundance = cli_arguments[4]
 
 	# Find the longest side, and sum of the other 2
 	longest = max(s1, s2, s3)
@@ -370,6 +361,8 @@ def _IsTriangle(tuples):
 def _VisualiseNodesAndRoutes(playdo):
 	'''Apply in-editor changes such that it's easier to visualise the relation between nodes and routes'''
 	log.Must(f"  Naming and coloring nodes & routes for visualisation...")
+	layer_name_node      = cli_arguments[0]
+	layer_name_route     = cli_arguments[1]
 
 	# Color nodes green and assign number, iff nothing is assigned yet
 	layer_node  = playdo.GetObjectGroup(layer_name_node,  False)
@@ -386,28 +379,51 @@ def _VisualiseNodesAndRoutes(playdo):
 	for obj in list(layer_route):
 		if obj.find('polyline') is None: continue	# Skip if object is not route
 		layer_route.remove(obj)				# Removes all existing routes
+
+	if CONFIG_ROUTE_THICKNESS and CONFIG_SHOW_THICKNESS:
+		_SetThickRouteObjects(layer_route)
+	else:
+		_SetLineRouteObjects(layer_route)
+
+
+
+def _SetLineRouteObjects(layer_route):
 	for i in range(len(list_route)):
 		pt_beg = list_nodes[ list_route[i][0] ]
 		pt_end = list_nodes[ list_route[i][1] ]
-		attributes = {
-			'id': "0", # TODO?
-#			'name' : str(i), 
-			'type' : "4", 
-			'x': "0",
-			'y': "0"
-		}
-		new_route_obj = ET.Element('object', attributes)
-		str_polypoint = f"{pt_beg[0]},{pt_beg[1]} {pt_end[0]},{pt_end[1]}"
-		tiled_utils.SetPolyPointsOnObject( new_route_obj, str_polypoint )
+		_SetIndividualRouteObject(layer_route, i, pt_beg, pt_end)
 
-		if is_route_closed[i]:  new_route_obj.set('type', "1")
-		if is_route_overlap[i]:
-			if CONFIG_SHOW_REDUNDANT:
-				new_route_obj.set('type', "0")
-			else:
-				continue
+def _SetThickRouteObjects(layer_route):
+	for i in range(len(list_route)):
+		pt_beg = list_thick1[i][0]
+		pt_end = list_thick1[i][1]
+		_SetIndividualRouteObject(layer_route, i, pt_beg, pt_end)
+		pt_beg = list_thick2[i][0]
+		pt_end = list_thick2[i][1]
+		_SetIndividualRouteObject(layer_route, i, pt_beg, pt_end)
 
-		layer_route.append(new_route_obj)
+def _SetIndividualRouteObject(layer_route, route_id, pt1, pt2):
+	pt_beg = pt1
+	pt_end = pt2
+	attributes = {
+		'id': "0", # TODO?
+#		'name' : str(route_id), 
+		'type' : "4", 
+		'x': "0",
+		'y': "0"
+	}
+	new_route_obj = ET.Element('object', attributes)
+	str_polypoint = f"{pt_beg[0]},{pt_beg[1]} {pt_end[0]},{pt_end[1]}"
+	tiled_utils.SetPolyPointsOnObject( new_route_obj, str_polypoint )
+
+	if is_route_closed[route_id]:  new_route_obj.set('type', "1")
+	if is_route_overlap[route_id]:
+		if CONFIG_SHOW_REDUNDANT:
+			new_route_obj.set('type', "0")
+		else:
+			return
+
+	layer_route.append(new_route_obj)
 
 
 
@@ -429,7 +445,8 @@ def _ExportCondenseData(playdo):
 	Object is placed in an empty new layer if target layer is not found
 	'''
 	log.Must(f"  Exporting data in condensed form for Unity-parsing...")
-
+	obj_name_default     = cli_arguments[5]
+	config_calculate_dist = cli_configs[0]
 
 	# Add route data as properties
 	obj_route = _MakeXmlObject(playdo, f"{obj_name_default}", f"_{len(list_nodes)}")
@@ -466,6 +483,8 @@ def _NodeId2Name(id):
 	return f"{id}"
 
 def _MakeXmlObject(playdo, name_prefix, num_suffix):
+	layer_name_export    = cli_arguments[6]
+
 	# If there is an existing meta-data object, delete it
 	obj_layer = playdo.GetObjectGroup(layer_name_export, False)
 	for obj in obj_layer:
