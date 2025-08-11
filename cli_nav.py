@@ -55,7 +55,7 @@ passed_arguments = (
 	layer_name_export
 )
 
-config_calculate_dist = True
+config_calculate_dist = True	# Whether the meta-data calculate the length of each route
 
 
 
@@ -84,8 +84,7 @@ def main():
 	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
 	# Main Logic
-	main_logic.ConfigIgnoreOWP(args.owp)
-	main_logic.ConfigCalculateRouteLength(config_calculate_dist)
+	main_logic.SetConfigs((config_calculate_dist, args.owp))
 	main_logic.logic(playdo, passed_arguments)
 
 	# Flush changes to File!
