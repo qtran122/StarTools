@@ -34,8 +34,11 @@ list_dist = []	# [ float ]
 list_thick1 = []	# [ ( (int,int), (int,int) ) ], stores the start & end points coordinates
 list_thick2 = []	#  ^ same
 
+list_forced_route = []	# [obj], line objects for "Forced routes"
+list_forced_id = []	# [int], line id for valid line objects that is a route
+
 is_route_closed = []	# [ bool ], for keepsing track of whether the route can be possible
-is_route_overlap = []	# [ bool ], for keepsing track of redundant routes
+is_route_redundant = []	# [ bool ], for keepsing track of redundant routes
 
 
 
@@ -45,9 +48,15 @@ CONFIG_SHOW_THICKNESS  = True	# Whether to visualise route-thickness in the outp
 CONFIG_SHOW_REDUNDANT  = False	# Whether redundant routes are shown
 CONFIG_PRINT_NODE      = False	# Whether meta-data for nodes are generated
 
+DEFAULT_NODE_TYPE           = "9"	# Blue
+DEFAULT_LINE_TYPE_NORMAL    = "4"	# Green
+DEFAULT_LINE_TYPE_MAYBE     = "1"	# Red
+DEFAULT_LINE_TYPE_REDUNDANT = "0"	# Black
+DEFAULT_LINE_TYPE_FORCED    = "8"	# Magenta
+
 default_exported_attribtue = {
 	'id': "0", 
-	'type': "9", 
+	'type': DEFAULT_NODE_TYPE, 
 	'x': "0",
 	'y': "-80", 
 	'width': "64",
@@ -74,6 +83,7 @@ def logic(playdo, passed_arguments):
 	for arg in passed_arguments: cli_arguments.append(arg)
 	_ParseLevel(playdo)
 	_CheckAllRoutes()
+	_SetForcedRoutes()
 	_CheckRedundantRoutes()
 	_VisualiseNodesAndRoutes(playdo)
 	_ExportCondenseData(playdo)
@@ -104,11 +114,15 @@ def _ParseLevel(playdo):
 		# Nodes & "Manual Blockage"
 		if layer.get('name') == layer_name_node:
 			for obj in layer:
-				# All ellipses are treated as nodes,
-				#  polylines, 0-width and 0-height rectangles are ignored,
+				# If object it not ellipses:
+				#  0-width and 0-height rectangles are ignored by default,
+				#  polylines, if named, are treated as FORCE route,
 				#  otherwise everything else are treated as solid collision
+				# Otherwise all ellipses are treated as nodes,
 				if obj.find('ellipse') is None:
-					if obj.find('polyline') is not None: continue
+					if obj.find('polyline') is not None:
+						if obj.get("name") is not None: list_forced_route.append(obj)
+						continue
 					list_collision1.append(obj)
 					continue
 
@@ -279,6 +293,49 @@ def _CheckIntersectAnyPolygon(start_point, end_point, list_curr_polygon, is_appe
 
 
 
+def _SetForcedRoutes():
+	log.Must(f"  Verifying {len(list_forced_route)} forced-routes...")
+	for obj in list_forced_route:
+		# Convert string into positions
+		polyline_str = obj.find("polyline").get("points")
+		pos_tuple = polyline_str.split(" ")
+		x1 = int(float(pos_tuple[0].split(",")[0]))
+		y1 = int(float(pos_tuple[0].split(",")[1]))
+		x2 = int(float(pos_tuple[1].split(",")[0]))
+		y2 = int(float(pos_tuple[1].split(",")[1]))
+
+		# Offset line based on object positions
+		line_offset_x = int(obj.get("x"))
+		line_offset_y = int(obj.get("y"))
+		x1 += line_offset_x
+		y1 += line_offset_y
+		x2 += line_offset_x
+		y2 += line_offset_y
+		pos_1 = (x1, y1)
+		pos_2 = (x2, y2)
+
+		# Check if the end-points are nodes
+		node_id_1 = -1
+		node_id_2 = -1
+		for id in range(len(list_nodes)):
+			node_pos = (list_nodes[id][0], list_nodes[id][1])
+			if math.dist(node_pos, pos_1) <= list_nodes[id][2]: node_id_1 = id
+			if math.dist(node_pos, pos_2) <= list_nodes[id][2]: node_id_2 = id
+		if node_id_1 < 0 or node_id_2 < 0: continue
+
+		# Set the ID to matching routes
+		route_id = -1
+		for id in range(len(list_route)):
+			if list_route[id][0] == node_id_1 and list_route[id][1] == node_id_2: route_id = id
+			if list_route[id][1] == node_id_1 and list_route[id][0] == node_id_2: route_id = id
+			if route_id >= 0: break
+		list_forced_id.append(route_id)
+		log.Info(f"    Route {route_id} is a Forced Route ({node_id_1} and {node_id_2})")
+
+
+
+
+
 def _CheckRedundantRoutes():
 	'''
 	If taking a route doesn't reduce travel distance by 10% compared to taking any "2 other routes",
@@ -298,7 +355,8 @@ def _CheckRedundantRoutes():
 	# When a triangle is found, compare the lengths
 	count_route = len(list_route)
 	for i in range(count_route):
-		is_route_overlap.append(False)
+		is_route_redundant.append(False)
+		if i in list_forced_id: continue
 		for j in range(i):
 			for k in range(j):
 				if not _IsTriangle( [list_route[i], list_route[j], list_route[k]] ): continue
@@ -309,16 +367,16 @@ def _CheckRedundantRoutes():
 				longest_dist = _IsLongestSideRedundant(dist1, dist2, dist3)
 #				log.Extra(f'    {i} {j} {k} - {round(dist1)} {round(dist2)} {round(dist3)} - {round(longest_dist)}')
 				if longest_dist < 0: continue
-				elif longest_dist == dist1: is_route_overlap[i] = True
-				elif longest_dist == dist2: is_route_overlap[j] = True
-				elif longest_dist == dist3: is_route_overlap[k] = True
+				elif longest_dist == dist1: is_route_redundant[i] = True
+				elif longest_dist == dist2: is_route_redundant[j] = True
+				elif longest_dist == dist3: is_route_redundant[k] = True
 
 				continue
 				if   longest_dist == dist1: log.Extra(f'{i} - {j},{k}')
 				elif longest_dist == dist2: log.Extra(f'{j} - {i},{k}')
 				elif longest_dist == dist3: log.Extra(f'{k} - {i},{j}')
 
-	log.Info(f'    Total of {sum(is_route_overlap)} routes are found redundant')
+	log.Info(f'    Total of {sum(is_route_redundant)} routes are found redundant')
 
 
 
@@ -377,7 +435,8 @@ def _VisualiseNodesAndRoutes(playdo):
 	# Color routes green and assign number, iff nothing is assigned yet
 	layer_route = playdo.GetObjectGroup(layer_name_route, False)
 	for obj in list(layer_route):
-		if obj.find('polyline') is None: continue	# Skip if object is not route
+		if obj.find("polyline") is None: continue	# Skip if object is not route
+		if obj.get("name") is not None: continue		# Skip if polyline is named, i.e. forced-routes
 		layer_route.remove(obj)				# Removes all existing routes
 
 	if CONFIG_ROUTE_THICKNESS and CONFIG_SHOW_THICKNESS:
@@ -408,7 +467,7 @@ def _SetIndividualRouteObject(layer_route, route_id, pt1, pt2):
 	attributes = {
 		'id': "0", # TODO?
 #		'name' : str(route_id), 
-		'type' : "4", 
+		'type' : DEFAULT_LINE_TYPE_NORMAL, 
 		'x': "0",
 		'y': "0"
 	}
@@ -416,10 +475,11 @@ def _SetIndividualRouteObject(layer_route, route_id, pt1, pt2):
 	str_polypoint = f"{pt_beg[0]},{pt_beg[1]} {pt_end[0]},{pt_end[1]}"
 	tiled_utils.SetPolyPointsOnObject( new_route_obj, str_polypoint )
 
-	if is_route_closed[route_id]:  new_route_obj.set('type', "1")
-	if is_route_overlap[route_id]:
+	if is_route_closed[route_id]:  new_route_obj.set('type', DEFAULT_LINE_TYPE_MAYBE)
+	if route_id in list_forced_id: new_route_obj.set('type', DEFAULT_LINE_TYPE_FORCED)
+	if is_route_redundant[route_id]:
 		if CONFIG_SHOW_REDUNDANT:
-			new_route_obj.set('type', "0")
+			new_route_obj.set('type', DEFAULT_LINE_TYPE_REDUNDANT)
 		else:
 			return
 
@@ -451,7 +511,7 @@ def _ExportCondenseData(playdo):
 	# Add route data as properties
 	obj_route = _MakeXmlObject(playdo, f"{obj_name_default}", f"_{len(list_nodes)}")
 	for i in range(len(list_route)):
-		if is_route_overlap[i]: continue	# Skip entirely if is redundant
+		if is_route_redundant[i]: continue	# Skip entirely if is redundant
 		new_name = f"{_NodeId2Name(list_route[i][0])}_{_NodeId2Name(list_route[i][1])}"
 		x1 = list_nodes[ list_route[i][0] ][0]
 		y1 = list_nodes[ list_route[i][0] ][1]
