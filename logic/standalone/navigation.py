@@ -305,8 +305,8 @@ def _SetForcedRoutes():
 		y2 = int(float(pos_tuple[1].split(",")[1]))
 
 		# Offset line based on object positions
-		line_offset_x = int(obj.get("x"))
-		line_offset_y = int(obj.get("y"))
+		line_offset_x = int(float(obj.get("x")))
+		line_offset_y = int(float(obj.get("y")))
 		x1 += line_offset_x
 		y1 += line_offset_y
 		x2 += line_offset_x
