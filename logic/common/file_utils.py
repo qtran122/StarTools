@@ -9,8 +9,6 @@ def GetLevelRoot():
         return root_dirs["Q_ROOT"]
     elif (os.path.exists(root_dirs["T_ROOT"])):
         return root_dirs["T_ROOT"]
-    elif (os.path.exists(root_dirs["Andy_ROOT"])):
-        return root_dirs["Andy_ROOT"]
     else:
         raise Exception("Could not find your 'Levels' directory. Please update input/root_dir.toml")
     
@@ -21,8 +19,6 @@ def GetInputFolder():
         return root_dirs["Q_INPUT"]
     elif (os.path.exists(root_dirs["T_INPUT"])):
         return root_dirs["T_INPUT"]
-    elif (os.path.exists(root_dirs["Andy_INPUT"])):
-        return root_dirs["Andy_INPUT"]
         
 
 def GetGfxFolder():
@@ -31,9 +27,6 @@ def GetGfxFolder():
         return root_dirs["Q_GFX"]
     elif (os.path.exists(root_dirs["T_GFX"])):
         return root_dirs["T_GFX"]
-    elif (os.path.exists(root_dirs["Andy_GFX"])):
-        return root_dirs["Andy_GFX"]
-    
 
 
 def GetAllLevelFiles():
@@ -56,8 +49,7 @@ def GetOutputFolder():
         output_dir = root_dirs["Q_OUTPUT"]
     elif (os.path.exists(root_dirs["T_INPUT"])):
         output_dir = root_dirs["T_OUTPUT"]
-    elif (os.path.exists(root_dirs["Andy_INPUT"])):
-        return root_dirs["Andy_OUTPUT"]
+    
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
     
@@ -71,8 +63,6 @@ def GetPatternRoot():
         return root_dirs["Q_ROOT"] + "star_tools/patterns/"
     elif (os.path.exists(root_dirs["T_INPUT"])):
         return root_dirs["T_ROOT"] + "star_tools/patterns/"
-    elif (os.path.exists(root_dirs["Andy_ROOT"])):
-        return root_dirs["Andy_ROOT"] + "star_tools/patterns/"
     else:
         raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/patterns' folder")
@@ -85,8 +75,6 @@ def GetTemplateRoot():
         return root_dirs["Q_ROOT"] + "star_tools/templates/"
     elif (os.path.exists(root_dirs["T_INPUT"])):
         return root_dirs["T_ROOT"] + "star_tools/templates/"
-    elif (os.path.exists(root_dirs["Andy_ROOT"])):
-        return root_dirs["Andy_ROOT"] + "star_tools/templates/"
     else:
         raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/templates' folder")
@@ -99,8 +87,8 @@ def GetRemapRoot():
     elif (os.path.exists(root_dirs["T_INPUT"])):
         return root_dirs["T_ROOT"] + "star_tools/remaps/"
     else:
-       return root_dirs["Andy_ROOT"] + "star_tools/remaps/"
-
+        raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
+            "Level directory needs to have a '/star_tools/remaps' folder")
             
 def GeGfxRoot():
     root_dirs = toml.load("input/root_dir.toml")
@@ -108,8 +96,6 @@ def GeGfxRoot():
         return root_dirs["Q_INPUT"] + "gfx/"
     elif (os.path.exists(root_dirs["T_INPUT"])):
         return root_dirs["T_INPUT"] + "gfx/"
-    elif (os.path.exists(root_dirs["Andy_ROOT"])):
-        return root_dirs["Andy_INPUT"] + "gfx/"
     else:
         raise Exception("Could not find the gfx directory. Please update input/root_dir.toml. " +
             "input directory needs to have a 'gfx' folder")
