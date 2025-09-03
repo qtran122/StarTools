@@ -43,8 +43,9 @@ class LevelPlayDo():
         
         # Map for tile_layer_name to a Hashset (for quick checking tile matches). This is created & cached w/  GetTiles2d()
         self._tiles2d_hash = {}
-        
-        log.Extra(f"-- level_playdo.py : initialized {file_name} ...")
+
+        file_name_without_path = file_name.split('/')[-1]
+        log.Extra(f"-- level_playdo.py : initialized {file_name_without_path} ...")
 
 
     def GetAllTileLayerNames(self):
