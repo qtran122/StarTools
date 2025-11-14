@@ -3,6 +3,15 @@ import os
 import toml
 
 
+def _SearchMatchingPathWithSuffix(root_dir, suffix):
+    """Helper function that loops over a dictionary and returns the first existing path with the given suffix
+    The dictionary should come from root_dir.toml file
+    """
+    for key, path in root_dir.items():
+        if key.endswith(suffix) and os.path.exists(path):
+            return path
+    return None;
+
 def GetLevelRoot():
     root_dirs = toml.load("input/root_dir.toml")
     if (os.path.exists(root_dirs["Q_ROOT"])):
@@ -90,7 +99,7 @@ def GetRemapRoot():
         raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/remaps' folder")
             
-def GeGfxRoot():
+def GetGfxRoot():
     root_dirs = toml.load("input/root_dir.toml")
     if (os.path.exists(root_dirs["Q_INPUT"])):
         return root_dirs["Q_INPUT"] + "gfx/"
@@ -127,8 +136,8 @@ def GetFullRemapPath(filename):
 def GetFullGfxPath(filename):
     '''Given a name like tiles, will construct the full path to the image & add ".png" extension to the end'''
     if not filename.endswith(".png"):
-        return GeGfxRoot() + filename + ".png"
-    return GeGfxRoot() + filename
+        return GetGfxRoot() + filename + ".png"
+    return GetGfxRoot() + filename
 
 def StripFilename(file_path):
     '''Gets the Filename without the path leading to nor the ending extension'''
