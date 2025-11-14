@@ -14,28 +14,26 @@ def _SearchMatchingPathWithSuffix(root_dir, suffix):
 
 def GetLevelRoot():
     root_dirs = toml.load("input/root_dir.toml")
-    if (os.path.exists(root_dirs["Q_ROOT"])):
-        return root_dirs["Q_ROOT"]
-    elif (os.path.exists(root_dirs["T_ROOT"])):
-        return root_dirs["T_ROOT"]
-    else:
-        raise Exception("Could not find your 'Levels' directory. Please update input/root_dir.toml")
+    path = _SearchMatchingPathWithSuffix(root_dirs, "_ROOT")
+    if path:
+        return path
+    raise Exception("Could not find your 'Levels' directory. Please update input/root_dir.toml")
     
         
 def GetInputFolder():
     root_dirs = toml.load("input/root_dir.toml")
-    if (os.path.exists(root_dirs["Q_INPUT"])):
-        return root_dirs["Q_INPUT"]
-    elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["T_INPUT"]
+    path = _SearchMatchingPathWithSuffix(root_dirs, "_INPUT")
+    if path:
+        return path
+    raise Exception("Could not find your 'Input' directory. Please update input/root_dir.toml")
         
 
 def GetGfxFolder():
     root_dirs = toml.load("input/root_dir.toml")
-    if (os.path.exists(root_dirs["Q_GFX"])):
-        return root_dirs["Q_GFX"]
-    elif (os.path.exists(root_dirs["T_GFX"])):
-        return root_dirs["T_GFX"]
+    path = _SearchMatchingPathWithSuffix(root_dirs, "_INPUT")
+    if path:
+        return path
+    raise Exception("Could not find your 'GFX' directory. Please update input/root_dir.toml")
 
 
 def GetAllLevelFiles():
