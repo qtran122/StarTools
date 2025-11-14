@@ -66,46 +66,38 @@ def GetOutputFolder():
 def GetPatternRoot():
     '''Retrieve the Pattern folder'''
     root_dirs = toml.load("input/root_dir.toml")
-    if (os.path.exists(root_dirs["Q_ROOT"])):
-        return root_dirs["Q_ROOT"] + "star_tools/patterns/"
-    elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["T_ROOT"] + "star_tools/patterns/"
-    else:
-        raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
-            "Level directory needs to have a '/star_tools/patterns' folder")
+    for key, path in root_dirs.items():
+        if key.endswith("_ROOT") and os.path.exists(path):
+            return os.path.join(path, "star_tools/patterns/")
+    raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " + "Level directory needs to have a '/star_tools/patterns' folder")
+    
 
 
 def GetTemplateRoot():
     '''Retrieve the Templates folder. Templates are similar to patterns, but are missing values'''
     root_dirs = toml.load("input/root_dir.toml")
-    if (os.path.exists(root_dirs["Q_ROOT"])):
-        return root_dirs["Q_ROOT"] + "star_tools/templates/"
-    elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["T_ROOT"] + "star_tools/templates/"
-    else:
-        raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
+    for key, path in root_dirs.items():
+        if key.endswith("_ROOT") and os.path.exists(path):
+            return os.path.join(path, "/star_tools/templates/")
+    raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/templates' folder")
 
-
+    
 def GetRemapRoot():
     root_dirs = toml.load("input/root_dir.toml")
-    if (os.path.exists(root_dirs["Q_INPUT"])):
-        return root_dirs["Q_ROOT"] + "star_tools/remaps/"
-    elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["T_ROOT"] + "star_tools/remaps/"
-    else:
-        raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
-            "Level directory needs to have a '/star_tools/remaps' folder")
+    for key, path in root_dirs.items():
+        if key.endswith("_ROOT") and os.path.exists(path):
+            return os.path.join(path, "/star_tools/remaps/")
+    raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
+        "Level directory needs to have a '/star_tools/remaps' folder")
             
 def GetGfxRoot():
     root_dirs = toml.load("input/root_dir.toml")
-    if (os.path.exists(root_dirs["Q_INPUT"])):
-        return root_dirs["Q_INPUT"] + "gfx/"
-    elif (os.path.exists(root_dirs["T_INPUT"])):
-        return root_dirs["T_INPUT"] + "gfx/"
-    else:
-        raise Exception("Could not find the gfx directory. Please update input/root_dir.toml. " +
-            "input directory needs to have a 'gfx' folder")
+    for key, path in root_dirs.items():
+        if key.endswith("_ROOT") and os.path.exists(path):
+            return os.path.join(path, "gfx/")
+    raise Exception("Could not find the gfx directory. Please update input/root_dir.toml. " +
+        "input directory needs to have a 'gfx' folder")
 
 def GetFullLevelPath(filename):
     '''Given a name like x01, will construct the full path to the "level" & add ".xml" extension to the end'''
