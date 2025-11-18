@@ -78,7 +78,7 @@ def GetTemplateRoot():
     root_dirs = toml.load("input/root_dir.toml")
     for key, path in root_dirs.items():
         if key.endswith("_ROOT") and os.path.exists(path):
-            return os.path.join(path, "/star_tools/templates/")
+            return os.path.join(path, "star_tools/templates/")
     raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
             "Level directory needs to have a '/star_tools/templates' folder")
 
@@ -87,7 +87,7 @@ def GetRemapRoot():
     root_dirs = toml.load("input/root_dir.toml")
     for key, path in root_dirs.items():
         if key.endswith("_ROOT") and os.path.exists(path):
-            return os.path.join(path, "/star_tools/remaps/")
+            return os.path.join(path, "star_tools/remaps/")
     raise Exception("Could not find the Root Level directory. Please update input/root_dir.toml. " +
         "Level directory needs to have a '/star_tools/remaps' folder")
             
