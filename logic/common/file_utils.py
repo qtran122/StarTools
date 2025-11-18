@@ -50,17 +50,14 @@ def GetAllLevelFiles():
 def GetOutputFolder():
     root_dirs = toml.load("input/root_dir.toml")
     output_dir = None
+    for key, path in root_dirs.items():
+        if key.endswith("_OUTPUT"):
+            input_key = key.replace("_OUTPUT", "_INPUT")
+            if input_key in root_dirs and os.path.exists(root_dirs[input_key]):
+                os.makedirs(path, exist_ok=True)
+                return path
+    raise Exception("Could not find output directory. Please update input/root_dir.toml")
     
-    # Output Folder might not exist, so check for the input folder to verify which machine we're on
-    if (os.path.exists(root_dirs["Q_INPUT"])):
-        output_dir = root_dirs["Q_OUTPUT"]
-    elif (os.path.exists(root_dirs["T_INPUT"])):
-        output_dir = root_dirs["T_OUTPUT"]
-    
-    # Ensure the output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-    
-    return output_dir
     
     
 def GetPatternRoot():
