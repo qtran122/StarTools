@@ -39,7 +39,7 @@ class PatternMatcher():
     def FindAndCreate(self, playdo, tile_layer_name, objects_layer_to_create, allow_overlap = True, discard_old = True):
         '''<FILL IN DESCRIPTION>'''
         
-        # Check if fg_raw or _BB is in the available_layers list
+        # Check if fg_raw or _BB is in the available_layers list, raises an error if fg_raw or _BB layer isn't found
         available_layers = playdo.GetAllTileLayerNames()
         if "fg_raw" not in available_layers or "_BB" not in available_layers:
             raise Exception("Could not add collissions. Neither fg_raw nor _BB title layers were found!")
@@ -48,25 +48,26 @@ class PatternMatcher():
         target_tiles2d = playdo.GetTiles2d(tile_layer_name)
         if target_tiles2d is None:
             return
-        
-        # Get the target object group into which new generated objects will be added
-        objects_group = playdo.GetObjectGroup(objects_layer_to_create, discard_old)
-        
         # Get a HASH of the target tile layer for quick checking
         target_tiles_hash = playdo.GetTilesHashSet(tile_layer_name)
-        
+
+        # Collect all the layers that need to be created. This helps us to ensure that if no patterns are found, empty layers aren't created
+        objects_to_create = []
+        total_matched_patterns = 0
+
         for pattern_name, query_tiles2d in self.pattern_tiles.items():
             object_group_to_copy, rows_trimmed, cols_trimmed  = self.pattern_objects[pattern_name]
-            
+
             # If a quick hash check fails, skip the more expensive pattern match search
             if not self._Possibility4MatchExists(target_tiles_hash, query_tiles2d):
                 continue
-            
+
             # Search for patterns
             locations_to_add = self._FindPatternInTileMap(target_tiles2d, query_tiles2d, allow_overlap)
+            total_matched_patterns += len(locations_to_add)
             log.Info(f"-- pattern_matcher.py : {pattern_name} found {len(locations_to_add)} matches!")
-            
-            # Copy object(s) to wherever there was a pattern match
+
+            # Collect object(s) for each pattern match
             for location in locations_to_add:
                 for pattern_obj in object_group_to_copy:
                     offset_x = float(pattern_obj.get('x')) - cols_trimmed * playdo.tile_height
@@ -74,7 +75,16 @@ class PatternMatcher():
                     object_copy = ET.fromstring(ET.tostring(pattern_obj))
                     object_copy.set('x', str(location[0] * playdo.tile_width + offset_x))
                     object_copy.set('y', str(location[1] * playdo.tile_height + offset_y))
-                    objects_group.append(object_copy)
+                    objects_to_create.append(object_copy)
+
+        # Raise an error if there are no matched patterns
+        if total_matched_patterns == 0:
+            raise Exception("No matching patterns. Empty layers CANNOT exist!")
+
+        # Only create the object group if we have matches
+        objects_group = playdo.GetObjectGroup(objects_layer_to_create, discard_old)
+        for obj in objects_to_create:
+            objects_group.append(obj)
     
     def FindAndCreateAll(self, playdo, objects_layer_to_create, allow_overlap = True):
         '''Performs FindAndCreateon all ALL "visible" tile layers (layers starting with "bg_" or "fg_")'''
@@ -247,14 +257,3 @@ class PatternMatcher():
 
 
 # end of file
-
-
-"""
-fg_raw
-border
-)other_ground
-_BB
-bg_wall
-_grid
-
-"""
