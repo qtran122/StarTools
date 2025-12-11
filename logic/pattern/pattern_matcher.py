@@ -79,7 +79,7 @@ class PatternMatcher():
 
         # Raise an error if there are no matched patterns
         if total_matched_patterns == 0:
-            raise Exception("No matching patterns possible because (_BB/fg_raw) layer was empty")
+            raise Exception(f"No matching patterns possible because {tile_layer_name} layer was empty")
     
     def FindAndCreateAll(self, playdo, objects_layer_to_create, allow_overlap = True):
         '''Performs FindAndCreateon all ALL "visible" tile layers (layers starting with "bg_" or "fg_")'''
