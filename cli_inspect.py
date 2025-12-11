@@ -71,6 +71,7 @@ def main():
     num_rects = 0
     num_polys = 0
     num_lines = 0
+    # Count shapes in collision layers
     for obj_grp in collision_obj:
         for shape in obj_grp:
             if IsPolygon(shape):
@@ -79,8 +80,15 @@ def main():
                 num_lines += 1
             else:
                 num_rects += 1
-    
-    print(f'Found {num_rects} rectangles, {num_polys} polygons, and {num_lines} lines!')
+
+    # Count relic blocks across ALL object groups (not just collision layers)
+    num_relic = 0
+    for obj_grp in all_obj_grp:
+        for shape in obj_grp:
+            if shape.get("name") == "relic_block":
+                num_relic += 1
+
+    print(f'Found {num_rects} rectangles, {num_polys} polygons, {num_lines} lines, and {num_relic} relic blocks!')
         
     
     #breakpoint()
@@ -93,11 +101,6 @@ def main():
 
 main()
 
-
-
-# check all layers that starts with "collisions_"
-# check for collisions_ layers that are tucked inside a folder
-# count collision objects that have name "relic_block"
 
 
 
