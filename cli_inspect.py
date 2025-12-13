@@ -53,19 +53,42 @@ def main():
     pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
     
-    obj_grp = playdo.GetObjectGroup("collisions", False)
+    # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
+    all_obj_grp = playdo.GetAllObjectgroup(is_print=False)
+    collision_obj = []
+    # allows us to only filter out groups that has name that matches with "collisions_"
+    # collisions_BB collisions_CAVE etc
+    for obj in all_obj_grp:
+        group_name = obj.get("name", "")
+        if group_name.startswith("collisions_"):
+            collision_obj.append(obj)
+    
+    # check with Quang to see if we should raise an error or just print
+    if not collision_obj:
+        print("No collisions layers starting with 'collisions_' were found ")
+        return
+    
     num_rects = 0
     num_polys = 0
     num_lines = 0
-    for shape in obj_grp:
-        if IsPolygon(shape):
-            num_polys += 1
-        elif IsPolyline(shape):
-            num_lines += 1
-        else:
-            num_rects += 1
-    
-    print(f'Found {num_rects} rectangles, {num_polys} polygons, and {num_lines} lines!')
+    # Count shapes in collision layers
+    for obj_grp in collision_obj:
+        for shape in obj_grp:
+            if IsPolygon(shape):
+                num_polys += 1
+            elif IsPolyline(shape):
+                num_lines += 1
+            else:
+                num_rects += 1
+
+    # Count relic blocks across ALL object groups (not just collision layers)
+    num_relic = 0
+    for obj_grp in all_obj_grp:
+        for shape in obj_grp:
+            if shape.get("name") == "relic_block":
+                num_relic += 1
+
+    print(f'Found {num_rects} rectangles, {num_polys} polygons, {num_lines} lines, and {num_relic} relic blocks!')
         
     
     #breakpoint()
@@ -77,8 +100,6 @@ def main():
 #--------------------------------------------------#
 
 main()
-
-
 
 
 
