@@ -55,24 +55,20 @@ def main():
     
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
-    obj_grps_w_collision = []
-    # allows us to only filter out groups that has name that matches with "collisions_"
-    # collisions_BB collisions_CAVE etc
+    layers_w_collision = [] # ["collisions_CAVE", "collisions_BB", "collisions_TREE"] XML objectgroup with name attribute that starts with "collisions"
     for obj_grp in obj_grps:                             # FIRST_CHANGE: obj -> obj_grp
         group_name = obj_grp.get("name", "")
-        if group_name.startswith("collisions_"):
-            obj_grps_w_collision.append(obj_grp)
+        if group_name.startswith("collisions"):
+            layers_w_collision.append(obj_grp)
     
-    # check with Quang to see if we should raise an error or just print
-    if not obj_grps_w_collision:
-        print("No collisions layers starting with 'collisions_' were found ")
-        return
+    if not layers_w_collision:
+        print("No collisions layers starting with 'collisions' were found ")
     
     num_rects = 0
     num_polys = 0
     num_lines = 0
     # Count shapes in collision layers
-    for obj_grp in obj_grps_w_collision:
+    for obj_grp in layers_w_collision:
         for shape in obj_grp:
             if IsPolygon(shape):
                 num_polys += 1
