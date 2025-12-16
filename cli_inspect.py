@@ -54,17 +54,17 @@ def main():
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
     
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
-    all_obj_grp = playdo.GetAllObjectgroup(is_print=False)
-    collision_obj = []
+    obj_grps = playdo.GetAllObjectgroup(is_print=False)
+    obj_grps_w_collision = []
     # allows us to only filter out groups that has name that matches with "collisions_"
     # collisions_BB collisions_CAVE etc
-    for obj in all_obj_grp:
-        group_name = obj.get("name", "")
+    for obj_grp in obj_grps:                             # FIRST_CHANGE: obj -> obj_grp
+        group_name = obj_grp.get("name", "")
         if group_name.startswith("collisions_"):
-            collision_obj.append(obj)
+            obj_grps_w_collision.append(obj_grp)
     
     # check with Quang to see if we should raise an error or just print
-    if not collision_obj:
+    if not obj_grps_w_collision:
         print("No collisions layers starting with 'collisions_' were found ")
         return
     
@@ -72,7 +72,7 @@ def main():
     num_polys = 0
     num_lines = 0
     # Count shapes in collision layers
-    for obj_grp in collision_obj:
+    for obj_grp in obj_grps_w_collision:
         for shape in obj_grp:
             if IsPolygon(shape):
                 num_polys += 1
@@ -83,7 +83,7 @@ def main():
 
     # Count relic blocks across ALL object groups (not just collision layers)
     num_relic = 0
-    for obj_grp in all_obj_grp:
+    for obj_grp in obj_grps:
         for shape in obj_grp:
             if shape.get("name") == "relic_block":
                 num_relic += 1
