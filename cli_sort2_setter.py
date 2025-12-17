@@ -44,19 +44,18 @@ def main():
 	# Scan through each level in folder directory
 	# TODO replace with a loop to scan through all levels in a folder
 	has_error = False
-	if True:
-		level_name = args.filename
-		playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(level_name))
 
-		has_error = main_logic.ErrorCheckSortOrder(playdo)
-		if has_error: return
+	level_name = args.filename
+	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(level_name))
 
-		has_error = main_logic.RenameTilelayer(playdo)
-		if has_error: return
+	has_error = main_logic.ErrorCheckSortOrder(playdo)
+	if has_error: return
 
-		playdo.Write()
+	has_error = main_logic.RenameTilelayer(playdo)
+	if has_error: return
 
-	# TODO replace object property ref here?
+#	playdo.Write()
+
 
 
 

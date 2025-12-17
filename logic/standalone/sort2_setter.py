@@ -50,11 +50,10 @@ def ErrorCheckSortOrder(playdo):
 	both_sort_standards_used = False
 	for objectgroup in playdo.GetAllObjectgroup():
 		# Ignore object layers if name starts with _
-		if objectgroup.get('name')[0] == '_': continue
+		layer_name = objectgroup.get('name')
+		if not (layer_name.startswith('objects') or layer_name.startswith('collisions')): continue
 
 		for obj in objectgroup:
-			count += 1
-
 			# Check properties
 			sort0_value = tiled_utils.GetPropertyFromObject(obj, 'sort')
 			sort1_value = tiled_utils.GetPropertyFromObject(obj, '_sort')
@@ -83,23 +82,25 @@ def ErrorCheckSortOrder(playdo):
 	num_group2 = len(list_new_sort_objects)
 	if num_group1 != 0 and num_group2 != 0:
 		log.Must(f'  Error! Both sort standards detected in the same level!')
-		log.Info(f'    {num_group1} objects are using sort1')
-		log.Info(f'    {num_group2} objects are using sort2')
+		log.Info(f'    {num_group1} objects are explicitly using sort1')
+		log.Info(f'    {num_group2} objects are explicitly using sort2')
 		count = 0
 		if num_group1 < num_group2:
 			log.Must(f'    List sort1: ')
 			for obj in list_old_sort_objects:
 				obj_name = obj.get('name')
+				parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
 				sort0_value = tiled_utils.GetPropertyFromObject(obj, 'sort')
 				sort1_value = tiled_utils.GetPropertyFromObject(obj, '_sort')
-				log.Must(f'      ({count}) {obj_name} : \'{sort0_value}\', \'{sort1_value}\'')
+				log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort0_value}\', \'{sort1_value}\'')
 				count += 1
 		else:
 			log.Must(f'    List sort2: ')
 			for obj in list_new_sort_objects:
 				obj_name = obj.get('name')
+				parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
 				sort2_value = tiled_utils.GetPropertyFromObject(obj, '_sort2')
-				log.Must(f'      ({count}) {obj_name} : \'{sort2_value}\'')
+				log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort2_value}\'')
 				count += 1
 		log.Must(f'  Exiting program now...')
 		return True
@@ -124,16 +125,18 @@ def ErrorCheckSortOrder(playdo):
 		sort2_value = _ConvertSort1(old_sort)
 		if sort2_value == '':
 			obj_name = obj.get('name')
-			log.Extra(f'    ERROR! Unable to convert value of \'{obj_name}\' : {old_sort}')
-			log.Must(f'  Exiting program now...')
-			return True
+			log.Must(f'    WARNING! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
+#			log.Must(f'  Exiting program now...')
+#			return True
 #		tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
 #		tiled_utils.RemovePropertyFromObject(obj, 'sort')
 #		tiled_utils.RemovePropertyFromObject(obj, '_sort')
-		log.Extra(f'    ({len(list_targetted_objects)}) {obj_name} \t: {old_sort} -> {sort2_value}')
+		log.Extra(f'    ({len(list_targetted_objects)+1}) {obj_name} \t: {old_sort} -> {sort2_value}')
 		list_targetted_objects.append(obj)
 
 	log.Info(f"  --- Finished converting {len(list_targetted_objects)} old _sort values! ---\n")
+
+
 
 
 
@@ -218,22 +221,20 @@ def RenameTilelayer(playdo):
 
 		# Renaming
 		original_name = layer_name
-		layer_name = _RemoveNumber(layer_name)
-		layer_name = _RemoveEndingSpaceAndHyphen(layer_name)
-		layer_name = _ReplaceSpace(layer_name) # With underscore
-		layer_name = _RemoveDoubleHyphen(layer_name)
-		layer_name = _SetAllLowercase(layer_name)
-		layer_name = _AddTilelayerSortNumber(layer_name, layer_counter)
-		layer_name = _RenameOWPLayer(layer_name)
+		layer_name = _GetStringOfNewName(layer_name, layer_counter)
 
 		# Apply change, then append to list
 		_RenameTilelayer(playdo, original_name, layer_name)
 		list_name_bef_aft.append( (original_name, layer_name) )
 		log.Extra(f"    Renaming layer : \'{original_name}\' \t-> \'{layer_name}\'")
 
+	# Inform user that there is no OWP layer, ask if want to proceed normally or exit
 	if not contains_bg_owp:
-		log.Must("    ERROR! Level does not contain the BG OWP anchor")
-		return True
+		log.Must("    WARNING! Level does not contain the BG OWP anchor")
+		user_input = input("      Continue processing the level? (Y/N) ")
+		if user_input[0].lower() == 'n':
+			log.Must("      Exiting program...")
+			return True
 
 	log.Info(f"  --- Finished renaming {len(list_name_bef_aft)} layers! ---\n")
 
@@ -255,42 +256,44 @@ def _RenameTilelayer(playdo, original_name, layer_name):
 
 
 
-def _RemoveNumber(layer_name):
+def _GetStringOfNewName(layer_name, layer_counter):
+	'''This renames tilelayer from old to new standard'''
+
+	# Keep track of /fx
+	has_fx = '/fx' in layer_name
+	layer_name = layer_name.replace('/fx', '')
+
+	# For the OWP layer, always renamed to bg_owp_30k
+	if layer_name.startswith('bg') and 'owp' in layer_name.lower():
+		layer_name = "bg_owp_30k"
+		if has_fx: layer_name += '/fx'
+		return layer_name
+
+	# Remove numbers
 	for i in range(10):
 		layer_name = layer_name.replace(f'{i}', '')
 	layer_name = layer_name.replace('__', '_')
-	return layer_name
 
-def _RemoveEndingSpaceAndHyphen(layer_name):
-	# bg_3_deco -> bg_deco
-	has_fx = '/fx' in layer_name
-	layer_name = layer_name.replace('/fx', '')
+	# Remove the ending space & hyphen
+	#  bg_deco - 3 -> bg_deco
 	if layer_name.endswith(' '): layer_name = layer_name[:-1]
 	if layer_name.endswith('-'): layer_name = layer_name[:-1]
 	if layer_name.endswith(' '): layer_name = layer_name[:-1]
-	if has_fx: layer_name += '/fx'
-	return layer_name
 
-def _ReplaceSpace(layer_name):
-	return layer_name.replace(' ', '_')
+	# Replace space with underscore
+	layer_name = layer_name.replace(' ', '_')
 
-def _RemoveDoubleHyphen(layer_name):
-	return layer_name.replace('__', '_')
+	# Remove double-hyphen
+	layer_name = layer_name.replace('__', '_')
 
-def _SetAllLowercase(layer_name):
-	return layer_name.lower()
+	# Set all char to lowercase
+	layer_name = layer_name.lower()
 
-def _AddTilelayerSortNumber(layer_name, layer_counter):
-	has_fx = '/fx' in layer_name
-	layer_name = layer_name.replace('/fx', '')
+	# Add the sort number at the end
 	layer_name += f"_{layer_counter * 5}k"
-	if has_fx: layer_name += '/fx'
-	return layer_name
 
-def _RenameOWPLayer(layer_name):
-	# Always renamed to bg_owp_30k
-	if layer_name.startswith('bg') and 'owp' in layer_name.lower():
-		return "bg_owp_30k"
+	# Add back /fx if applicable
+	if has_fx: layer_name += '/fx'
 	return layer_name
 
 

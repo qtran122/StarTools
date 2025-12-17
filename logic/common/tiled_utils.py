@@ -214,11 +214,10 @@ def GetTileIdPermutations(tile_id):
 #--------------------------------------------------#
 '''Fetch object property'''
 
-# Currently unused
 def GetParentObject(obj, playdo):
     '''Return the parent of any XML tree object, e.g. the objectgroup for a given TILED object'''
     parent_map = {child: parent for parent in playdo.level_root.iter() for child in parent}
-    parent_obj = parent_map[curr_obj]
+    parent_obj = parent_map[obj]
     return parent_obj
 
 
