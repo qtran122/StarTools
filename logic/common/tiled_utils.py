@@ -214,11 +214,10 @@ def GetTileIdPermutations(tile_id):
 #--------------------------------------------------#
 '''Fetch object property'''
 
-# Currently unused
 def GetParentObject(obj, playdo):
     '''Return the parent of any XML tree object, e.g. the objectgroup for a given TILED object'''
     parent_map = {child: parent for parent in playdo.level_root.iter() for child in parent}
-    parent_obj = parent_map[curr_obj]
+    parent_obj = parent_map[obj]
     return parent_obj
 
 
@@ -233,7 +232,12 @@ def GetNameFromObject( tiled_object ):
 
 def GetPropertyFromObject( tiled_object, property_name ):
     '''Extract the property as string, e.g. returns "20" from GetProperty('_sort')'''
-    for curr_property in tiled_object.find('properties').findall('property'):
+    # Check if the object has any property
+    properties = tiled_object.find('properties')
+    if properties == None: return ''
+
+    # Continue searching the object's list for specific property
+    for curr_property in properties.findall('property'):
         if curr_property.get('name') == property_name:
             return curr_property.get('value')
     return ''    # returning None would crash when attempted to be converted into string
