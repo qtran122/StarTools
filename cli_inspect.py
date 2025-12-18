@@ -56,10 +56,16 @@ def main():
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
     layers_w_collision = [] # ["collisions_CAVE", "collisions_BB", "collisions_TREE"] XML objectgroup with name attribute that starts with "collisions"
-    for obj_grp in obj_grps:                             # FIRST_CHANGE: obj -> obj_grp
+    num_relic = 0
+    for obj_grp in obj_grps:                             
         group_name = obj_grp.get("name", "")
         if group_name.startswith("collisions"):
             layers_w_collision.append(obj_grp)
+        if group_name.startswith("objects"): # Groups that starts with "objects" will only contain relic blocks
+            for shape in obj_grp:
+                if shape.get("name") == "relic_block":
+                    num_relic += 1
+
     
     if not layers_w_collision:
         print("No collisions layers starting with 'collisions' were found ")
@@ -67,7 +73,7 @@ def main():
     num_rects = 0
     num_polys = 0
     num_lines = 0
-    # Count shapes in collision layers
+    # Count shapes in collision layers, hadle case where obj_group starts with "collisions" in which we have all shapes (polygon, lines, rects, and relic blocks)
     for obj_grp in layers_w_collision:
         for shape in obj_grp:
             if IsPolygon(shape):
@@ -75,14 +81,11 @@ def main():
             elif IsPolyline(shape):
                 num_lines += 1
             else:
-                num_rects += 1
+                if shape.get("name") == "relic_block":
+                    num_relic += 1
+                else:
+                    num_rects += 1
 
-    # Count relic blocks across ALL object groups (not just collision layers)
-    num_relic = 0
-    for obj_grp in obj_grps:
-        for shape in obj_grp:
-            if shape.get("name") == "relic_block":
-                num_relic += 1
 
     print(f'Found {num_rects} rectangles, {num_polys} polygons, {num_lines} lines, and {num_relic} relic blocks!')
         
