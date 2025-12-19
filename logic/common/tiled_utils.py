@@ -371,6 +371,29 @@ def MakePolypoints( list_pos, is_reversed = False, polygon_xy = (0,0) ):
 
 
 
+def RemovePropertyFromObject( tiled_object, property_name ):
+    '''Return True if the property exists in object'''
+
+    # Get the properties of object
+    properties = tiled_object.find('properties')
+    if properties is None: return False
+
+    # Remove property if it exists
+    has_property_to_be_removed = False
+    for property in properties.findall('property'):
+        if property.get('name') != property_name: continue
+        properties.remove(property)
+        has_property_to_be_removed = True
+    if not has_property_to_be_removed: return False
+
+    # If the only property is getting removed, add an empty property
+    if len(properties) == 0:
+        SetPropertyOnObject(tiled_object, '#Q', '')
+    return True
+
+
+
+
 
 #--------------------------------------------------#
 

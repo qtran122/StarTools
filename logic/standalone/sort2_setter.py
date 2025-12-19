@@ -21,6 +21,14 @@ import logic.common.tiled_utils as tiled_utils
 # Constants
 SLOT_SORT2_LAYER = 5000	# Each tilelayer takes up 5000 slots
 
+LIST_OBJ_RESORT_NAME = {
+	"AT",
+	"env_particles", 
+	"water_line", 
+	"water_fill"
+}
+
+
 
 
 #--------------------------------------------------#
@@ -37,11 +45,6 @@ def ErrorCheckSortOrder(playdo):
 
 	list_old_sort_objects = []	# Use _sort or sort
 	list_new_sort_objects = []	# Use _sort2
-	list_bad_sort_objects = []	# Use both sort standards in 1 object
-
-	list_targetted_objects = []	# All objects that will be modified
-
-	count = 0
 	obj_name = ''
 
 
@@ -49,7 +52,7 @@ def ErrorCheckSortOrder(playdo):
 	# Separate all objects into either group, based on which sort standard is used
 	both_sort_standards_used = False
 	for objectgroup in playdo.GetAllObjectgroup():
-		# Ignore object layers if name starts with _
+		# Ignore object layers if not read by level
 		layer_name = objectgroup.get('name')
 		if not (layer_name.startswith('objects') or layer_name.startswith('collisions')): continue
 
@@ -110,58 +113,8 @@ def ErrorCheckSortOrder(playdo):
 	# If only sort2 standard is used, do nothing for this function
 	if num_group2 != 0:
 		log.Info(f"  --- Only sort2 stardard is used, no change would be applied ---\n")
-		return
-
-
-
-	# Lastly, if only sort1 standard is used
-	#  Apply conversion formula to all these objects
-	for obj in list_old_sort_objects:
-		# Only one of the two below should be present
-		old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
-		old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
-
-		# Apply conversion, then add to list
-		sort2_value = _ConvertSort1(old_sort)
-		if sort2_value == '':
-			obj_name = obj.get('name')
-			log.Must(f'    WARNING! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
-#			log.Must(f'  Exiting program now...')
-#			return True
-#		tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
-#		tiled_utils.RemovePropertyFromObject(obj, 'sort')
-#		tiled_utils.RemovePropertyFromObject(obj, '_sort')
-		log.Extra(f'    ({len(list_targetted_objects)+1}) {obj_name} \t: {old_sort} -> {sort2_value}')
-		list_targetted_objects.append(obj)
-
-	log.Info(f"  --- Finished converting {len(list_targetted_objects)} old _sort values! ---\n")
-
-
-
-
-
-def _ConvertSort1(sort1_value):
-	# Certain objects cannot be converted? e.g. env_art
-	sort1_tuple = sort1_value.split('/')
-	if len(sort1_tuple) < 2: return ''
-
-	# game_objects is ignored, and is thus not processed
-	if sort1_tuple[0] == 'game_objects': return sort1_value
-
-	# Apply simple conversion formula
-	sort1_num = int(sort1_tuple[1])
-	sort2_num1 = int(sort1_num / 10) * SLOT_SORT2_LAYER
-	sort2_num2 = sort1_num % 10
-	if sort1_num < 0:
-		sort2_num2 = - (10 - sort2_num2)
-
-	# Safety check, range: [-32768, 32767]
-	sort2_num = sort2_num1 + sort2_num2
-	if sort2_num < -32700: sort2_num = -32700
-	if sort2_num >  32700: sort2_num =  32700
-
-	sort2_value = f'{sort1_tuple[0]}/{sort2_num}'
-	return sort2_value
+	else:
+		log.Info(f"  --- {len(list_old_sort_objects)} objects detected using sort1 standard ---\n")
 
 
 
@@ -236,6 +189,13 @@ def RenameTilelayer(playdo):
 			log.Must("      Exiting program...")
 			return True
 
+	# Scan through all objects to check their properties and see if affected by renaming
+	for obj in playdo.GetAllObjects():
+		properties = obj.find('properties')
+		if properties == None: continue
+		for curr_property in properties.findall('property'):
+			_RenameLayerInProperty(curr_property, list_name_bef_aft)
+
 	log.Info(f"  --- Finished renaming {len(list_name_bef_aft)} layers! ---\n")
 
 
@@ -248,11 +208,27 @@ def _TilelayerHasSortProperty(playdo, layer_name):
 		if tiled_utils.GetPropertyFromObject(layer, '_sort') != '': return True
 	return False
 
+
+
 def _RenameTilelayer(playdo, original_name, layer_name):
 	for layer in playdo.level_root.findall('.//layer'):
 		if layer.get('name') != original_name: continue
 		layer.set('name', layer_name)
 		return
+
+def _RenameLayerInProperty(curr_property, list_name_bef_aft):
+	'''Adjust the property value if it contains a tilelayer name that needs to be renamed'''
+	# Scan through all properties
+	old_value = curr_property.get('value')
+	new_value = old_value
+	for tuple in list_name_bef_aft:
+		if tuple[0] in new_value:
+			new_value = new_value.replace(tuple[0], tuple[1])
+
+	# Set the property value if there is a change
+	if new_value != old_value:
+		curr_property.set('value', new_value)
+		log.Extra(f"    Update property \'{curr_property.get('name')}\' : \'{old_value}\' \t-> \'{new_value}\'")
 
 
 
@@ -301,40 +277,181 @@ def _GetStringOfNewName(layer_name, layer_counter):
 
 
 #--------------------------------------------------#
+'''Milestone 3'''
 
+def ConvertSortValueStandard(playdo):
+	''' TBA '''
+	log.Must(f"  Procedure 3 - Catergorising objects by sort groups...")
 
-
-
-
-
-	'''
-
-def _RemoveStartingNumber(layer_name):
-	# bg_3_deco -> bg_deco
-	for i in range(10):
-		layer_name = layer_name.replace(f'_{i}_', '_')
-	return layer_name
-
-
-
-
-To be deleted
-	# Can we just do it after the file is written?
+	# Separate objects into one of these 3 groups
+	objs_to_resort = []
+	objs_dev_sort = []
+	objs_losing_sort = []
 	for obj in playdo.GetAllObjects():
-		list_properties = obj.get("properties")
-		for property in list_properties:
-			prop_value = property.get("value")
-			if prop_value contains list_name_bef_aft
-	'''
+		obj_name = obj.get('name')
+		if obj_name == None: continue
+
+		# Is in resort group?
+		if obj_name in LIST_OBJ_RESORT_NAME:
+			objs_to_resort.append(obj)
+			continue
+		if obj_name.startswith('AT_'):
+			objs_to_resort.append(obj)
+			continue
+
+		# Is in dev group?
+		if tiled_utils.GetPropertyFromObject(obj, '_dev_load') != '':
+			objs_dev_sort.append(obj)
+			continue
+
+		# Otherwise, link to the TBD group
+		if tiled_utils.GetPropertyFromObject(obj, 'sort') != '':
+			objs_losing_sort.append(obj)
+		if tiled_utils.GetPropertyFromObject(obj, '_sort') != '':
+			objs_losing_sort.append(obj)
+
+	# Append the 2 groups to remove their sort as well?
+	for obj in objs_to_resort: objs_losing_sort.append(obj)
+	for obj in objs_dev_sort: objs_losing_sort.append(obj)
+
+
+	# Resort normal objects
+	log.Info(f"    {len(objs_to_resort)} objects will be resorted")
+	for obj in objs_to_resort: _Resort_NormalObjects(obj)
+
+	# Resort dev objects
+	log.Info(f"    {len(objs_dev_sort)} objects will be set to the layer's top")
+	for obj in objs_dev_sort: _Resort_DevObjects(obj)
+
+
+	# Proceed with removing sort values, only if the list is non-empty
+	if len(objs_losing_sort) == 0:
+		log.Info(f"  --- Finished fixing sorts! ---\n")
+		return
+
+	# Waits for player's input
+	log.Must(f"    WARNING! SORT TOOL will be removing sort values for:")
+	log.Must(f"      {_CountObjectsWithName(objs_losing_sort, 'enemy')} enemies,")
+	log.Must(f"      {_CountObjectsWithName(objs_losing_sort, 'relic_block')} relic blocks,")
+	log.Must(f"      {len(objs_to_resort)} objects with new sort2 values,")
+	log.Must(f"      {len(objs_dev_sort)} objects with dev sort2 values, (\'_dev_load\')")
+	user_input = input("      Proceed? (Y/N) ")
+	if user_input[0].lower() == 'n': return
+
+	# Remove old sort property
+	log.Info(f"    All {len(objs_losing_sort)} objects will remove their sort values")
+	for obj in objs_losing_sort: _RemoveOldSortProperty(obj)
+	for obj in objs_to_resort: _RemoveOldSortProperty(obj)
+	for obj in objs_dev_sort: _RemoveOldSortProperty(obj)
+
+	log.Info(f"  --- Finished fixing sorts! ---\n")
+
+
+
+
+
+def _CountObjectsWithName(list_obj, prefix):
+	count = 0
+	for obj in list_obj:
+		obj_name = obj.get('name')
+		obj_type = obj.get('type')
+		if obj_name != None and obj_name.startswith(prefix): count += 1
+		else:
+			if obj_type != None and obj_type.startswith(prefix): count += 1
+	return count
+
+
+def _Resort_NormalObjects(obj):
+	obj_name = obj.get('name')
+
+	# Only one of the two below should be present
+	old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
+	old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+
+	# Apply conversion, then add to list
+	sort2_value = _ConvertSort1(old_sort)
+	if sort2_value == '':
+		log.Must(f'      WARNING! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
+#		log.Must(f'    Exiting program now...')
+#		return True
+#	tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
+#	tiled_utils.RemovePropertyFromObject(obj, 'sort')
+#	tiled_utils.RemovePropertyFromObject(obj, '_sort')
+
+#	({len(list_targetted_objects)+1}) 
+	log.Extra(f'      \'{obj_name}\' \t: {old_sort} -> {sort2_value}')
+#	list_targetted_objects.append(obj)
+
+def _ConvertSort1(sort1_value):
+	# Certain objects cannot be converted? e.g. env_art
+	sort1_tuple = sort1_value.split('/')
+	if len(sort1_tuple) < 2: return ''
+
+	# game_objects is ignored, and is thus not processed
+	if sort1_tuple[0] == 'game_objects': return sort1_value
+
+	# Apply simple conversion formula
+	sort1_num = int(sort1_tuple[1])
+	sort2_num1 = int(sort1_num / 10) * SLOT_SORT2_LAYER
+	sort2_num2 = sort1_num % 10
+	if sort1_num < 0:
+		sort2_num2 = - (10 - sort2_num2)
+
+	# Safety check, range: [-32768, 32767]
+	sort2_num = sort2_num1 + sort2_num2
+	if sort2_num < -32700: sort2_num = -32700
+	if sort2_num >  32700: sort2_num =  32700
+
+	sort2_value = f'{sort1_tuple[0]}/{sort2_num}'
+	return sort2_value
+
+
+
+def _Resort_DevObjects(obj):
+	obj_name = obj.get('name')
+	old_sort = tiled_utils.GetPropertyFromObject(obj, 'sort')
+	old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+	if old_sort != '':
+		new_value = ''
+		if old_sort.startswith('fg_'): new_value += 'fg'
+		else: new_value += 'bg'
+		new_value += '_tiles/32767'
+		tiled_utils.SetPropertyOnObject(obj, '_sort2', new_value)
+		log.Extra(f"      \'{obj_name}\' \t: {old_sort} -> {new_value}")
+	else:
+		log.Must(f"      ERROR! \'{obj_name}\' object has \'_dev_load\' but doesn't contain a sort value")
+
+
+
+def _RemoveOldSortProperty(obj):
+	has_old_sort_a = tiled_utils.RemovePropertyFromObject(obj, 'sort')
+	has_old_sort_b = tiled_utils.RemovePropertyFromObject(obj, '_sort')
+	if has_old_sort_a or has_old_sort_b:
+		obj_name = obj.get('name')
+		log.Extra(f"      Removing old sort property from \'{obj_name}\'")
+
 
 
 
 
 #--------------------------------------------------#
-'''Milestone 3'''
+'''Milestone 4'''
 
-def TODO(playdo):
-	x = 1
+def TBA(playdo):
+	''' TBA '''
+	log.Must(f"  Procedure 4 - ")
+
+
+
+
+
+
+	log.Info(f"  --- Finished renaming {1} layers! ---\n")
+
+
+
+
+
 
 
 

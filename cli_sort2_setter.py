@@ -54,6 +54,9 @@ def main():
 	has_error = main_logic.RenameTilelayer(playdo)
 	if has_error: return
 
+	has_error = main_logic.ConvertSortValueStandard(playdo)
+	if has_error: return
+
 #	playdo.Write()
 
 
