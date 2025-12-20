@@ -2,9 +2,9 @@
 Logic module that can
 	1. If using `_sort`, add new `_sort2` property
 	2. Rename tilelayers
- TODO	3. Color code lighting objects after sort
- TODO	4. Enable switching between two views for lighting objects
- TODO	?? Check for `_sort2` conflicts and resolve
+	3. Group all objects by their sorts, then resort the `_sort2` values
+ TODO	x. Color code lighting objects after sort
+ TODO	x. Enable switching between two views for lighting objects
 
 USAGE EXAMPLE:
 	main_logic.ErrorCheckSortOrder(playdo)
@@ -27,6 +27,9 @@ LIST_OBJ_RESORT_NAME = {
 	"water_line", 
 	"water_fill"
 }
+
+_bg_owp_bef_aft = []	# Second number is always 6, for the bg_owp_30k anchor
+_max_layer_count = []	# Total layer numbers for BG & FG tilelayers
 
 
 
@@ -153,6 +156,7 @@ def RenameTilelayer(playdo):
 		if not now_at_fg:
 			if layer_name.startswith('fg'):
 				now_at_fg = True
+				_max_layer_count.append(layer_counter)
 				layer_counter = 0
 		layer_counter += 1
 		if layer_counter > 6:
@@ -180,6 +184,9 @@ def RenameTilelayer(playdo):
 		_RenameTilelayer(playdo, original_name, layer_name)
 		list_name_bef_aft.append( (original_name, layer_name) )
 		log.Extra(f"    Renaming layer : \'{original_name}\' \t-> \'{layer_name}\'")
+	_max_layer_count.append(layer_counter)
+#	print(f'{_max_layer_count[0]} BG Layer & {_max_layer_count[1]} FG Layers')
+
 
 	# Inform user that there is no OWP layer, ask if want to proceed normally or exit
 	if not contains_bg_owp:
@@ -241,6 +248,8 @@ def _GetStringOfNewName(layer_name, layer_counter):
 
 	# For the OWP layer, always renamed to bg_owp_30k
 	if layer_name.startswith('bg') and 'owp' in layer_name.lower():
+		_bg_owp_bef_aft.append(layer_counter)
+		_bg_owp_bef_aft.append(6)
 		layer_name = "bg_owp_30k"
 		if has_fx: layer_name += '/fx'
 		return layer_name
@@ -313,15 +322,19 @@ def ConvertSortValueStandard(playdo):
 	# Append the 2 groups to remove their sort as well?
 	for obj in objs_to_resort: objs_losing_sort.append(obj)
 	for obj in objs_dev_sort: objs_losing_sort.append(obj)
+	log.Extra("")
 
 
 	# Resort normal objects
 	log.Info(f"    {len(objs_to_resort)} objects will be resorted")
-	for obj in objs_to_resort: _Resort_NormalObjects(obj)
+	_Resort_NormalObjects(objs_to_resort)
+	log.Extra("")
+	return
 
 	# Resort dev objects
 	log.Info(f"    {len(objs_dev_sort)} objects will be set to the layer's top")
 	for obj in objs_dev_sort: _Resort_DevObjects(obj)
+	log.Extra("")
 
 
 	# Proceed with removing sort values, only if the list is non-empty
@@ -331,6 +344,7 @@ def ConvertSortValueStandard(playdo):
 
 	# Waits for player's input
 	log.Must(f"    WARNING! SORT TOOL will be removing sort values for:")
+	log.Must(f"    (TODO for TY - show list of objects by names)")
 	log.Must(f"      {_CountObjectsWithName(objs_losing_sort, 'enemy')} enemies,")
 	log.Must(f"      {_CountObjectsWithName(objs_losing_sort, 'relic_block')} relic blocks,")
 	log.Must(f"      {len(objs_to_resort)} objects with new sort2 values,")
@@ -350,6 +364,110 @@ def ConvertSortValueStandard(playdo):
 
 
 
+DICT_KEY_ADDON_FG_SORT = 10000	# Any really big number
+def _Resort_NormalObjects(objs_to_resort):
+	# TBA
+	# Create the dictionary with each "bucket" as key, i.e. dictionaries each for a layer
+
+
+	# Map all objects to dictionary, grouped by sort values to then be sorted numerically
+	dict_all_sortval = {}
+	for obj in objs_to_resort:
+		old_sort = tiled_utils.GetPropertyFromObject(obj, 'sort')
+		old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+		if old_sort == '': continue    # When doesn't have the property somehow
+
+		# Create the "key" that allows sorting items by values
+		#  e.g. As string, it has trouble handling single-digit numbers
+		sort_group = old_sort.split('/')[0]
+		sort_value = old_sort.split('/')[1]
+		sort_id = int(sort_value)
+		if sort_group.startswith('fg'): sort_id += DICT_KEY_ADDON_FG_SORT
+		elif sort_group.startswith('bg'): sort_id += 0	# Do nothing
+		else:
+			obj_name = obj.get('name')
+			log.Must(f'      WARNING! \'{obj_name}\' with invalid sort is ignored : \'{old_sort}\'')
+			continue
+
+		if not sort_id in dict_all_sortval: dict_all_sortval[sort_id] = []
+		dict_all_sortval[sort_id].append(obj)
+
+	dict_all_sortval = dict(sorted(dict_all_sortval.items()))
+#	for key, value in dict_all_sortval.items(): print(f'{key} : {len(value)}')
+#	print()
+
+
+	# Map all objects to the 2nd dictionary into their respective buckets
+	dict_all_buckets = {}
+	for key, value in dict_all_sortval.items():
+		is_fg_layer = (key > DICT_KEY_ADDON_FG_SORT * 0.8)
+		if is_fg_layer: key -= DICT_KEY_ADDON_FG_SORT
+#		print(f'{is_fg_layer} {key}')
+
+		curr_key = _GetNewKeyFromSortValue(is_fg_layer, key)
+		if not curr_key in dict_all_buckets:
+			dict_all_buckets[curr_key] = []
+		for obj in value: dict_all_buckets[curr_key].append(obj)
+
+#	print()
+#	for key, value in dict_all_buckets.items(): print(f'{key} : {len(value)}')
+
+
+	# Assign new sort values in properties
+	count_all_obj = 0
+#	_bg_owp_bef_aft.append(5)	# Debug
+#	_bg_owp_bef_aft.append(10)	# Debug
+#	print(f'{_max_layer_count[0]} BG Layer & {_max_layer_count[1]} FG Layers')
+#	print(f'OWP Anchor : {_bg_owp_bef_aft[0]} -> {_bg_owp_bef_aft[1]}')
+	for key, value in dict_all_buckets.items():
+		sortval = key[1]
+
+		# Check if the bucket is above the original OWP anchor layer
+		if not key[0] and len(_bg_owp_bef_aft) >= 2:
+			if sortval >= _bg_owp_bef_aft[0]: sortval = _bg_owp_bef_aft[1]
+
+		sortval = sortval * 5000
+		for obj in value:
+			count_all_obj += 1
+			sortval += 10
+
+			sort2_value = ''
+			if key[0]: sort2_value += 'fg'
+			else: sort2_value += 'bg'
+			sort2_value += '_tiles/' + str(sortval)
+			tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
+
+			obj_name = obj.get('name')
+			old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
+			old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+			log.Extra(f'      \'{obj_name}\' \t: {old_sort} -> {sort2_value}')
+
+			# This should never happen
+			if sortval > 32000:
+				log.Must(f'        WARNING! \'{obj_name}\' has new sort exceeding limit : \'{sortval}\'')
+
+#	log.Info(f"    --- Finished resorting {count_all_obj} objects! ---\n")
+
+
+
+def _GetNewKeyFromSortValue(is_fg_layer, curr_sort):
+	'''Returns the key of which sort bucket this value should lead to'''
+	layer_num = int(curr_sort/10) + 1
+	if curr_sort < 0: layer_num -=1
+
+	# If there are only 4 BG layers, bg_tiles/31 & bg_tiles/101 are treated the same
+	if not is_fg_layer:
+		if layer_num > _max_layer_count[0]: layer_num = _max_layer_count[0]
+	else:
+		if layer_num > _max_layer_count[1]: layer_num = _max_layer_count[1]
+
+	new_key = (is_fg_layer, layer_num)
+	return new_key
+
+
+
+
+
 def _CountObjectsWithName(list_obj, prefix):
 	count = 0
 	for obj in list_obj:
@@ -359,51 +477,6 @@ def _CountObjectsWithName(list_obj, prefix):
 		else:
 			if obj_type != None and obj_type.startswith(prefix): count += 1
 	return count
-
-
-def _Resort_NormalObjects(obj):
-	obj_name = obj.get('name')
-
-	# Only one of the two below should be present
-	old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
-	old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
-
-	# Apply conversion, then add to list
-	sort2_value = _ConvertSort1(old_sort)
-	if sort2_value == '':
-		log.Must(f'      WARNING! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
-#		log.Must(f'    Exiting program now...')
-#		return True
-#	tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
-#	tiled_utils.RemovePropertyFromObject(obj, 'sort')
-#	tiled_utils.RemovePropertyFromObject(obj, '_sort')
-
-#	({len(list_targetted_objects)+1}) 
-	log.Extra(f'      \'{obj_name}\' \t: {old_sort} -> {sort2_value}')
-#	list_targetted_objects.append(obj)
-
-def _ConvertSort1(sort1_value):
-	# Certain objects cannot be converted? e.g. env_art
-	sort1_tuple = sort1_value.split('/')
-	if len(sort1_tuple) < 2: return ''
-
-	# game_objects is ignored, and is thus not processed
-	if sort1_tuple[0] == 'game_objects': return sort1_value
-
-	# Apply simple conversion formula
-	sort1_num = int(sort1_tuple[1])
-	sort2_num1 = int(sort1_num / 10) * SLOT_SORT2_LAYER
-	sort2_num2 = sort1_num % 10
-	if sort1_num < 0:
-		sort2_num2 = - (10 - sort2_num2)
-
-	# Safety check, range: [-32768, 32767]
-	sort2_num = sort2_num1 + sort2_num2
-	if sort2_num < -32700: sort2_num = -32700
-	if sort2_num >  32700: sort2_num =  32700
-
-	sort2_value = f'{sort1_tuple[0]}/{sort2_num}'
-	return sort2_value
 
 
 
@@ -450,6 +523,56 @@ def TBA(playdo):
 
 
 
+
+
+
+#--------------------------------------------------#
+'''To be deleted'''
+
+
+def _Resort_NormalObjects_deprecate(obj):
+	obj_name = obj.get('name')
+
+	# Only one of the two below should be present
+	old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
+	old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+
+	# Apply conversion, then add to list
+	sort2_value = _ConvertSort1(old_sort)
+	if sort2_value == '':
+		log.Must(f'      WARNING! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
+#		log.Must(f'    Exiting program now...')
+#		return True
+#	tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
+#	tiled_utils.RemovePropertyFromObject(obj, 'sort')
+#	tiled_utils.RemovePropertyFromObject(obj, '_sort')
+
+#	({len(list_targetted_objects)+1}) 
+	log.Extra(f'      \'{obj_name}\' \t: {old_sort} -> {sort2_value}')
+#	list_targetted_objects.append(obj)
+
+def _ConvertSort1(sort1_value):
+	# Certain objects cannot be converted? e.g. env_art
+	sort1_tuple = sort1_value.split('/')
+	if len(sort1_tuple) < 2: return ''
+
+	# game_objects is ignored, and is thus not processed
+	if sort1_tuple[0] == 'game_objects': return sort1_value
+
+	# Apply simple conversion formula
+	sort1_num = int(sort1_tuple[1])
+	sort2_num1 = int(sort1_num / 10) * SLOT_SORT2_LAYER
+	sort2_num2 = sort1_num % 10
+	if sort1_num < 0:
+		sort2_num2 = - (10 - sort2_num2)
+
+	# Safety check, range: [-32768, 32767]
+	sort2_num = sort2_num1 + sort2_num2
+	if sort2_num < -32700: sort2_num = -32700
+	if sort2_num >  32700: sort2_num =  32700
+
+	sort2_value = f'{sort1_tuple[0]}/{sort2_num}'
+	return sort2_value
 
 
 
