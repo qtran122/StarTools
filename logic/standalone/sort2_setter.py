@@ -44,7 +44,8 @@ def ErrorCheckSortOrder(playdo):
 	Error Check 2 : When the level has some object using sort1 AND some using sort2
 	Error Check 3 : When an old sort value cannot be converted into new sort2 value
 	'''
-	log.Must(f"  Procedure 1 - Converting old _sort values into newer _sort2...")
+	log.Must("Running ReSORT TOOL. Updating tile layer names & object SORT values...\n")
+	log.Info(f"  Procedure 1 - Identify which sort standards is used in \'{playdo.full_file_name.split('/')[-1]}\'")
 
 	list_old_sort_objects = []	# Use _sort or sort
 	list_new_sort_objects = []	# Use _sort2
@@ -87,12 +88,12 @@ def ErrorCheckSortOrder(playdo):
 	num_group1 = len(list_old_sort_objects)
 	num_group2 = len(list_new_sort_objects)
 	if num_group1 != 0 and num_group2 != 0:
-		log.Must(f'  Error! Both sort standards detected in the same level!')
-		log.Info(f'    {num_group1} objects are explicitly using sort1')
-		log.Info(f'    {num_group2} objects are explicitly using sort2')
+		log.Must(f'Error! Both sort standards detected in the same level!')
+		log.Must(f'    {num_group1} objects are explicitly using sort1')
+		log.Must(f'    {num_group2} objects are explicitly using sort2\n')
 		count = 0
 		if num_group1 < num_group2:
-			log.Must(f'    List sort1: ')
+			log.Must(f'    Offending sort1 objects: ')
 			for obj in list_old_sort_objects:
 				obj_name = obj.get('name')
 				parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
@@ -101,14 +102,15 @@ def ErrorCheckSortOrder(playdo):
 				log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort0_value}\', \'{sort1_value}\'')
 				count += 1
 		else:
-			log.Must(f'    List sort2: ')
+			log.Must(f'    Offending sort2 objects: ')
 			for obj in list_new_sort_objects:
 				obj_name = obj.get('name')
 				parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
 				sort2_value = tiled_utils.GetPropertyFromObject(obj, '_sort2')
 				log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort2_value}\'')
 				count += 1
-		log.Must(f'  Exiting program now...')
+#		log.Must(f'  Exiting program now...')
+		log.Must('\nAborting ReSort. Please correct level to exclusively use one sort standard and try again')
 		return True
 
 
@@ -135,16 +137,18 @@ def RenameTilelayer(playdo):
 	Error Check 4 : A layer contains a _sort property
 	Error Check 5 : Level does not have a bg_owp layer
 	'''
-	log.Must("  Procedure 2 - Renaming tilelayers with new standards...")
+	log.Info("  Procedure 2 - Rename tilelayers following the new standards")
 
 	list_name_bef_aft = []    # List of tuple, each stores a (<name_before>, <name_after>)
 	contains_bg_owp = False
 	now_at_fg = False
 	layer_counter = 0
 	layer_counter_all = 0
+	max_name_len = 0
 
 	for layer_name in playdo.GetAllTileLayerNames():
 		if not (layer_name.startswith('fg') or layer_name.startswith('bg')): continue
+		if max_name_len < len(layer_name): max_name_len = len(layer_name)
 
 		# If too many layers, print error
 		layer_counter_all += 1
@@ -183,27 +187,41 @@ def RenameTilelayer(playdo):
 		# Apply change, then append to list
 		_RenameTilelayer(playdo, original_name, layer_name)
 		list_name_bef_aft.append( (original_name, layer_name) )
-		log.Extra(f"    Renaming layer : \'{original_name}\' \t-> \'{layer_name}\'")
 	_max_layer_count.append(layer_counter)
 #	print(f'{_max_layer_count[0]} BG Layer & {_max_layer_count[1]} FG Layers')
 
 
+	# Log the layer name change in reversed order
+	log.Must("    Existing tilelayers will be renamed to the following:\n")
+	for tuple in reversed(list_name_bef_aft):
+		log.Must(f"    {_IndentBack(tuple[0], max_name_len+2, True)} -> \'{tuple[1]}\'")
+	log.Must("")
+
 	# Inform user that there is no OWP layer, ask if want to proceed normally or exit
 	if not contains_bg_owp:
-		log.Must("    WARNING! Level does not contain the BG OWP anchor")
-		user_input = input("      Continue processing the level? (Y/N) ")
+		log.Must("WARNING! Level does not contain the BG OWP anchor")
+#		user_input = input("Continue processing the level? (Y/N) ")
+		user_input = 'y'
 		if user_input[0].lower() == 'n':
 			log.Must("      Exiting program...")
 			return True
 
+
 	# Scan through all objects to check their properties and see if affected by renaming
+	log.Must("Additional tilelayer references in objects will now be updated to match the new names")
+	count = 1
 	for obj in playdo.GetAllObjects():
 		properties = obj.find('properties')
 		if properties == None: continue
+		obj_name = obj.get('name')
 		for curr_property in properties.findall('property'):
-			_RenameLayerInProperty(curr_property, list_name_bef_aft)
+			has_change = _RenameLayerInProperty(curr_property, list_name_bef_aft, obj_name, count)
+			if has_change: count += 1
+	if count == 1:
+		log.Must(f"    (no object references need to be changed)")
 
 	log.Info(f"  --- Finished renaming {len(list_name_bef_aft)} layers! ---\n")
+	log.Must("")
 
 
 
@@ -223,7 +241,7 @@ def _RenameTilelayer(playdo, original_name, layer_name):
 		layer.set('name', layer_name)
 		return
 
-def _RenameLayerInProperty(curr_property, list_name_bef_aft):
+def _RenameLayerInProperty(curr_property, list_name_bef_aft, obj_name, count):
 	'''Adjust the property value if it contains a tilelayer name that needs to be renamed'''
 	# Scan through all properties
 	old_value = curr_property.get('value')
@@ -235,7 +253,8 @@ def _RenameLayerInProperty(curr_property, list_name_bef_aft):
 	# Set the property value if there is a change
 	if new_value != old_value:
 		curr_property.set('value', new_value)
-		log.Extra(f"    Update property \'{curr_property.get('name')}\' : \'{old_value}\' \t-> \'{new_value}\'")
+		log.Must(f"    ({count}) \'{obj_name}\' : \'{curr_property.get('name')}\' : \'{new_value}\'")
+		return True
 
 
 
@@ -289,8 +308,11 @@ def _GetStringOfNewName(layer_name, layer_counter):
 '''Milestone 3'''
 
 def ConvertSortValueStandard(playdo):
-	''' TBA '''
-	log.Must(f"  Procedure 3 - Catergorising objects by sort groups...")
+	'''
+	This fixes the _sort2 values in all objects' property.
+	Old sort properties shall all be removed afterwards.
+	'''
+	log.Info(f"  Procedure 3 - Catergorising objects by sort groups...")
 
 	# Separate objects into one of these 3 groups
 	objs_to_resort = []
@@ -320,21 +342,28 @@ def ConvertSortValueStandard(playdo):
 			objs_losing_sort.append(obj)
 
 	# Append the 2 groups to remove their sort as well?
-	for obj in objs_to_resort: objs_losing_sort.append(obj)
-	for obj in objs_dev_sort: objs_losing_sort.append(obj)
+#	for obj in objs_to_resort: objs_losing_sort.append(obj)
+#	for obj in objs_dev_sort: objs_losing_sort.append(obj)
 	log.Extra("")
 
+
+	# Log the number of objects using sort1
+	_LogObjectsToResort(objs_losing_sort)
 
 	# Resort normal objects
-	log.Info(f"    {len(objs_to_resort)} objects will be resorted")
-	_Resort_NormalObjects(objs_to_resort)
-	log.Extra("")
-	return
+	log.Must(f"{len(objs_to_resort)} objects will be updated to use sort2 standard. Results:")
+	has_error = _Resort_NormalObjects(objs_to_resort)
+	if has_error:
+		log.Must("Aborting ReSort. Please correct the error and try again\n")
+		return True
+#	log.Extra("")
+#	return
 
 	# Resort dev objects
-	log.Info(f"    {len(objs_dev_sort)} objects will be set to the layer's top")
-	for obj in objs_dev_sort: _Resort_DevObjects(obj)
-	log.Extra("")
+	if len(objs_dev_sort) > 0:
+		log.Info(f"    {len(objs_dev_sort)} objects will be set to the layer's top")
+		for obj in objs_dev_sort: _Resort_DevObjects(obj)
+		log.Extra("")
 
 
 	# Proceed with removing sort values, only if the list is non-empty
@@ -344,21 +373,38 @@ def ConvertSortValueStandard(playdo):
 
 	# Waits for player's input
 	log.Must(f"    WARNING! SORT TOOL will be removing sort values for:")
-	log.Must(f"    (TODO for TY - show list of objects by names)")
-	log.Must(f"      {_CountObjectsWithName(objs_losing_sort, 'enemy')} enemies,")
-	log.Must(f"      {_CountObjectsWithName(objs_losing_sort, 'relic_block')} relic blocks,")
-	log.Must(f"      {len(objs_to_resort)} objects with new sort2 values,")
-	log.Must(f"      {len(objs_dev_sort)} objects with dev sort2 values, (\'_dev_load\')")
 	user_input = input("      Proceed? (Y/N) ")
 	if user_input[0].lower() == 'n': return
 
 	# Remove old sort property
-	log.Info(f"    All {len(objs_losing_sort)} objects will remove their sort values")
+#	log.Info(f"    All {len(objs_losing_sort)} objects will remove their sort values")
 	for obj in objs_losing_sort: _RemoveOldSortProperty(obj)
 	for obj in objs_to_resort: _RemoveOldSortProperty(obj)
 	for obj in objs_dev_sort: _RemoveOldSortProperty(obj)
 
-	log.Info(f"  --- Finished fixing sorts! ---\n")
+	log.Info(f"  --- Finished fixing sorts! ---")
+	log.Must("")
+
+
+
+
+
+def _LogObjectsToResort(objs_to_resort):
+	'''This function is purely for logging purpose'''
+	log.Must(f"{len(objs_to_resort)} objects detected using sort1 standard, but should no longer be having sort")
+
+	# Create the dictionary
+	dict_by_name = {}
+	for obj in objs_to_resort:
+		obj_name = obj.get('name')
+		if not obj_name in dict_by_name: dict_by_name[obj_name] = 0
+		dict_by_name[obj_name] += 1
+#	print(dict_by_name)
+
+	# Log the details
+	for key, value in dict_by_name.items():
+		print(f'    Removing sort property from {value} \'{key}\'')
+	log.Must("")
 
 
 
@@ -369,13 +415,15 @@ def _Resort_NormalObjects(objs_to_resort):
 	# TBA
 	# Create the dictionary with each "bucket" as key, i.e. dictionaries each for a layer
 
+	max_name_len = 0
 
 	# Map all objects to dictionary, grouped by sort values to then be sorted numerically
+	has_error = False
 	dict_all_sortval = {}
 	for obj in objs_to_resort:
 		old_sort = tiled_utils.GetPropertyFromObject(obj, 'sort')
 		old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
-		if old_sort == '': continue    # When doesn't have the property somehow
+		if old_sort == '': continue    # Ignore object when it doesn't have sort property
 
 		# Create the "key" that allows sorting items by values
 		#  e.g. As string, it has trouble handling single-digit numbers
@@ -386,15 +434,18 @@ def _Resort_NormalObjects(objs_to_resort):
 		elif sort_group.startswith('bg'): sort_id += 0	# Do nothing
 		else:
 			obj_name = obj.get('name')
-			log.Must(f'      WARNING! \'{obj_name}\' with invalid sort is ignored : \'{old_sort}\'')
+			log.Must(f'ERROR! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
+			has_error = True
 			continue
 
 		if not sort_id in dict_all_sortval: dict_all_sortval[sort_id] = []
 		dict_all_sortval[sort_id].append(obj)
 
+	# Show multiple objects with bad sort1 values before exiting
+	if has_error: return True
+
+	# Sort
 	dict_all_sortval = dict(sorted(dict_all_sortval.items()))
-#	for key, value in dict_all_sortval.items(): print(f'{key} : {len(value)}')
-#	print()
 
 
 	# Map all objects to the 2nd dictionary into their respective buckets
@@ -402,15 +453,15 @@ def _Resort_NormalObjects(objs_to_resort):
 	for key, value in dict_all_sortval.items():
 		is_fg_layer = (key > DICT_KEY_ADDON_FG_SORT * 0.8)
 		if is_fg_layer: key -= DICT_KEY_ADDON_FG_SORT
-#		print(f'{is_fg_layer} {key}')
 
 		curr_key = _GetNewKeyFromSortValue(is_fg_layer, key)
 		if not curr_key in dict_all_buckets:
 			dict_all_buckets[curr_key] = []
-		for obj in value: dict_all_buckets[curr_key].append(obj)
 
-#	print()
-#	for key, value in dict_all_buckets.items(): print(f'{key} : {len(value)}')
+		for obj in value:
+			dict_all_buckets[curr_key].append(obj)
+			obj_name = obj.get('name')
+			if max_name_len < len(obj_name): max_name_len = len(obj_name)
 
 
 	# Assign new sort values in properties
@@ -440,11 +491,12 @@ def _Resort_NormalObjects(objs_to_resort):
 			obj_name = obj.get('name')
 			old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
 			old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
-			log.Extra(f'      \'{obj_name}\' \t: {old_sort} -> {sort2_value}')
+			log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} : {old_sort} -> {sort2_value}')
 
 			# This should never happen
 			if sortval > 32000:
 				log.Must(f'        WARNING! \'{obj_name}\' has new sort exceeding limit : \'{sortval}\'')
+		log.Must("")
 
 #	log.Info(f"    --- Finished resorting {count_all_obj} objects! ---\n")
 
@@ -582,6 +634,15 @@ def _ConvertSort1(sort1_value):
 
 #--------------------------------------------------#
 '''Other Utility'''
+
+def _IndentBack(string, max_len, add_quotation = False):
+	if add_quotation: string = f'\'{string}\''
+	if len(string) < max_len:
+		string += (max_len - len(string)) * ' '
+	return string
+
+
+
 
 
 

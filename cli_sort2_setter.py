@@ -57,6 +57,9 @@ def main():
 	has_error = main_logic.ConvertSortValueStandard(playdo)
 	if has_error: return
 
+	log.Must("ReSORT Run Completed...")
+
+	log.Must("\n\n\nNOTE : Currently the playdo is not written into the XML.\n It can be changed in the CLI")
 #	playdo.Write()
 
 
