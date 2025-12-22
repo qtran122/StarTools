@@ -141,6 +141,17 @@ class LevelPlayDo():
             log.Extra(f'-- level_playdo.py : objectgroup found : {len(list_objectgroup)}')
         return list_objectgroup
 
+    def GetAllObjects(self):
+        '''Fetches all XML objects and return them as an array'''
+        list_object = []
+        for objectgroup in self.GetAllObjectgroup():
+            # Ignore object layers if not read by level
+            layer_name = objectgroup.get('name')
+            if not (layer_name.startswith('objects') or layer_name.startswith('collisions')): continue
+            # Append to list
+            for obj in objectgroup: list_object.append(obj)
+        return list_object
+
 
 
 
