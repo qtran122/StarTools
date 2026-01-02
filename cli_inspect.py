@@ -39,7 +39,7 @@ def IsPolygon(tiled_object):
         
     return False
 
-def InspectLevel(filename):
+def Inspect(filename):
     ''' Inspects a Tiled level XML and returns a tuple that counts the totals the number of (num_rect, num_polys, num_lines, num_relic_block) '''
     # Use a playdo to read/process the XML
     if filename.endswith('.xml') or filename.endswith('.tmx'): # cases where we run on all files 
@@ -94,12 +94,12 @@ def main():
         level_files = file_utils.GetAllLevelFiles();
         results = {}
         for level_file in level_files:
-            results[level_file] = InspectLevel(level_file)
+            results[level_file] = Inspect(level_file)
         print(results)
     else: 
         if not args.filename:
             raise Exception("Please specify a filename to inspect!")
-        shape_results = InspectLevel(args.filename)
+        shape_results = Inspect(args.filename)
         print(f"Found {shape_results[0]} rectangles, {shape_results[1]} polygons, {shape_results[2]} lines, and {shape_results[3]} relic blocks!")
         
     
