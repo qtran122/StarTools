@@ -42,10 +42,10 @@ def IsPolygon(tiled_object):
 def InspectLevel(filename):
     ''' Inspects a Tiled level XML and returns a tuple that counts the totals the number of (num_rect, num_polys, num_lines, num_relic_block) '''
     # Use a playdo to read/process the XML
-    if filename.endswith('.xml') or filename.endswith('.tmx'):
+    if filename.endswith('.xml') or filename.endswith('.tmx'): # cases where we run on all files 
         playdo = play.LevelPlayDo(filename)
     else:
-        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
+        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename)) # cases where we run on inidivdual file "f02"
     
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
