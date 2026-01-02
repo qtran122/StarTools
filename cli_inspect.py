@@ -42,7 +42,11 @@ def IsPolygon(tiled_object):
 def InspectLevel(filename):
     ''' Inspects a Tiled level XML and returns a tuple that counts the totals the number of (num_rect, num_polys, num_lines, num_relic_block) '''
     # Use a playdo to read/process the XML
-    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
+    if filename.endswith('.xml') or filename.endswith('.tmx'):
+        playdo = play.LevelPlayDo(filename)
+    else:
+        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
+    
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
     layers_w_collision = [] # ["collisions_CAVE", "collisions_BB", "collisions_TREE"] XML objectgroup with name attribute that starts with "collisions"
@@ -80,13 +84,23 @@ def InspectLevel(filename):
 def main():
     # Use argparse to get the filename & other optional arguments from the command line
     parser = argparse.ArgumentParser(description = arg_description)
-    parser.add_argument('filename', type=str, help = arg_help1)
+    parser.add_argument('filename', type=str, help = arg_help1, nargs='?') # now optional if user wants to run on all files (--all)
     parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+    parser.add_argument('--all', action='store_true', help='inspect all level files')
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
-    shape_results = InspectLevel(args.filename)
-    print(f"Found {shape_results[0]} rectangles, {shape_results[1]} polygons, {shape_results[2]} lines, and {shape_results[3]} relic blocks!")
+    if args.all:
+        level_files = file_utils.GetAllLevelFiles();
+        results = {}
+        for level_file in level_files:
+            results[level_file] = InspectLevel(level_file)
+        print(results)
+    else: 
+        if not args.filename:
+            raise Exception("Please specify a filename to inspect!")
+        shape_results = InspectLevel(args.filename)
+        print(f"Found {shape_results[0]} rectangles, {shape_results[1]} polygons, {shape_results[2]} lines, and {shape_results[3]} relic blocks!")
         
     
     #breakpoint()
