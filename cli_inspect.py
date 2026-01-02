@@ -40,12 +40,12 @@ def IsPolygon(tiled_object):
     return False
 
 def Inspect(filename):
-    ''' Inspects a Tiled level XML and returns a tuple that counts the totals the number of (num_rect, num_polys, num_lines, num_relic_block) '''
+    ''' Inspects a Tiled level XML and returns the total counts of (num_rect, num_polys, num_lines, num_relic_block) '''
     # Use a playdo to read/process the XML
-    if filename.endswith('.xml') or filename.endswith('.tmx'): # cases where we run on all files 
+    if filename.endswith('.xml') or filename.endswith('.tmx'): # cases where we run cli_inspect on all files 
         playdo = play.LevelPlayDo(filename)
     else:
-        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename)) # cases where we run on inidivdual file "f02"
+        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename)) # cases where we run cli_inspect on individual file "f02"
     
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
@@ -58,13 +58,12 @@ def Inspect(filename):
         if group_name.startswith("objects"): # Groups that starts with "objects" will only contain relic blocks
             for shape in obj_grp:
                 if shape.get("name") == "relic_block":
-                    num_relic += 1
+                    num_relic += 1    
 
-    
     num_rects = 0
     num_polys = 0
     num_lines = 0
-    # Count shapes in collision layers, hadle case where obj_group starts with "collisions" in which we have all shapes (polygon, lines, rects, and relic blocks)
+    # Count shapes in collision layers, handle case where obj_group starts with "collisions" in which we have all shapes (polygon, lines, rects, and relic blocks)
     for obj_grp in layers_w_collision:
         for shape in obj_grp:
             if IsPolygon(shape):
@@ -94,8 +93,13 @@ def main():
         level_files = file_utils.GetAllLevelFiles();
         results = {}
         for level_file in level_files:
-            results[level_file] = Inspect(level_file)
-        print(results)
+            results[file_utils.StripFilename(level_file)] = Inspect(level_file)
+        sorted_results = sorted(results.items(), key=lambda x: sum(x[1]), reverse=True)
+        top_30_collisions_levels = sorted_results[:30]
+        for filename, (rects, polys, lines, relics) in top_30_collisions_levels:
+            total_collision = rects + polys + lines + relics
+            print(f"{filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
+       
     else: 
         if not args.filename:
             raise Exception("Please specify a filename to inspect!")
