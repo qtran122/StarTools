@@ -12,8 +12,6 @@ import argparse
 import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
-import logic.pattern.pattern_matcher as PM
-import logic.remapper.tile_remapper as TM
 
 #--------------------------------------------------#
 '''Pattern Lists'''
@@ -41,17 +39,13 @@ def IsPolygon(tiled_object):
         
     return False
 
-def main():
-    # Use argparse to get the filename & other optional arguments from the command line
-    parser = argparse.ArgumentParser(description = arg_description)
-    parser.add_argument('filename', type=str, help = arg_help1)
-    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
-    args = parser.parse_args()
-    log.SetVerbosityLevel(args.v)
-
+def Inspect(filename):
+    ''' Inspects a Tiled level XML and returns the total counts of (num_rect, num_polys, num_lines, num_relic_block) '''
     # Use a playdo to read/process the XML
-    pattern_root = file_utils.GetPatternRoot()
-    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
+    if filename.endswith('.xml') or filename.endswith('.tmx'): # cases where we run cli_inspect on all files 
+        playdo = play.LevelPlayDo(filename)
+    else:
+        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename)) # cases where we run cli_inspect on individual file "f02"
     
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
@@ -64,16 +58,12 @@ def main():
         if group_name.startswith("objects"): # Groups that starts with "objects" will only contain relic blocks
             for shape in obj_grp:
                 if shape.get("name") == "relic_block":
-                    num_relic += 1
+                    num_relic += 1    
 
-    
-    if not layers_w_collision:
-        print("No collisions layers starting with 'collisions' were found ")
-    
     num_rects = 0
     num_polys = 0
     num_lines = 0
-    # Count shapes in collision layers, hadle case where obj_group starts with "collisions" in which we have all shapes (polygon, lines, rects, and relic blocks)
+    # Count shapes in collision layers, handle case where obj_group starts with "collisions" in which we have all shapes (polygon, lines, rects, and relic blocks)
     for obj_grp in layers_w_collision:
         for shape in obj_grp:
             if IsPolygon(shape):
@@ -86,8 +76,35 @@ def main():
                 else:
                     num_rects += 1
 
+    shape_tuple = (num_rects, num_polys, num_lines, num_relic)
+    return shape_tuple
+        
 
-    print(f'Found {num_rects} rectangles, {num_polys} polygons, {num_lines} lines, and {num_relic} relic blocks!')
+def main():
+    # Use argparse to get the filename & other optional arguments from the command line
+    parser = argparse.ArgumentParser(description = arg_description)
+    parser.add_argument('filename', type=str, help = arg_help1, nargs='?') # now optional if user wants to run on all files (--all)
+    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+    parser.add_argument('--all', action='store_true', help='inspect all level files')
+    args = parser.parse_args()
+    log.SetVerbosityLevel(args.v)
+
+    if args.all:
+        level_files = file_utils.GetAllLevelFiles();
+        results = {}
+        for level_file in level_files:
+            results[file_utils.StripFilename(level_file)] = Inspect(level_file)
+        sorted_results = sorted(results.items(), key=lambda x: sum(x[1]), reverse=True)
+        top_30_collisions_levels = sorted_results[:30]
+        for filename, (rects, polys, lines, relics) in top_30_collisions_levels:
+            total_collision = rects + polys + lines + relics
+            print(f"{filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
+       
+    else: 
+        if not args.filename:
+            raise Exception("Please specify a filename to inspect!")
+        shape_results = Inspect(args.filename)
+        print(f"Found {shape_results[0]} rectangles, {shape_results[1]} polygons, {shape_results[2]} lines, and {shape_results[3]} relic blocks!")
         
     
     #breakpoint()
