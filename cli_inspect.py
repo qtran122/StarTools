@@ -67,9 +67,6 @@ def main():
                     num_relic += 1
 
     
-    if not layers_w_collision:
-        print("No collisions layers starting with 'collisions' were found ")
-    
     num_rects = 0
     num_polys = 0
     num_lines = 0
