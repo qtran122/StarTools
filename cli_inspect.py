@@ -12,8 +12,6 @@ import argparse
 import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
-import logic.pattern.pattern_matcher as PM
-import logic.remapper.tile_remapper as TM
 
 #--------------------------------------------------#
 '''Pattern Lists'''
@@ -41,18 +39,10 @@ def IsPolygon(tiled_object):
         
     return False
 
-def main():
-    # Use argparse to get the filename & other optional arguments from the command line
-    parser = argparse.ArgumentParser(description = arg_description)
-    parser.add_argument('filename', type=str, help = arg_help1)
-    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
-    args = parser.parse_args()
-    log.SetVerbosityLevel(args.v)
-
+def InspectLevel(filename):
+    ''' Inspects a Tiled level XML and returns a tuple that counts the totals the number of (num_rect, num_polys, num_lines, num_relic_block) '''
     # Use a playdo to read/process the XML
-    pattern_root = file_utils.GetPatternRoot()
-    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
-    
+    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
     layers_w_collision = [] # ["collisions_CAVE", "collisions_BB", "collisions_TREE"] XML objectgroup with name attribute that starts with "collisions"
@@ -83,8 +73,20 @@ def main():
                 else:
                     num_rects += 1
 
+    shape_tuple = (num_rects, num_polys, num_lines, num_relic)
+    return shape_tuple
+        
 
-    print(f'Found {num_rects} rectangles, {num_polys} polygons, {num_lines} lines, and {num_relic} relic blocks!')
+def main():
+    # Use argparse to get the filename & other optional arguments from the command line
+    parser = argparse.ArgumentParser(description = arg_description)
+    parser.add_argument('filename', type=str, help = arg_help1)
+    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+    args = parser.parse_args()
+    log.SetVerbosityLevel(args.v)
+
+    shape_results = InspectLevel(args.filename)
+    print(f"Found {shape_results[0]} rectangles, {shape_results[1]} polygons, {shape_results[2]} lines, and {shape_results[3]} relic blocks!")
         
     
     #breakpoint()
