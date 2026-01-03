@@ -3,8 +3,8 @@ Logic module that can
 	1. If using `_sort`, add new `_sort2` property
 	2. Rename tilelayers
 	3. Group all objects by their sorts, then resort the `_sort2` values
- TODO	x. Color code lighting objects after sort
- TODO	x. Enable switching between two views for lighting objects
+ TODO	   Color code lighting objects after sort
+ TODO	   Enable switching between two views for lighting objects
 
 USAGE EXAMPLE:
 	main_logic.ErrorCheckSortOrder(playdo)
@@ -12,6 +12,7 @@ USAGE EXAMPLE:
 
 '''
 
+import re    # For renaming
 import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
 
@@ -109,7 +110,6 @@ def ErrorCheckSortOrder(playdo):
 				sort2_value = tiled_utils.GetPropertyFromObject(obj, '_sort2')
 				log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort2_value}\'')
 				count += 1
-#		log.Must(f'  Exiting program now...')
 		log.Must('\nAborting ReSort. Please correct level to exclusively use one sort standard and try again')
 		return True
 
@@ -144,7 +144,7 @@ def RenameTilelayer(playdo):
 	now_at_fg = False
 	layer_counter = 0
 	layer_counter_all = 0
-	max_name_len = 0
+	max_name_len = 0    # Purely cosmetic, for making the output looks pretty
 
 	for layer_name in playdo.GetAllTileLayerNames():
 		if not (layer_name.startswith('fg') or layer_name.startswith('bg')): continue
@@ -188,7 +188,6 @@ def RenameTilelayer(playdo):
 		_RenameTilelayer(playdo, original_name, layer_name)
 		list_name_bef_aft.append( (original_name, layer_name) )
 	_max_layer_count.append(layer_counter)
-#	print(f'{_max_layer_count[0]} BG Layer & {_max_layer_count[1]} FG Layers')
 
 
 	# Log the layer name change in reversed order
@@ -200,8 +199,8 @@ def RenameTilelayer(playdo):
 	# Inform user that there is no OWP layer, ask if want to proceed normally or exit
 	if not contains_bg_owp:
 		log.Must("WARNING! Level does not contain the BG OWP anchor")
-#		user_input = input("Continue processing the level? (Y/N) ")
-		user_input = 'y'
+		user_input = input("Continue processing the level? (Y/N) ")
+#		user_input = 'y'    # Use this line instead if want to skip the user input
 		if user_input[0].lower() == 'n':
 			log.Must("      Exiting program...")
 			return True
@@ -258,45 +257,33 @@ def _RenameLayerInProperty(curr_property, list_name_bef_aft, obj_name, count):
 
 
 
+# https://docs.google.com/document/d/1GN5UMAfNQC44met51Ms4MZ575rQlZAk61CYXeYQelzg/edit?tab=t.i244z3rn90j6
 def _GetStringOfNewName(layer_name, layer_counter):
 	'''This renames tilelayer from old to new standard'''
 
-	# Keep track of /fx
+	# Keep track of /fx, then remove it temporarily during renaming
 	has_fx = '/fx' in layer_name
 	layer_name = layer_name.replace('/fx', '')
 
-	# For the OWP layer, always renamed to bg_owp_30k
+	# Case 1 - OWP layer is always renamed to 'bg_owp_30k'
 	if layer_name.startswith('bg') and 'owp' in layer_name.lower():
-		_bg_owp_bef_aft.append(layer_counter)
+		_bg_owp_bef_aft.append(layer_counter) # For adjusting the above-owp object later
 		_bg_owp_bef_aft.append(6)
 		layer_name = "bg_owp_30k"
 		if has_fx: layer_name += '/fx'
 		return layer_name
 
-	# Remove numbers
-	for i in range(10):
-		layer_name = layer_name.replace(f'{i}', '')
-	layer_name = layer_name.replace('__', '_')
-
-	# Remove the ending space & hyphen
-	#  bg_deco - 3 -> bg_deco
-	if layer_name.endswith(' '): layer_name = layer_name[:-1]
-	if layer_name.endswith('-'): layer_name = layer_name[:-1]
-	if layer_name.endswith(' '): layer_name = layer_name[:-1]
-
-	# Replace space with underscore
+	# Case 2 - Other layers, 'bg_1_wall' -> 'bg_wall'
+	#  1. Lowercase
+	#  2. Non-letter -> space, then trim
+	#  3. Space -> underscore
+	layer_name = layer_name.lower()
+	layer_name = re.sub(r'[^a-z]+', ' ', layer_name)
+	layer_name = layer_name.strip()
 	layer_name = layer_name.replace(' ', '_')
 
-	# Remove double-hyphen
-	layer_name = layer_name.replace('__', '_')
-
-	# Set all char to lowercase
-	layer_name = layer_name.lower()
-
-	# Add the sort number at the end
+	# Add the sort number at the end, then add back /fx if needed
 	layer_name += f"_{layer_counter * 5}k"
-
-	# Add back /fx if applicable
 	if has_fx: layer_name += '/fx'
 	return layer_name
 
@@ -340,10 +327,6 @@ def ConvertSortValueStandard(playdo):
 			objs_losing_sort.append(obj)
 		if tiled_utils.GetPropertyFromObject(obj, '_sort') != '':
 			objs_losing_sort.append(obj)
-
-	# Append the 2 groups to remove their sort as well?
-#	for obj in objs_to_resort: objs_losing_sort.append(obj)
-#	for obj in objs_dev_sort: objs_losing_sort.append(obj)
 	log.Extra("")
 
 
@@ -356,8 +339,6 @@ def ConvertSortValueStandard(playdo):
 	if has_error:
 		log.Must("Aborting ReSort. Please correct the error and try again\n")
 		return True
-#	log.Extra("")
-#	return
 
 	# Resort dev objects
 	if len(objs_dev_sort) > 0:
@@ -377,7 +358,6 @@ def ConvertSortValueStandard(playdo):
 	if user_input[0].lower() == 'n': return
 
 	# Remove old sort property
-#	log.Info(f"    All {len(objs_losing_sort)} objects will remove their sort values")
 	for obj in objs_losing_sort: _RemoveOldSortProperty(obj)
 	for obj in objs_to_resort: _RemoveOldSortProperty(obj)
 	for obj in objs_dev_sort: _RemoveOldSortProperty(obj)
@@ -399,7 +379,6 @@ def _LogObjectsToResort(objs_to_resort):
 		obj_name = obj.get('name')
 		if not obj_name in dict_by_name: dict_by_name[obj_name] = 0
 		dict_by_name[obj_name] += 1
-#	print(dict_by_name)
 
 	# Log the details
 	for key, value in dict_by_name.items():
@@ -412,10 +391,9 @@ def _LogObjectsToResort(objs_to_resort):
 
 DICT_KEY_ADDON_FG_SORT = 10000	# Any really big number
 def _Resort_NormalObjects(objs_to_resort):
-	# TBA
-	# Create the dictionary with each "bucket" as key, i.e. dictionaries each for a layer
+	'''Assign new sort values to the input objects' properties'''
 
-	max_name_len = 0
+	max_name_len = 0    # Purely cosmetic, for making the output looks pretty
 
 	# Map all objects to dictionary, grouped by sort values to then be sorted numerically
 	has_error = False
@@ -466,10 +444,6 @@ def _Resort_NormalObjects(objs_to_resort):
 
 	# Assign new sort values in properties
 	count_all_obj = 0
-#	_bg_owp_bef_aft.append(5)	# Debug
-#	_bg_owp_bef_aft.append(10)	# Debug
-#	print(f'{_max_layer_count[0]} BG Layer & {_max_layer_count[1]} FG Layers')
-#	print(f'OWP Anchor : {_bg_owp_bef_aft[0]} -> {_bg_owp_bef_aft[1]}')
 	for key, value in dict_all_buckets.items():
 		sortval = key[1]
 
@@ -498,7 +472,7 @@ def _Resort_NormalObjects(objs_to_resort):
 				log.Must(f'        WARNING! \'{obj_name}\' has new sort exceeding limit : \'{sortval}\'')
 		log.Must("")
 
-#	log.Info(f"    --- Finished resorting {count_all_obj} objects! ---\n")
+
 
 
 
@@ -515,20 +489,6 @@ def _GetNewKeyFromSortValue(is_fg_layer, curr_sort):
 
 	new_key = (is_fg_layer, layer_num)
 	return new_key
-
-
-
-
-
-def _CountObjectsWithName(list_obj, prefix):
-	count = 0
-	for obj in list_obj:
-		obj_name = obj.get('name')
-		obj_type = obj.get('type')
-		if obj_name != None and obj_name.startswith(prefix): count += 1
-		else:
-			if obj_type != None and obj_type.startswith(prefix): count += 1
-	return count
 
 
 
@@ -580,51 +540,6 @@ def TBA(playdo):
 
 #--------------------------------------------------#
 '''To be deleted'''
-
-
-def _Resort_NormalObjects_deprecate(obj):
-	obj_name = obj.get('name')
-
-	# Only one of the two below should be present
-	old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
-	old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
-
-	# Apply conversion, then add to list
-	sort2_value = _ConvertSort1(old_sort)
-	if sort2_value == '':
-		log.Must(f'      WARNING! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
-#		log.Must(f'    Exiting program now...')
-#		return True
-#	tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
-#	tiled_utils.RemovePropertyFromObject(obj, 'sort')
-#	tiled_utils.RemovePropertyFromObject(obj, '_sort')
-
-#	({len(list_targetted_objects)+1}) 
-	log.Extra(f'      \'{obj_name}\' \t: {old_sort} -> {sort2_value}')
-#	list_targetted_objects.append(obj)
-
-def _ConvertSort1(sort1_value):
-	# Certain objects cannot be converted? e.g. env_art
-	sort1_tuple = sort1_value.split('/')
-	if len(sort1_tuple) < 2: return ''
-
-	# game_objects is ignored, and is thus not processed
-	if sort1_tuple[0] == 'game_objects': return sort1_value
-
-	# Apply simple conversion formula
-	sort1_num = int(sort1_tuple[1])
-	sort2_num1 = int(sort1_num / 10) * SLOT_SORT2_LAYER
-	sort2_num2 = sort1_num % 10
-	if sort1_num < 0:
-		sort2_num2 = - (10 - sort2_num2)
-
-	# Safety check, range: [-32768, 32767]
-	sort2_num = sort2_num1 + sort2_num2
-	if sort2_num < -32700: sort2_num = -32700
-	if sort2_num >  32700: sort2_num =  32700
-
-	sort2_value = f'{sort1_tuple[0]}/{sort2_num}'
-	return sort2_value
 
 
 
