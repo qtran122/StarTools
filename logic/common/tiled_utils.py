@@ -386,7 +386,7 @@ def RemovePropertyFromObject( tiled_object, property_name ):
         has_property_to_be_removed = True
     if not has_property_to_be_removed: return False
 
-    # If the only property is getting removed, add an empty property
+    # If the property getting removed is the only property, add the no-op #Q property
     if len(properties) == 0:
         SetPropertyOnObject(tiled_object, '#Q', '')
     return True

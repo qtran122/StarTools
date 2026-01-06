@@ -6,8 +6,7 @@ This includes:
  - Renaming tilelayer to include suffix of the sort values
 	
 USAGE EXAMPLE:
-	python cli_sort2_setter.py _sort --v 0
-	python cli_sort2_setter.py --v 0
+	python cli_sort.py sf1 --v 0
 
 '''
 import argparse
@@ -18,9 +17,6 @@ import logic.standalone.sort2_setter as main_logic
 
 #--------------------------------------------------#
 '''Adjustable Configurations'''
-
-# Debug - Will be removed at the end
-# level_name = "_sort 3-old"
 
 
 
@@ -57,11 +53,12 @@ def main():
 	has_error = main_logic.ConvertSortValueStandard(playdo)
 	if has_error: return
 
-	log.Must("ReSORT Run Completed...")
-
-	log.Must("\n\n\nNOTE : Currently the playdo is not written into the XML.\n It can be changed in the CLI")
+	user_input = input(f"      Proceed to overwrite level \'{level_name}\'? (Y/N) ")
+	if user_input[0].lower() != 'n': playdo.Write()
+#	log.Must("\n\n\nNOTE : Currently the playdo is not written into the XML.\n It can be changed in the CLI")
 #	playdo.Write()
 
+	log.Must("\nReSORT Run Completed...\n")
 
 
 

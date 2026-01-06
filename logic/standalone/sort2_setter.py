@@ -1,10 +1,8 @@
 '''
-Logic module that can
-	1. If using `_sort`, add new `_sort2` property
-	2. Rename tilelayers
-	3. Group all objects by their sorts, then resort the `_sort2` values
- TODO	   Color code lighting objects after sort
- TODO	   Enable switching between two views for lighting objects
+Logic module to upgrade levels from sort1-standard to sort2-standard
+ - Finds new sort-indices for objects that are unique in order to avoid conflicts & visual glitches
+ - Renames tilelayers to orient them for lighting & rename any direct tilelayer references
+ - If file is already using sort2 standard, continues its maintenance (separate out any conflicts)
 
 USAGE EXAMPLE:
 	main_logic.ErrorCheckSortOrder(playdo)
@@ -29,8 +27,8 @@ LIST_OBJ_RESORT_NAME = {
 	"water_fill"
 }
 
-_bg_owp_bef_aft = []	# Second number is always 6, for the bg_owp_30k anchor
-_max_layer_count = []	# Total layer numbers for BG & FG tilelayers
+_bg_owp_layer_index = [] # Ensures objects previously above OWP remains above after renaming
+_max_layer_count = []    # Total layer numbers for BG & FG tilelayers
 
 
 
@@ -141,7 +139,7 @@ def RenameTilelayer(playdo):
 
 	list_name_bef_aft = []    # List of tuple, each stores a (<name_before>, <name_after>)
 	contains_bg_owp = False
-	now_at_fg = False
+	reached_fg_layers = False
 	layer_counter = 0
 	layer_counter_all = 0
 	max_name_len = 0    # Purely cosmetic, for making the output looks pretty
@@ -157,9 +155,9 @@ def RenameTilelayer(playdo):
 			return True
 
 		# For number suffix
-		if not now_at_fg:
+		if not reached_fg_layers:
 			if layer_name.startswith('fg'):
-				now_at_fg = True
+				reached_fg_layers = True
 				_max_layer_count.append(layer_counter)
 				layer_counter = 0
 		layer_counter += 1
@@ -199,15 +197,15 @@ def RenameTilelayer(playdo):
 	# Inform user that there is no OWP layer, ask if want to proceed normally or exit
 	if not contains_bg_owp:
 		log.Must("WARNING! Level does not contain the BG OWP anchor")
-		user_input = input("Continue processing the level? (Y/N) ")
+#		user_input = input("Continue processing the level? (Y/N) ")
 #		user_input = 'y'    # Use this line instead if want to skip the user input
-		if user_input[0].lower() == 'n':
-			log.Must("      Exiting program...")
-			return True
+#		if user_input[0].lower() == 'n':
+#			log.Must("      Exiting program...")
+#			return True
 
 
 	# Scan through all objects to check their properties and see if affected by renaming
-	log.Must("Additional tilelayer references in objects will now be updated to match the new names")
+	log.Must("Additional tilelayer references in objects now updated to match the new names")
 	count = 1
 	for obj in playdo.GetAllObjects():
 		properties = obj.find('properties')
@@ -267,8 +265,8 @@ def _GetStringOfNewName(layer_name, layer_counter):
 
 	# Case 1 - OWP layer is always renamed to 'bg_owp_30k'
 	if layer_name.startswith('bg') and 'owp' in layer_name.lower():
-		_bg_owp_bef_aft.append(layer_counter) # For adjusting the above-owp object later
-		_bg_owp_bef_aft.append(6)
+		_bg_owp_layer_index.append(layer_counter) # For adjusting the above-owp object later
+		_bg_owp_layer_index.append(6)
 		layer_name = "bg_owp_30k"
 		if has_fx: layer_name += '/fx'
 		return layer_name
@@ -298,13 +296,14 @@ def ConvertSortValueStandard(playdo):
 	'''
 	This fixes the _sort2 values in all objects' property.
 	Old sort properties shall all be removed afterwards.
+	NOTE : Only objects in 'collisions_' and 'objects_' layers are checked, not 'meta' layer
 	'''
 	log.Info(f"  Procedure 3 - Catergorising objects by sort groups...")
 
 	# Separate objects into one of these 3 groups
-	objs_to_resort = []
-	objs_dev_sort = []
-	objs_losing_sort = []
+	objs_to_resort = []   # These meet the criteria to be "re-sorted", and are most likely to be conflicting
+	objs_dev_sort = []    # These are placeholder objects, used for development but not meant to be in the game
+	objs_losing_sort = [] # These no longer need a sort property because of the new sort2 standard
 	for obj in playdo.GetAllObjects():
 		obj_name = obj.get('name')
 		if obj_name == None: continue
@@ -330,12 +329,9 @@ def ConvertSortValueStandard(playdo):
 	log.Extra("")
 
 
-	# Log the number of objects using sort1
-	_LogObjectsToResort(objs_losing_sort)
-
 	# Resort normal objects
 	log.Must(f"{len(objs_to_resort)} objects will be updated to use sort2 standard. Results:")
-	has_error = _Resort_NormalObjects(objs_to_resort)
+	has_error = _Resort_NormalObjects(objs_to_resort, playdo)
 	if has_error:
 		log.Must("Aborting ReSort. Please correct the error and try again\n")
 		return True
@@ -347,20 +343,18 @@ def ConvertSortValueStandard(playdo):
 		log.Extra("")
 
 
-	# Proceed with removing sort values, only if the list is non-empty
-	if len(objs_losing_sort) == 0:
-		log.Info(f"  --- Finished fixing sorts! ---\n")
-		return
-
-	# Waits for player's input
-	log.Must(f"    WARNING! SORT TOOL will be removing sort values for:")
-	user_input = input("      Proceed? (Y/N) ")
-	if user_input[0].lower() == 'n': return
+	# Log the number of objects using sort1
+	_LogObjectsToResort(objs_losing_sort)
 
 	# Remove old sort property
-	for obj in objs_losing_sort: _RemoveOldSortProperty(obj)
+	log.Must(f"    WARNING! SORT TOOL will be removing old sort values for all objects")
+	log.Must(f"     objs_to_resort   : {len(objs_to_resort)}")
+	log.Must(f"     objs_dev_sort    : {len(objs_dev_sort)}")
+	log.Must(f"     objs_losing_sort : {len(objs_losing_sort)}")
 	for obj in objs_to_resort: _RemoveOldSortProperty(obj)
 	for obj in objs_dev_sort: _RemoveOldSortProperty(obj)
+	for obj in objs_losing_sort: _RemoveOldSortProperty(obj)
+
 
 	log.Info(f"  --- Finished fixing sorts! ---")
 	log.Must("")
@@ -370,10 +364,11 @@ def ConvertSortValueStandard(playdo):
 
 
 def _LogObjectsToResort(objs_to_resort):
-	'''This function is purely for logging purpose'''
-	log.Must(f"{len(objs_to_resort)} objects detected using sort1 standard, but should no longer be having sort")
+	'''This function is purely for logging - Shows how many of each objects have redundant _sort'''
+	log.Must(f"{len(objs_to_resort)} objects no longer require a sort property and have graduated to a")
+	log.Must( " permanent unique sort order; their sort property will be removed.")
 
-	# Create the dictionary
+	# Key is object name; Value is number of objects with for each name
 	dict_by_name = {}
 	for obj in objs_to_resort:
 		obj_name = obj.get('name')
@@ -382,26 +377,33 @@ def _LogObjectsToResort(objs_to_resort):
 
 	# Log the details
 	for key, value in dict_by_name.items():
-		print(f'    Removing sort property from {value} \'{key}\'')
+		log.Must(f'    Removing sort property from {value} \'{key}\'')
 	log.Must("")
 
 
 
 
-
-DICT_KEY_ADDON_FG_SORT = 10000	# Any really big number
-def _Resort_NormalObjects(objs_to_resort):
+# Any really big number - This lets me reorder both BG/FG objects without a separate dictionary
+DICT_KEY_ADDON_FG_SORT = 100000
+def _Resort_NormalObjects(objs_to_resort, playdo):
 	'''Assign new sort values to the input objects' properties'''
 
 	max_name_len = 0    # Purely cosmetic, for making the output looks pretty
 
 	# Map all objects to dictionary, grouped by sort values to then be sorted numerically
+	#  Key is the unique sort-group but converted, e.g. "fg_tiles/15" -> big_number + 15 -> 100015
+	#  Value is the array of objects, which all belong to the same sort-group 100015
 	has_error = False
 	dict_all_sortval = {}
 	for obj in objs_to_resort:
+		# Ignore object when it doesn't have sort property
 		old_sort = tiled_utils.GetPropertyFromObject(obj, 'sort')
 		old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
-		if old_sort == '': continue    # Ignore object when it doesn't have sort property
+		if old_sort == '':
+			obj_name = obj.get('name')
+			layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+			log.Must(f'WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort1')
+			continue
 
 		# Create the "key" that allows sorting items by values
 		#  e.g. As string, it has trouble handling single-digit numbers
@@ -427,9 +429,11 @@ def _Resort_NormalObjects(objs_to_resort):
 
 
 	# Map all objects to the 2nd dictionary into their respective buckets
+	#  Key is the tuple storing unique sort-group in "buckets", e.g. "fg_tiles/15" -> is FG & 2nd layer -> (True, 2)
+	#  Value is the array of objects, which all belong to the same "bucket"
 	dict_all_buckets = {}
 	for key, value in dict_all_sortval.items():
-		is_fg_layer = (key > DICT_KEY_ADDON_FG_SORT * 0.8)
+		is_fg_layer = (key > DICT_KEY_ADDON_FG_SORT * 0.8) # Slightly smaller than big number in case of negative
 		if is_fg_layer: key -= DICT_KEY_ADDON_FG_SORT
 
 		curr_key = _GetNewKeyFromSortValue(is_fg_layer, key)
@@ -443,13 +447,13 @@ def _Resort_NormalObjects(objs_to_resort):
 
 
 	# Assign new sort values in properties
-	count_all_obj = 0
+	count_all_obj = 0    # TODO remove it since it's redundant
 	for key, value in dict_all_buckets.items():
 		sortval = key[1]
 
 		# Check if the bucket is above the original OWP anchor layer
-		if not key[0] and len(_bg_owp_bef_aft) >= 2:
-			if sortval >= _bg_owp_bef_aft[0]: sortval = _bg_owp_bef_aft[1]
+		if not key[0] and len(_bg_owp_layer_index) >= 2:
+			if sortval >= _bg_owp_layer_index[0]: sortval = _bg_owp_layer_index[1]
 
 		sortval = sortval * 5000
 		for obj in value:
@@ -466,6 +470,7 @@ def _Resort_NormalObjects(objs_to_resort):
 			old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
 			old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
 			log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} : {old_sort} -> {sort2_value}')
+#			log.Must(f'  {count_all_obj}\t  {_IndentBack(obj_name, max_name_len+2, True)} : {old_sort} -> {sort2_value}')
 
 			# This should never happen
 			if sortval > 32000:
@@ -511,6 +516,7 @@ def _Resort_DevObjects(obj):
 def _RemoveOldSortProperty(obj):
 	has_old_sort_a = tiled_utils.RemovePropertyFromObject(obj, 'sort')
 	has_old_sort_b = tiled_utils.RemovePropertyFromObject(obj, '_sort')
+#	log.Must(f"      \'{obj_name}\' : {has_old_sort_a}, {has_old_sort_b}")
 	if has_old_sort_a or has_old_sort_b:
 		obj_name = obj.get('name')
 		log.Extra(f"      Removing old sort property from \'{obj_name}\'")
