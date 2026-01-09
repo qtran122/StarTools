@@ -44,19 +44,17 @@ def main():
     level_name = args.filename
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(level_name))
 
-    has_error = main_logic.ErrorCheckSortOrder(playdo)
+    has_error, is_using_sort1 = main_logic.ErrorCheckSortOrder(playdo)
     if has_error: return
 
-    has_error = main_logic.RenameTilelayer(playdo)
+    has_error, bg_owp_prev_index, max_layer_count = main_logic.RenameTilelayer(playdo)
     if has_error: return
 
-    has_error = main_logic.ConvertSortValueStandard(playdo)
+    has_error = main_logic.ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
     if has_error: return
 
     user_input = input(f"      Proceed to overwrite level \'{level_name}\'? (Y/N) ")
     if user_input[0].lower() != 'n': playdo.Write()
-#    log.Must("\n\n\nNOTE : Currently the playdo is not written into the XML.\n It can be changed in the CLI")
-#    playdo.Write()
 
     log.Must("\nReSORT Run Completed...\n")
 
