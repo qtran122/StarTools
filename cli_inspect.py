@@ -99,9 +99,9 @@ def main():
             total_collision = rects + polys + lines + relics
             print(f"{filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
        
-    else: 
+    else:
         if not args.filename:
-            raise Exception("Please specify a filename to inspect!")
+            parser.error("filename is required when not using --all")
         shape_results = Inspect(args.filename)
         print(f"Found {shape_results[0]} rectangles, {shape_results[1]} polygons, {shape_results[2]} lines, and {shape_results[3]} relic blocks!")
         
