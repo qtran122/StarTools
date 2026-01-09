@@ -95,9 +95,10 @@ def main():
             results[file_utils.StripFilename(level_file)] = Inspect(level_file)
         sorted_results = sorted(results.items(), key=lambda x: sum(x[1]), reverse=True)
         top_collisions_levels = sorted_results[:args.top]
-        for filename, (rects, polys, lines, relics) in top_collisions_levels:
+        for index, (filename, (rects, polys, lines, relics)) in enumerate(top_collisions_levels, start=1):
             total_collision = rects + polys + lines + relics
-            print(f"{filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
+            print(f"{index}. {filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
+        
        
     else:
         if not args.filename:
