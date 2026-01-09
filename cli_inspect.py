@@ -29,14 +29,12 @@ def IsPolyline(tiled_object):
     polyline = tiled_object.find('polyline')
     if polyline is not None:
         return True
-        
     return False
 
 def IsPolygon(tiled_object):    
     polygon = tiled_object.find('polygon')
     if polygon is not None:
         return True
-        
     return False
 
 def Inspect(filename):
@@ -76,8 +74,8 @@ def Inspect(filename):
                 else:
                     num_rects += 1
 
-    shape_tuple = (num_rects, num_polys, num_lines, num_relic)
-    return shape_tuple
+    shape_counts = (num_rects, num_polys, num_lines, num_relic)
+    return shape_counts
         
 
 def main():
