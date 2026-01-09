@@ -335,7 +335,7 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
 
     # Resort normal objects
     log.Must(f"{len(objs_to_resort)} objects will be updated to use sort2 standard. Results:")
-    has_error = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count)
+    has_error = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
     if has_error:
         log.Must("Aborting ReSort. Please correct the error and try again\n")
         return True
@@ -389,7 +389,7 @@ def _LogObjectsToResort(objs_to_resort):
 
 # Any really big number - This lets me reorder both BG/FG objects without a separate dictionary
 DICT_KEY_ADDON_FG_SORT = 100000
-def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count):
+def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1):
     '''Assign new sort values to the input objects' properties'''
 
     max_name_len = 0    # Purely cosmetic, for making the output looks pretty
@@ -400,14 +400,25 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
     has_error = False
     dict_all_sortval = {}
     for obj in objs_to_resort:
+        old_sort = ''
+
         # Ignore object when it doesn't have sort property
-        old_sort = tiled_utils.GetPropertyFromObject(obj, 'sort')
-        old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
-        if old_sort == '':
-            obj_name = obj.get('name')
-            layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
-            log.Must(f'WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort1')
-            continue
+        if is_using_sort1:
+            old_sort = tiled_utils.GetPropertyFromObject(obj, 'sort')
+            old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+            if old_sort == '':
+                obj_name = obj.get('name')
+                layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+                log.Must(f'WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort1')
+                continue
+        else:
+            old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort2')
+            if old_sort == '':
+                obj_name = obj.get('name')
+                layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+                log.Must(f'WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort2')
+                continue
+
 
         # Create the "key" that allows sorting items by values
         #  e.g. As string, it has trouble handling single-digit numbers
@@ -440,7 +451,7 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
         is_fg_layer = (key > DICT_KEY_ADDON_FG_SORT * 0.8) # Slightly smaller than big number in case of negative
         if is_fg_layer: key -= DICT_KEY_ADDON_FG_SORT
 
-        curr_key = _GetNewKeyFromSortValue(is_fg_layer, key, max_layer_count)
+        curr_key = _GetNewKeyFromSortValue(is_fg_layer, key, max_layer_count, is_using_sort1)
         if not curr_key in dict_all_buckets:
             dict_all_buckets[curr_key] = []
 
@@ -470,13 +481,14 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
             if is_fg: sort2_value += 'fg'
             else: sort2_value += 'bg'
             sort2_value += '_tiles/' + str(sortval)
-            tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
 
             obj_name = obj.get('name')
             old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
             old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+            old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort2')
             log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} : {old_sort} -> {sort2_value}')
-#            log.Must(f'  {count_all_obj}\t  {_IndentBack(obj_name, max_name_len+2, True)} : {old_sort} -> {sort2_value}')
+
+            tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
 
             # This should never happen
             if sortval > 32000:
@@ -487,12 +499,19 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
 
 
 
-def _GetNewKeyFromSortValue(is_fg_layer, curr_sort, max_layer_count):
+def _GetNewKeyFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_using_sort1):
     '''Returns the key of which sort bucket this value should lead to'''
-    layer_num = int(curr_sort/10) + 1
+    # Formula is different between sort1 and sort2
+    if is_using_sort1:
+        layer_num = int(curr_sort/10) + 1
+    else:
+        layer_num = int(curr_sort/5000)
+
+    # Allows negative numbers
     if curr_sort < 0: layer_num -=1
 
-    # If there are only 4 BG layers, bg_tiles/31 & bg_tiles/101 are treated the same
+    # Cap it based on the number of tilelayers
+    #  e.g. If there are only 4 BG layers, bg_tiles/31 & bg_tiles/101 are treated the same
     if not is_fg_layer:
         if layer_num > max_layer_count[0]: layer_num = max_layer_count[0]
     else:
