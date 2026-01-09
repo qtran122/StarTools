@@ -84,6 +84,7 @@ def main():
     parser.add_argument('filename', type=str, help = arg_help1, nargs='?') # now optional if user wants to run on all files (--all)
     parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
     parser.add_argument('--all', action='store_true', help='inspect all level files')
+    parser.add_argument('--top', type=int, default=30, help='returns a specified amount of collision levels (default 30)')
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
@@ -93,8 +94,8 @@ def main():
         for level_file in level_files:
             results[file_utils.StripFilename(level_file)] = Inspect(level_file)
         sorted_results = sorted(results.items(), key=lambda x: sum(x[1]), reverse=True)
-        top_30_collisions_levels = sorted_results[:30]
-        for filename, (rects, polys, lines, relics) in top_30_collisions_levels:
+        top_collisions_levels = sorted_results[:args.top]
+        for filename, (rects, polys, lines, relics) in top_collisions_levels:
             total_collision = rects + polys + lines + relics
             print(f"{filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
        
