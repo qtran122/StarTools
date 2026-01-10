@@ -8,6 +8,8 @@ of reddressment
 USAGE EXAMPLE:
     python cli_inspect.py j01
 '''
+import sys
+import time
 import argparse
 import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
@@ -76,7 +78,27 @@ def Inspect(filename):
 
     shape_counts = (num_rects, num_polys, num_lines, num_relic)
     return shape_counts
-        
+
+
+def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
+    """Call in a loop to create terminal progress bar"""
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '-' * (length - filled_length)
+    sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
+    sys.stdout.flush()
+
+
+def _FormatName(name):
+    name = file_utils.StripFilename(name)
+    if len(name) > 20:
+        # Truncate and add "..." to the end
+        formatted_name = name[:17] + "..."
+    else:
+        # Pad with spaces to make it 20 characters
+        formatted_name = name.ljust(20)
+    return formatted_name
+
 
 def main():
     # Use argparse to get the filename & other optional arguments from the command line
@@ -90,11 +112,17 @@ def main():
 
     if args.all:
         level_files = file_utils.GetAllLevelFiles();
+        log.Must(f"Preparing to inspect {len(level_files)} files...\n")
         results = {}
-        for level_file in level_files:
+        for num, level_file in enumerate(level_files):
             results[file_utils.StripFilename(level_file)] = Inspect(level_file)
+            PrintProgressBar(num + 1, len(level_files), prefix='Inspect Progress:', suffix=f'processing {_FormatName(level_file)}', length=30)
+
+        time.sleep(0.25)
         sorted_results = sorted(results.items(), key=lambda x: sum(x[1]), reverse=True)
         top_collisions_levels = sorted_results[:args.top]
+
+        print(f"\n\nTop {len(top_collisions_levels)} levels with most collisions:\n")
         for index, (filename, (rects, polys, lines, relics)) in enumerate(top_collisions_levels, start=1):
             total_collision = rects + polys + lines + relics
             print(f"{index}. {filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
