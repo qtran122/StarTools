@@ -8,12 +8,12 @@ of reddressment
 USAGE EXAMPLE:
     python cli_inspect.py j01
 '''
+import sys
+import time
 import argparse
 import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
-import logic.pattern.pattern_matcher as PM
-import logic.remapper.tile_remapper as TM
 
 #--------------------------------------------------#
 '''Pattern Lists'''
@@ -31,27 +31,21 @@ def IsPolyline(tiled_object):
     polyline = tiled_object.find('polyline')
     if polyline is not None:
         return True
-        
     return False
 
 def IsPolygon(tiled_object):    
     polygon = tiled_object.find('polygon')
     if polygon is not None:
         return True
-        
     return False
 
-def main():
-    # Use argparse to get the filename & other optional arguments from the command line
-    parser = argparse.ArgumentParser(description = arg_description)
-    parser.add_argument('filename', type=str, help = arg_help1)
-    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
-    args = parser.parse_args()
-    log.SetVerbosityLevel(args.v)
-
+def Inspect(filename):
+    ''' Inspects a Tiled level XML and returns the total counts of (num_rect, num_polys, num_lines, num_relic_block) '''
     # Use a playdo to read/process the XML
-    pattern_root = file_utils.GetPatternRoot()
-    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
+    if filename.endswith('.xml') or filename.endswith('.tmx'): # cases where we run cli_inspect on all files 
+        playdo = play.LevelPlayDo(filename)
+    else:
+        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename)) # cases where we run cli_inspect on individual file "f02"
     
     # Retrieve all the object groups, layers tucked inside folder are also solved by using GetAllObjectGroup (per comment from playdo file)
     obj_grps = playdo.GetAllObjectgroup(is_print=False)
@@ -64,16 +58,12 @@ def main():
         if group_name.startswith("objects"): # Groups that starts with "objects" will only contain relic blocks
             for shape in obj_grp:
                 if shape.get("name") == "relic_block":
-                    num_relic += 1
+                    num_relic += 1    
 
-    
-    if not layers_w_collision:
-        print("No collisions layers starting with 'collisions' were found ")
-    
     num_rects = 0
     num_polys = 0
     num_lines = 0
-    # Count shapes in collision layers, hadle case where obj_group starts with "collisions" in which we have all shapes (polygon, lines, rects, and relic blocks)
+    # Count shapes in collision layers, handle case where obj_group starts with "collisions" in which we have all shapes (polygon, lines, rects, and relic blocks)
     for obj_grp in layers_w_collision:
         for shape in obj_grp:
             if IsPolygon(shape):
@@ -86,8 +76,63 @@ def main():
                 else:
                     num_rects += 1
 
+    shape_counts = (num_rects, num_polys, num_lines, num_relic)
+    return shape_counts
 
-    print(f'Found {num_rects} rectangles, {num_polys} polygons, {num_lines} lines, and {num_relic} relic blocks!')
+
+def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
+    """Call in a loop to create terminal progress bar"""
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '-' * (length - filled_length)
+    sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
+    sys.stdout.flush()
+
+
+def _FormatName(name):
+    name = file_utils.StripFilename(name)
+    if len(name) > 20:
+        # Truncate and add "..." to the end
+        formatted_name = name[:17] + "..."
+    else:
+        # Pad with spaces to make it 20 characters
+        formatted_name = name.ljust(20)
+    return formatted_name
+
+
+def main():
+    # Use argparse to get the filename & other optional arguments from the command line
+    parser = argparse.ArgumentParser(description = arg_description)
+    parser.add_argument('filename', type=str, help = arg_help1, nargs='?') # now optional if user wants to run on all files (--all)
+    parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+    parser.add_argument('--all', action='store_true', help='inspect all level files')
+    parser.add_argument('--top', type=int, default=30, help='returns a specified amount of collision levels (default 30)')
+    args = parser.parse_args()
+    log.SetVerbosityLevel(args.v)
+
+    if args.all:
+        level_files = file_utils.GetAllLevelFiles();
+        log.Must(f"Preparing to inspect {len(level_files)} files...\n")
+        results = {}
+        for num, level_file in enumerate(level_files):
+            results[file_utils.StripFilename(level_file)] = Inspect(level_file)
+            PrintProgressBar(num + 1, len(level_files), prefix='Inspect Progress:', suffix=f'processing {_FormatName(level_file)}', length=30)
+
+        time.sleep(0.25)
+        sorted_results = sorted(results.items(), key=lambda x: sum(x[1]), reverse=True)
+        top_collisions_levels = sorted_results[:args.top]
+
+        print(f"\n\nTop {len(top_collisions_levels)} levels with most collisions:\n")
+        for index, (filename, (rects, polys, lines, relics)) in enumerate(top_collisions_levels, start=1):
+            total_collision = rects + polys + lines + relics
+            print(f"{index}. {filename}: {total_collision} total collisions, (Rectangles: {rects}, Polygons: {polys}, Lines: {lines}, Relic Blocks: {relics})")
+        
+       
+    else:
+        if not args.filename:
+            parser.error("filename is required when not using --all")
+        shape_results = Inspect(args.filename)
+        print(f"Found {shape_results[0]} rectangles, {shape_results[1]} polygons, {shape_results[2]} lines, and {shape_results[3]} relic blocks!")
         
     
     #breakpoint()
