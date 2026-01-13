@@ -2,3 +2,4 @@
 .DS_Store
 output/
 tools/transactions
+reference/log/logfile.log
