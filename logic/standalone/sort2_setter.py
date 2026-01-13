@@ -437,11 +437,11 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
 
         # Create the "key" that allows sorting items by values
         #  e.g. As string, it has trouble handling single-digit numbers
-        sort_group = old_sort.split('/')[0]
+        sort_order = old_sort.split('/')[0]
         sort_value = old_sort.split('/')[1]
         sort_id = int(sort_value)
-        if sort_group.startswith('fg'): sort_id += DICT_KEY_ADDON_FG_SORT
-        elif sort_group.startswith('bg'): sort_id += 0    # Do nothing
+        if sort_order.startswith('fg'): sort_id += DICT_KEY_ADDON_FG_SORT
+        elif sort_order.startswith('bg'): sort_id += 0    # Do nothing
         else:
             obj_name = obj.get('name')
             log.Must(f'ERROR! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
