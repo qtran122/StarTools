@@ -1,8 +1,9 @@
 '''
-Logic module to create the tilelayer
+Logic module to create the reference tilelayer to simulate the range of in-game camera
+The tilelayer has parallax factor adjusted, such that the "frame" stays in the center of the editor.
 
 USAGE EXAMPLE:
-    main_logic.logic(playdo, passed_arguments)
+    cam_logic.AddCameraFrameToLevel(playdo, size, FRAME_TILE_IDs, LAYER_NAME)
 
 '''
 import time
@@ -19,7 +20,17 @@ import logic.common.tiled_utils as tiled_utils
 #--------------------------------------------------#
 '''Main Function'''
 
-def logic(playdo, frame_size, array_tile_id, layer_name):
+def AddCameraFrameToLevel(playdo, frame_size, FRAME_TILE_IDs, LAYER_NAME):
+    '''
+     This function creates the reference tilelayer to simulate the range of in-game camera
+     The tilelayer has parallax factor adjusted, such that the "frame" stays in the center of the editor.
+
+     :param playdo:         Processed level
+     :param frame_size:     Integer tuple that states the size of the empty space inside frame
+     :param FRAME_TILE_IDs: Integer array for Tile IDs, of which tiles the frame is using
+     :param LAYER_NAME:     String of the output tilelayer
+    '''
+
     log.Extra("")
     log.Must(f"Creating new reference frame tilelayer : {frame_size[0]}x{frame_size[1]}")
     log.Extra("")
@@ -28,17 +39,17 @@ def logic(playdo, frame_size, array_tile_id, layer_name):
     # Create new layer
     log.Must(f" Creating Tiles2D...")
     new_tiles2d = playdo.GetBlankTiles2d()
-    frame_thickness = len(array_tile_id)
-    for i in range(len(array_tile_id)):
-        _SetTiles2D(new_tiles2d, frame_size, (i, frame_thickness), array_tile_id[i]+1)
+    frame_thickness = len(FRAME_TILE_IDs)
+    for i in range(len(FRAME_TILE_IDs)):
+        _CreateCameraFrame(new_tiles2d, frame_size, (i, frame_thickness), FRAME_TILE_IDs[i]+1)
     log.Extra("")
 
     # Add the tilelayer and set its properties
-    new_tilelayer = _AddTilelayerBelowMeta(playdo, layer_name, new_tiles2d)
+    new_tilelayer = _AddTilelayerBelowMeta(playdo, LAYER_NAME, new_tiles2d)
     log.Extra("")
 
     # Adding property for the parallax effect
-    _SetTilelayerAttributes(new_tilelayer, frame_size, frame_thickness)
+    _SetTilelayerAttributesForFrame(new_tilelayer, frame_size, frame_thickness)
     log.Extra("")
 
     log.Must(f"~~End of All Procedures~~ ({round( time.time()-start_time, 3 )}s)")
@@ -51,7 +62,15 @@ def logic(playdo, frame_size, array_tile_id, layer_name):
 #--------------------------------------------------#
 '''Helper Functions'''
 
-def _SetTiles2D(tiles2d, frame_size, thick_data, tile_id):
+def _CreateCameraFrame(tiles2d, frame_size, thick_data, tile_id):
+    '''
+     Sets the tile ID onto the Tiles2D in a rectangular outline
+    
+     :param tiles2d:    2D Array that stores the tileID used in each tile of the layer
+     :param frame_size: Integer tuple, same as the input argument from CLI
+     :param thick_data: Integer tuple, first is current number of the frame, second is the total number
+     :param tile_id:    Integer, for the tile ID used in the current "onion layer" of the frame
+    '''
     log.Must(f"  Setting tiles \'{tile_id}\' at thickness {thick_data[0]+1}...")
 
     # Interpret data
@@ -60,7 +79,7 @@ def _SetTiles2D(tiles2d, frame_size, thick_data, tile_id):
     curr_thickness = thick_data[0]
     max_thickness  = thick_data[1]
 
-    # Set range
+    # Calculate range
     x_beg = max_thickness - curr_thickness - 1
     y_beg = max_thickness - curr_thickness - 1
     x_end = x_beg + layer_w + curr_thickness * 2 + 1
@@ -105,7 +124,7 @@ def _AddTilelayerBelowMeta(playdo, tile_layer_name, new_tiles2d):
 
 
 
-def _SetTilelayerAttributes(new_tilelayer, frame_size, frame_thickness):
+def _SetTilelayerAttributesForFrame(new_tilelayer, frame_size, frame_thickness):
     log.Must(f" Setting attributes...")
 
     # Parallax Factor

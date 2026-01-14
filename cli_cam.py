@@ -1,7 +1,11 @@
 '''
-Command-Line Tool for creating the reference tilelayer for other parallax layers.
-Its size inside the frame is either game's rough resolution (30x17) or a square (17x17)
+Command-Line Tool for creating the reference tilelayer to simulate the range of in-game camera.
+The tilelayer has parallax factor adjusted, such that the "frame" stays in the center of the editor.
+
+The size inside the frame is either game's rough resolution (30x17) or a square (17x17)
+
 USAGE EXAMPLE:
+    python cli_cam.py z01
     python cli_cam.py z01 --square
 
 '''
@@ -9,7 +13,7 @@ import argparse
 import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
-import logic.standalone.camera_tilelayer as main_logic
+import logic.standalone.camera_tilelayer as cam_logic
 
 #--------------------------------------------------#
 '''Adjustable Configurations'''
@@ -19,9 +23,9 @@ LAYER_NAME = '_CAM_BOUNDS'
 SIZE_RECT = (30,17)
 SIZE_SQR  = (17,17)
 
-TILE_ID = [1024, 1032]    # "Frame tiles"; Array length = Frame's thickness
-# Tile ID is the same when hovering cursor over the tile within the Tiled app
-# Yon can expand and edit the frame color as follows
+FRAME_TILE_IDs = [1024, 1032]    # "Frame tiles"; Array length = Frame's thickness
+# Tile ID is the same as shown within the Tiled app, when hovering cursor over a tile in any tilelayer
+# Yon can expand and change the tiles used (i.e. frame color) as follows:
 #  TILE_ID = [1024, 1032, 1033, 1034, 1035]
 
 
@@ -53,7 +57,7 @@ def main():
     # Main Logic
     size = SIZE_RECT
     if args.square : size = SIZE_SQR
-    main_logic.logic(playdo, size, TILE_ID, LAYER_NAME)
+    cam_logic.AddCameraFrameToLevel(playdo, size, FRAME_TILE_IDs, LAYER_NAME)
 
     # Flush changes to File!
     playdo.Write()
