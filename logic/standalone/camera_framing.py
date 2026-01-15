@@ -25,9 +25,9 @@ def AddCameraFrameToLevel(playdo, frame_size, FRAME_TILE_IDs, LAYER_NAME):
      This function creates the reference tilelayer to simulate the range of in-game camera
      The tilelayer has parallax factor adjusted, such that the "frame" stays in the center of the editor.
 
-     :param playdo:         Processed level
-     :param frame_size:     Integer tuple that states the size of the empty space inside frame
-     :param FRAME_TILE_IDs: Integer array for Tile IDs, of which tiles the frame is using
+     :param playdo:         Tiled level in an easily moldable state
+     :param frame_size:     Integer pair (width, height) - specifies the size of the empty space inside the frame
+     :param FRAME_TILE_IDs: Integer array of Tile IDs - specifies which tiles will compose the frame
      :param LAYER_NAME:     String of the output tilelayer
     '''
 
@@ -41,7 +41,7 @@ def AddCameraFrameToLevel(playdo, frame_size, FRAME_TILE_IDs, LAYER_NAME):
     new_tiles2d = playdo.GetBlankTiles2d()
     frame_thickness = len(FRAME_TILE_IDs)
     for i in range(len(FRAME_TILE_IDs)):
-        _CreateCameraFrame(new_tiles2d, frame_size, (i, frame_thickness), FRAME_TILE_IDs[i]+1)
+        _DrawRectangle(new_tiles2d, frame_size, i, frame_thickness, FRAME_TILE_IDs[i]+1)
     log.Extra("")
 
     # Add the tilelayer and set its properties
@@ -62,22 +62,22 @@ def AddCameraFrameToLevel(playdo, frame_size, FRAME_TILE_IDs, LAYER_NAME):
 #--------------------------------------------------#
 '''Helper Functions'''
 
-def _CreateCameraFrame(tiles2d, frame_size, thick_data, tile_id):
+def _DrawRectangle(tiles2d, frame_size, curr_thickness, max_thickness, tile_id):
     '''
-     Sets the tile ID onto the Tiles2D in a rectangular outline
+     Draws a rectangle into tiles2D using 'tile_id' as the brush.
+     This function is called multiple times in a loop to get the desired thickness.
     
-     :param tiles2d:    2D Array that stores the tileID used in each tile of the layer
-     :param frame_size: Integer tuple, same as the input argument from CLI
-     :param thick_data: Integer tuple, first is current number of the frame, second is the total number
-     :param tile_id:    Integer, for the tile ID used in the current "onion layer" of the frame
+     :param tiles2d:        2D Array that stores the tileID used in each tile of the layer
+     :param frame_size:     Integer pair (width, height) - specifies the size of the empty space inside the frame
+     :param curr_thickness: Integer, current number of the frame
+     :param max_thickness:  Integer, the total number of frames planning to be drawn
+     :param tile_id:        Integer, for the tile ID used in the current "onion layer" of the frame
     '''
-    log.Must(f"  Setting tiles \'{tile_id}\' at thickness {thick_data[0]+1}...")
+    log.Must(f"  Setting tiles \'{tile_id}\' at thickness {curr_thickness+1}...")
 
     # Interpret data
     layer_w = frame_size[0]
     layer_h = frame_size[1]
-    curr_thickness = thick_data[0]
-    max_thickness  = thick_data[1]
 
     # Calculate range
     x_beg = max_thickness - curr_thickness - 1
