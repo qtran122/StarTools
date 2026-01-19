@@ -21,4 +21,44 @@ Pseudo Algo
 4 all blocks will have an angle property where each angle can be [0, 90, 180, 270]
 """
 
+import argparse
+import logic.common.level_playdo as play
 
+
+arg_desription = "Scans a level file for relic blocks and apply the custom properties of flip_x and angle"
+arg_help1 = "Name of the tiled level XML"
+
+def GetAllRelicBlocks(playdo):
+    obj_grps = playdo.GetAllObjectgroup(is_print=False)
+    layers_w_collision = []
+    relic_blocks = []
+    for obj_grp in obj_grps:
+        group_name = obj_grp.get("name", "")
+        if group_name.startswith("collisions"):
+            layers_w_collision.append(obj_grp)
+        if group_name.startswith("objects"):
+            for shape in obj_grp:
+                if shape.get("name") == "relic_block":
+                    relic_blocks.append(shape)
+    for obj_grp in layers_w_collision:
+        for shape in obj_grp:
+            if shape.get("name") == "relic_block":
+                relic_blocks.append(shape)
+    return relic_blocks
+
+def main():
+    parser = argparse. ArgumentParser(description=arg_desription)
+    parser.add_argument('filename', type=str, help=arg_help1)
+    args = parser.parse_args()
+    print(f"Running for cli_vary_block on Tiled level {args.filename}")
+
+    playdo = play.LevelPlayDo(args.filename)
+    relic_blocks = GetAllRelicBlocks(playdo)
+
+    if not relic_blocks:
+        print(f"No relic blocks found inside Tiled level {args.filename}")
+        return;
+    
+
+
+main();
