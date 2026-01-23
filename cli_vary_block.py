@@ -12,7 +12,7 @@ Varying block rotation & flipped configurations prevents block patterns from loo
 Goals:
     1. set angle and/or flip_x properties across all blocks inside a level
     2. allow users to reroll blocks configuration if re-run this tool multiple times
-    
+
 Pseudo Algo
 1. scan level file for relic_blocks
 2. remove the "autoset property from these blocks
@@ -32,21 +32,7 @@ arg_help_level = "Name of the tiled level XML"
 angle = [0, 90, 180, 270]
 
 def GetAllRelicBlocks(playdo):
-    obj_grps = playdo.GetAllObjectgroup(is_print=False)
-    layers_w_collision = []
-    relic_blocks = []
-    for obj_grp in obj_grps:
-        group_name = obj_grp.get("name", "")
-        if group_name.startswith("collisions"):
-            layers_w_collision.append(obj_grp)
-        if group_name.startswith("objects"):
-            for shape in obj_grp:
-                if shape.get("name") == "relic_block":
-                    relic_blocks.append(shape)
-    for obj_grp in layers_w_collision:
-        for shape in obj_grp:
-            if shape.get("name") == "relic_block":
-                relic_blocks.append(shape)
+    relic_blocks = playdo.GetAllObjectsWithName("relic_block")
     print(f"There are {len(relic_blocks)} relic blocks")
     return relic_blocks
 
