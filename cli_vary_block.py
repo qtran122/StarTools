@@ -51,9 +51,10 @@ def main():
     
     for relic_block in relic_blocks:
         tiled.RemovePropertyFromObject(relic_block, "autoset")
+        tiled.RemovePropertyFromObject(relic_block, "flip_x")
         tiled.SetPropertyOnObject(relic_block, "angle", str(random.choice(angle)))
         if random.choice([True, False]):
-            tiled.SetPropertyOnObject(relic_block, "flip_x", "true")
+            tiled.SetPropertyOnObject(relic_block, "flip_x", " ")
 
     playdo.Write()
 main();
