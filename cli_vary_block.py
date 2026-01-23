@@ -29,32 +29,39 @@ import random
 
 tool_desription = "Scans a level file for relic blocks and apply the custom properties of flip_x and angle"
 arg_help_level = "Name of the tiled level XML"
-angle = [0, 90, 180, 270]
+ANGLE = [0, 90, 180, 270]
+EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_")
 
 def GetAllRelicBlocks(playdo):
     relic_blocks = playdo.GetAllObjectsWithName("relic_block")
     print(f"There are {len(relic_blocks)} relic blocks")
     return relic_blocks
 
+def ValidRelicBlocks(relic_block):
+    block_type = tiled.GetPropertyFromObject(relic_block, "_type")
+    if block_type and block_type.startswith(EXCLUDED_PREFIXES):
+        return False
+    return True
+
 def main():
-    parser = argparse. ArgumentParser(description=tool_desription)
+    parser = argparse.ArgumentParser(description=tool_desription)
     parser.add_argument('filename', type=str, help=arg_help_level)
     args = parser.parse_args()
     print(f"Running for cli_vary_block on Tiled level {args.filename}")
 
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
     relic_blocks = GetAllRelicBlocks(playdo)
-
     if not relic_blocks:
         print(f"No relic blocks found inside Tiled level {args.filename}")
-        return;
+        return
     
-    for relic_block in relic_blocks:
+    relic_blocks_to_configure = [relic_block for relic_block in relic_blocks if ValidRelicBlocks(relic_block)]
+    for relic_block in relic_blocks_to_configure:
         tiled.RemovePropertyFromObject(relic_block, "autoset")
         tiled.RemovePropertyFromObject(relic_block, "flip_x")
-        tiled.SetPropertyOnObject(relic_block, "angle", str(random.choice(angle)))
+        tiled.SetPropertyOnObject(relic_block, "angle", str(random.choice(ANGLE)))
         if random.choice([True, False]):
             tiled.SetPropertyOnObject(relic_block, "flip_x", " ")
 
     playdo.Write()
-main();
+main()
