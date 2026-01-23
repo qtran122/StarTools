@@ -37,17 +37,23 @@ LIST_OBJ_RESORT_NAME = {
 #--------------------------------------------------#
 '''Milestone 1 - Check which sort standard a level is using'''
 
-ERROR_VALUE_1 = (True, False)
 def ErrorCheckSortOrder(playdo):
     '''
     This function does a thorough check to all objects within a level
-    Error Check 1 : When an object is using both sort1 & sort2 standards
-    Error Check 2 : When the level has some object using sort1 AND some using sort2
-    Error Check 3 : When an old sort value cannot be converted into new sort2 value
+     Error Check 1 : When an object is using both sort1 & sort2 standards
+     Error Check 2 : When the level has some object using sort1 AND some using sort2
+     Error Check 3 : When an old sort value cannot be converted into new sort2 value
+
+    Return a tuple (bool, bool)
+     1st : Whether an error has been detected
+     2nd : Whether the level is using sort1 standard
     '''
     log.Must("Running ReSORT TOOL. Updating tile layer names & object SORT values...\n")
     log.Info(f"  Procedure 1 - Identifying sort standard of \'{playdo.full_file_name.split('/')[-1]}\'")
 
+    # Default error value; 2nd value is irrelevant since the program would exit upon detecting an error
+    DEFAULT_ERROR = (True, False)
+    
     list_old_sort_objects = []    # Use _sort or sort
     list_new_sort_objects = []    # Use _sort2
     obj_name = ''
@@ -77,7 +83,7 @@ def ErrorCheckSortOrder(playdo):
                 both_sort_standards_used = True
                 log.Must(f'    ERROR! Both sort standards detected for \'{obj_name}\' : \'{sort0_value}\', \'{sort1_value}\'')
                 log.Must(f'  Exiting program now...')
-                return ERROR_VALUE_1
+                return DEFAULT_ERROR
 
             # Otherwise, assign to list
             if is_obj_group1: list_old_sort_objects.append(obj)
@@ -111,13 +117,13 @@ def ErrorCheckSortOrder(playdo):
                 log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort2_value}\'')
                 count += 1
         log.Must('\nAborting ReSort. Please correct level to exclusively use one sort standard and try again')
-        return ERROR_VALUE_1
+        return DEFAULT_ERROR
 
 
 
     # If only sort2 standard is used, do nothing for this function
     if num_group2 != 0:
-        log.Info(f"  --- Only sort2 stardard is used, no change would be applied ---\n")
+        log.Info(f"  --- Only sort2 stardard is used, maintenance mode initiated ---\n")
         return (False, False)
     else:
         log.Info(f"  --- {len(list_old_sort_objects)} objects detected using sort1 standard ---\n")
@@ -130,17 +136,24 @@ def ErrorCheckSortOrder(playdo):
 #--------------------------------------------------#
 '''Milestone 2'''
 
-ERROR_VALUE_2 = (True, -1, [-1,-1])
 def RenameTilelayer(playdo):
     '''
     This renames all tilelayers to fit the current standard
-    Error Check 1 : Level has more than 9 tilelayers
-    Error Check 2 : Level has more than 6 FG, or 6 BG tilelayers
-    Error Check 3 : Level has another BG layer above bg_owp
-    Error Check 4 : A layer contains a _sort property
-    Error Check 5 : Level does not have a bg_owp layer
+     Error Check 1 : Level has more than 9 tilelayers
+     Error Check 2 : Level has more than 6 FG, or 6 BG tilelayers
+     Error Check 3 : Level has another BG layer above bg_owp
+     Error Check 4 : A layer contains a _sort property
+     Error Check 5 : Level does not have a bg_owp layer
+
+    Return a tuple (bool, int, int[2])
+     1st : Whether an error has been detected
+     2nd : The original layer that BG OWP was at, e.g. 4 if there were 3 BG tilelayers below it
+     3rd : Number of BG tilelayers and FG tilelayers in total respectively
     '''
     log.Info("  Procedure 2 - Renaming tilelayers...")
+
+    # Default error value; 2nd & 3rd value are irrelevant since the program would exit upon detecting an error
+    DEFAULT_ERROR = (True, -1, [-1,-1])
 
     list_name_bef_aft = []    # List of tuple, each stores a (<name_before>, <name_after>)
     contains_bg_owp = False
@@ -159,7 +172,7 @@ def RenameTilelayer(playdo):
         layer_counter_all += 1
         if layer_counter_all > 9:
             log.Must("    ERROR! Level contains more than 9 tilelayers!")
-            return ERROR_VALUE_2
+            return DEFAULT_ERROR
 
         # For number suffix
         if not reached_fg_layers:
@@ -170,20 +183,20 @@ def RenameTilelayer(playdo):
         layer_counter += 1
         if layer_counter > 6:
             log.Must("    ERROR! Level contains more than 6 BG/FG tilelayers!")
-            return ERROR_VALUE_2
+            return DEFAULT_ERROR
 
         # Check for the OWP anchor
         if layer_name.startswith('bg'):
             if contains_bg_owp:
                 log.Must(f"    ERROR! Tilelayer \'{layer_name}\' is placed above BG OWP!")
-                return ERROR_VALUE_2
+                return DEFAULT_ERROR
             if 'owp' in layer_name.lower():
                 contains_bg_owp = True
 
         # Check for overriding _sort property
         if _TilelayerHasSortProperty(playdo, layer_name):
             log.Must(f"    ERROR! Tilelayer \'{layer_name}\' contains _sort property!")
-            return ERROR_VALUE_2
+            return DEFAULT_ERROR
 
         # Renaming
         original_name = layer_name
@@ -197,8 +210,12 @@ def RenameTilelayer(playdo):
 
 
     # Log the layer name change in reversed order
+    num_name_change = 0
     for tuple in reversed(list_name_bef_aft):
+        if tuple[0] == tuple[1]: continue    # No need to log if the name before == name after
+        num_name_change += 1
         log.Must(f"    {_IndentBack(tuple[0], max_name_len+2, True)} -> \'{tuple[1]}\'")
+    if num_name_change == 0: log.Must("    None of the tilalayers needs to be renamed")
     log.Must("")
 
     # Inform user that there is no OWP layer, ask if want to proceed normally or exit
@@ -210,17 +227,11 @@ def RenameTilelayer(playdo):
     log.Must("   Additional references in objects will be updated to match the new tilelayer names")
     count = 1
     for obj in playdo.GetAllObjects():
-        properties = obj.find('properties')
-        if properties == None: continue
-        obj_name = obj.get('name')
-        layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
-        for curr_property in properties.findall('property'):
-            has_change = _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, layer_name)
-            if has_change: count += 1
+        has_change = _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo)
+        if has_change: count += 1
     if count == 1:
         log.Must(f"    (no object references need to be changed)")
 
-    log.Info(f"  --- Finished renaming {len(list_name_bef_aft)} layers! ---\n")
     log.Must("")
     return (False, bg_owp_prev_index, max_layer_count)
 
@@ -242,6 +253,31 @@ def _RenameTilelayer(playdo, original_name, layer_name):
         layer.set('name', layer_name)
         return
 
+
+
+def _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo):
+    '''
+     Check through an object's properties to see if there is any outdated tilelayer name references.
+     Return True if the object's reference has been updated
+    
+     :param obj:               XML Object, its properties would be checked
+     :param list_name_bef_aft: (string, string), stores the tilelayer name before and after renaming respectively
+     :param count:             int, number of objects that have been updated so far
+     :param playdo:            A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+    '''
+    # Only proceed if the object contains properties
+    properties = obj.find('properties')
+    if properties == None: return
+
+    # Check each property individually
+    has_change = False
+    obj_name = obj.get('name')
+    layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+    for curr_property in properties.findall('property'):
+        has_change = has_change or _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, layer_name)
+        # Does not return immediately, in case an object has more than 1 property that needs updating
+    return has_change
+
 def _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, layer_name):
     '''Adjust the property value if it contains a tilelayer name that needs to be renamed'''
     # Scan through all properties
@@ -257,6 +293,7 @@ def _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, la
         if obj_name == None : obj_name = 'no-name obj'
         log.Must(f"    ({count}) \'{obj_name}\' in layer \'{layer_name}\' will change \'{curr_property.get('name')}\' to \'{new_value}\'")
         return True
+    return False
 
 
 
@@ -336,8 +373,8 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
 
     # Resort normal objects
     log.Must(f"   {len(objs_to_resort)} objects will be updated to use sort2 standard. Results:")
-    has_error = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
-    if has_error:
+    count_sort_changed = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
+    if count_sort_changed < 0:
         log.Must("Aborting ReSort. Please correct the error and try again\n")
         return True
 
@@ -353,7 +390,7 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
 
     # Remove old sort property
     log.Must(f"    CHANGE SUMMARY:")
-    log.Must(f"     objects upgrading to sort2     : {len(objs_to_resort)}")
+    log.Must(f"     objects updating sort listings : {count_sort_changed}")
     log.Must(f"     objects removing sort entirely : {len(objs_losing_sort)}")
     log.Must(f"     dev objects detected           : {len(objs_dev_sort)}")
     
@@ -374,6 +411,8 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
 
 def _LogObjectsToResort(objs_to_resort):
     '''This function is purely for logging - Shows how many of each objects have redundant _sort'''
+    if len(objs_to_resort) == 0: return
+
     log.Must(f"{len(objs_to_resort)} objects no longer require a sort property and have graduated to a")
     log.Must( " permanent unique sort order; their sort property will be removed.")
 
@@ -392,21 +431,25 @@ def _LogObjectsToResort(objs_to_resort):
 
 
 
-# Any really big number - This lets me reorder both BG/FG objects without a separate dictionary
-DICT_KEY_ADDON_FG_SORT = 100000
 def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1):
     '''
-      1. Scans through all input objects
+      1. Scan through all input objects
       2. Sort them by existing sort values, either sort1 or sort2
       3. Set adjusted sort2 values to all objects' properties
-
-      objs_to_resort    - List of all relevant XML objects that now use sort2
-      playdo            - Processed Level
-      bg_owp_prev_index - Integer that indicates index of previous BG OWP layer, e.g. would be 4 for bg_4_owp
-      max_layer_count   - Integer tuple that keeps track of total numbers of BG & FG tilelayers respectively
-      is_using_sort1    - Boolean that indicates whether level is using sort1 or sort2
+      4. Return the number of objects whose sort value has been changed
+    
+    :param objs_to_resort:    List of all relevant XML objects that are currenting using sort2, or will convert to using sort2
+    :param playdo:            A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+    :param bg_owp_prev_index: Integer that indicates index of previous BG OWP layer, e.g. would be 4 for bg_4_owp
+    :param max_layer_count:   Integer tuple that keeps track of total numbers of BG & FG tilelayers respectively
+    :param is_using_sort1:    Boolean that indicates whether level is using sort1 or sort2
     '''
 
+    DEFAULT_ERROR = -1
+    # Any really big number - This lets me reorder both BG/FG objects without a separate dictionary
+    DICT_KEY_ADDON_FG_SORT = 100000
+
+    count_sort_changed = 0 # Number of objects whose sort value has been changed
     max_name_len = 0    # Purely cosmetic, for making the output looks pretty
 
     # Map all objects to dictionary, grouped by sort values to then be sorted numerically
@@ -424,35 +467,34 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
             if old_sort == '':
                 obj_name = obj.get('name')
                 layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
-                log.Must(f'    WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort1')
+                log.Must(f'     WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort1')
                 continue
         else:
             old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort2')
             if old_sort == '':
                 obj_name = obj.get('name')
                 layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
-                log.Must(f'    WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort2')
+                log.Must(f'     WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort2')
                 continue
 
 
         # Create the "key" that allows sorting items by values
         #  e.g. As string, it has trouble handling single-digit numbers
         sort_order = old_sort.split('/')[0]
-        sort_value = old_sort.split('/')[1]
-        sort_id = int(sort_value)
-        if sort_order.startswith('fg'): sort_id += DICT_KEY_ADDON_FG_SORT
-        elif sort_order.startswith('bg'): sort_id += 0    # Do nothing
+        sort_value = int(old_sort.split('/')[1])
+        if sort_order.startswith('fg'): sort_value += DICT_KEY_ADDON_FG_SORT
+        elif sort_order.startswith('bg'): sort_value += 0    # Do nothing
         else:
             obj_name = obj.get('name')
             log.Must(f'ERROR! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
             has_error = True
             continue
 
-        if not sort_id in dict_all_sortval: dict_all_sortval[sort_id] = []
-        dict_all_sortval[sort_id].append(obj)
+        if not sort_value in dict_all_sortval: dict_all_sortval[sort_value] = []
+        dict_all_sortval[sort_value].append(obj)
 
     # Show multiple objects with bad sort1 values before exiting
-    if has_error: return True
+    if has_error: return DEFAULT_ERROR
 
     # Sort
     dict_all_sortval = dict(sorted(dict_all_sortval.items()))
@@ -466,7 +508,8 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
         is_fg_layer = (key > DICT_KEY_ADDON_FG_SORT * 0.8) # Slightly smaller than big number in case of negative
         if is_fg_layer: key -= DICT_KEY_ADDON_FG_SORT
 
-        curr_key = _GetNewKeyFromSortValue(is_fg_layer, key, max_layer_count, is_using_sort1)
+        new_layer_num = _GetLayerNumberFromSortValue(is_fg_layer, key, max_layer_count, is_using_sort1)
+        curr_key = (is_fg_layer, new_layer_num)
         if not curr_key in dict_all_buckets:
             dict_all_buckets[curr_key] = []
 
@@ -477,7 +520,6 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
 
 
     # Assign new sort values in properties
-    count_all_obj = 0    # TODO remove it since it's redundant
     for key, value in dict_all_buckets.items():
         is_fg = key[0]
         sortval = key[1]
@@ -489,7 +531,6 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
 
         sortval = sortval * 5000
         for obj in value:
-            count_all_obj += 1
             sortval += 10
 
             sort2_value = ''
@@ -501,7 +542,11 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
             old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
             old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
             old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort2')
-            log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} : {old_sort} -> {sort2_value}')
+            change_indicator = ' '
+            if old_sort != sort2_value:
+                change_indicator = '*'
+                count_sort_changed += 1
+            log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} {change_indicator} {old_sort} -> {sort2_value}')
 
             tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
 
@@ -509,13 +554,25 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
             if sortval > 32000:
                 log.Must(f'        WARNING! \'{obj_name}\' has new sort exceeding limit : \'{sortval}\'')
         log.Must("")
+    return count_sort_changed
 
 
 
 
 
-def _GetNewKeyFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_using_sort1):
-    '''Returns the key of which sort bucket this value should lead to'''
+def _GetLayerNumberFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_using_sort1):
+    '''
+    Helper function for _Resort_NormalObjects().
+    Returns the layer number based on the input sort string,
+     sort1 - fg_tiles/15    => above the 2nd FG layer => return 2
+     sort2 - fg_tiles/16120 => above the 3nd FG layer => return 3
+
+     :param is_fg_layer:     bool, whether current object is in FG tilelayers
+     :param curr_sort:       int, the original sort value, accepts both sort1 and sort2
+     :param max_layer_count: int, maximum number of BG or FG tilelayers, whichever applicable
+     :param is_using_sort1:  bool, whether current object is using sort1
+    '''
+
     # Formula is different between sort1 and sort2
     if is_using_sort1:
         layer_num = int(curr_sort/10) + 1
@@ -526,14 +583,13 @@ def _GetNewKeyFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_using_so
     if curr_sort < 0: layer_num -=1
 
     # Cap it based on the number of tilelayers
-    #  e.g. If there are only 4 BG layers, bg_tiles/31 & bg_tiles/101 are treated the same
+    #  e.g. As a result, if there are only 4 BG layers, we would treat bg_tiles/31 and bg_tiles/101 the same
     if not is_fg_layer:
         if layer_num > max_layer_count[0]: layer_num = max_layer_count[0]
     else:
         if layer_num > max_layer_count[1]: layer_num = max_layer_count[1]
 
-    new_key = (is_fg_layer, layer_num)
-    return new_key
+    return layer_num
 
 
 
