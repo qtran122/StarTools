@@ -20,10 +20,12 @@ Pseudo Algo
 4. all blocks will have an angle property where each angle can be [0, 90, 180, 270]
 """
 
+import sys
 import argparse
 import logic.common.level_playdo as play
 import logic.common.tiled_utils as tiled
 import logic.common.file_utils as file_utils
+import logic.common.log_utils as log
 import random
 
 
@@ -34,7 +36,6 @@ EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_")
 
 def GetAllRelicBlocks(playdo):
     relic_blocks = playdo.GetAllObjectsWithName("relic_block")
-    print(f"There are {len(relic_blocks)} relic blocks")
     return relic_blocks
 
 def ValidRelicBlocks(relic_block):
@@ -43,12 +44,30 @@ def ValidRelicBlocks(relic_block):
         return False
     return True
 
+def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
+    """Call in a loop to create terminal progress bar"""
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '-' * (length - filled_length)
+    sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
+    sys.stdout.flush()
+
+def _FormatName(name):
+    name = file_utils.StripFilename(name)
+    if len(name) > 20:
+        # Truncate and add "..." to the end
+        formatted_name = name[:17] + "..."
+    else:
+        # Pad with spaces to make it 20 characters
+        formatted_name = name.ljust(20)
+    return formatted_name
+
 def main():
     parser = argparse.ArgumentParser(description=tool_desription)
     parser.add_argument('filename', type=str, help=arg_help_level)
+    parser.add_argument('--all', action='store_true', help='Scans ALL levels for relic blocks and apply the custom properties of flip_x and angle')
     args = parser.parse_args()
-    print(f"Running for cli_vary_block on Tiled level {args.filename}")
-
+    
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
     relic_blocks = GetAllRelicBlocks(playdo)
     if not relic_blocks:
