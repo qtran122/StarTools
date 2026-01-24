@@ -480,18 +480,19 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
 
         # Create the "key" that allows sorting items by values
         #  e.g. As string, it has trouble handling single-digit numbers
-        sort_order = old_sort.split('/')[0]
-        sort_value = int(old_sort.split('/')[1])
-        if sort_order.startswith('fg'): sort_value += DICT_KEY_ADDON_FG_SORT
-        elif sort_order.startswith('bg'): sort_value += 0    # Do nothing
+        # old_sort example : "fg_tiles/13"
+        sort_layer = old_sort.split('/')[0]      # string portion
+        sort_order = int(old_sort.split('/')[1]) # int portion
+        if sort_layer.startswith('fg'): sort_order += DICT_KEY_ADDON_FG_SORT
+        elif sort_layer.startswith('bg'): sort_order += 0    # Do nothing
         else:
             obj_name = obj.get('name')
             log.Must(f'ERROR! \'{obj_name}\' is using invalid sort value : \'{old_sort}\'')
             has_error = True
             continue
 
-        if not sort_value in dict_all_sortval: dict_all_sortval[sort_value] = []
-        dict_all_sortval[sort_value].append(obj)
+        if not sort_order in dict_all_sortval: dict_all_sortval[sort_order] = []
+        dict_all_sortval[sort_order].append(obj)
 
     # Show multiple objects with bad sort1 values before exiting
     if has_error: return DEFAULT_ERROR
