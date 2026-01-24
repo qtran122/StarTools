@@ -14,7 +14,7 @@ T_GFX = '/Users/Jimmy/Documents/10 Star Iliad tasks/00-Tiling/10-workspace/'
 T_ROOT1 = '/Users/Jimmy/Library/Application Support/Steam/steamapps/common/Whale Nebula/Contents/Resources/Data/StreamingAssets/levels/'
 
 
-TV_ROOT = '/Users/thachvu/Desktop/StarIliad/levels'
-TV_INPUT = '/Users/thachvu/StarTools/input'
-TV_OUTPUT = '/Users/thachvu/StarTools/ouput'
-TV_GFX = '/Users/thachvu/Desktop/StarIliad'
+TV_ROOT = '/Users/thachvu/Desktop/StarIliad/levels/'
+TV_INPUT = '/Users/thachvu/StarTools/input/'
+TV_OUTPUT = '/Users/thachvu/StarTools/ouput/'
+TV_GFX = '/Users/thachvu/Desktop/StarIliad/'
