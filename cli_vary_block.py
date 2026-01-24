@@ -25,8 +25,8 @@ import argparse
 import logic.common.level_playdo as play
 import logic.common.tiled_utils as tiled
 import logic.common.file_utils as file_utils
-import logic.common.log_utils as log
 import random
+import time
 
 
 tool_desription = "Scans a level file for relic blocks and apply the custom properties of flip_x and angle"
@@ -62,16 +62,14 @@ def _FormatName(name):
         formatted_name = name.ljust(20)
     return formatted_name
 
-def main():
-    parser = argparse.ArgumentParser(description=tool_desription)
-    parser.add_argument('filename', type=str, help=arg_help_level)
-    parser.add_argument('--all', action='store_true', help='Scans ALL levels for relic blocks and apply the custom properties of flip_x and angle')
-    args = parser.parse_args()
-    
-    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
+def VaryRelicBlocks(filename):
+    if filename.endswith('.xml') or filename.endswith('.tmx'):
+        playdo = play.LevelPlayDo(filename)
+    else:
+        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
     relic_blocks = GetAllRelicBlocks(playdo)
+
     if not relic_blocks:
-        print(f"No relic blocks found inside Tiled level {args.filename}")
         return
     
     relic_blocks_to_configure = [relic_block for relic_block in relic_blocks if ValidRelicBlocks(relic_block)]
@@ -81,6 +79,28 @@ def main():
         tiled.SetPropertyOnObject(relic_block, "angle", str(random.choice(ANGLE)))
         if random.choice([True, False]):
             tiled.SetPropertyOnObject(relic_block, "flip_x", " ")
-
     playdo.Write()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=tool_desription)
+    parser.add_argument('filename', type=str, help=arg_help_level, nargs='?')
+    parser.add_argument('--all', action='store_true', help='Scans ALL levels for relic blocks and apply the custom properties of flip_x and angle')
+    args = parser.parse_args()
+    
+    if args.all:
+        level_files = file_utils.GetAllLevelFiles()
+        print(f"Varying relic blocks for {len(level_files)} level files")
+        for num, level_file in enumerate(level_files):
+            VaryRelicBlocks(level_file)
+            PrintProgressBar(num + 1, len(level_files), prefix='Varying Progress:', suffix=f'processing {_FormatName(level_file)}')
+    else:
+        if not args.filename:
+            parser.error("File name is required when not using --all")
+        print(f"Varying relic blocks for {args.filename}")
+        VaryRelicBlocks(args.filename)
+    
+    time.sleep(0.25)
+    print("Finished varying all relic blocks")
+            
 main()
