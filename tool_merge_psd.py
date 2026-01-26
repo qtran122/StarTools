@@ -13,147 +13,158 @@ USAGE EXAMPLE:
 '''
 from psd_tools import PSDImage
 from psd_tools.api.layers import PixelLayer
-from PIL import ImageDraw
+from pathlib import Path
+import os
 
 #--------------------------------------------------#
 '''Adjustable Configurations'''
 
-# File paths
+# Extension format & Configurations
 EXTENSION = '.psd'
+config_reverse_order = False # If True, inputs are read in reversed alphabetical order instead
+config_do_merge = True       # If False, ends program prematurely without merging/outputting
 
-# Your input PSD files
-input_folder = '/Users/Jimmy/20-GitHub/StarTools/input/' # Default folder path
-input_files = [
-    'BEFORE1', 
-    'BEFORE2', 
-    'BEFORE3'
-]
-# From top to bottom: 1 -> 2 -> 3
 
-# Desired output file name
-output_folder = input_folder
-output_file = 'AFTER'
+# Input folder paths: PSDs are loaded in alphabetical order
+#  e.g. From top to bottom: 1 -> 2 -> 3
+#   BEFORE1.psd
+#   BEFORE2.psd
+#   BEFORE3.psd
+config_folder = r'/Users/Jimmy/Desktop/PSD' # Default folder path
 
-# Configurations
-config_reverse_order = True
+
+# Output PSD at desktop by default
+output_folder = os.path.expanduser("~/Desktop") + '/'
+output_file = output_folder + 'AFTER'
+
 
 
 
 
 #--------------------------------------------------#
 
-def merge_psd_layers(input_psd_files, output_psd_file):
-    temp_list = []
-    for name in input_psd_files:
-        temp_list.append(input_folder + name + EXTENSION)
-    input_psd_files = temp_list
-    output_psd_file = output_folder + output_psd_file + EXTENSION
+def MergePsdLayers(input_psd_files = [], output_psd_file = output_file):
+    # Add the slash at the end of the folder path if needed
+    print('Verifying paths...')
+    input_folder = _CheckFolderPath(config_folder)
+    print(f'  Folder:')
+    print(f'    {input_folder}')
 
-    # Configurations
+    # Adjust the input/output paths
+    # If none is provided, read all PSD in folder
+    input_psd_files, output_psd_file = _AdjustFilePaths(input_folder, input_psd_files, output_psd_file)
+    input_psd_files.sort() # Sort temp list alphabetically
     if config_reverse_order: input_psd_files.reverse()
-#    print(input_psd_files)
-#    print(output_psd_file)
-#    return
+    
+    # Show the filepaths to user to ensure it's desirable
+    print("  Reading input PSD files: (order is top to bottom)")
+    for input in input_psd_files:
+        print(f'    {input}')
+    print("  Outputting PSD file at:")
+    print(f'    {output_psd_file}')
+    print()
+
+
+    if not config_do_merge: return
+    print('Begin merging layers...')
 
     # Load the first PSD file to get dimensions and layers
+    input_psd_files.reverse() # First in list used as base, then the rest are drawn above them
     base_psd = PSDImage.open(input_psd_files[0])
     num_layers = len(base_psd)
-    print(f"Layer Number : {num_layers}")
+    max_viewport = ( 0, 0, base_psd.size[0], base_psd.size[1] )
+    print(f"  Opening {input_psd_files[0]}... (base image)")
+    print(f"    Layer Number : {num_layers}")
+    print(f"    PSD Size     : {base_psd.size}")
     
     # Create a new PSD with the same dimensions
-#    merged_psd = PSDImage.new(mode='RGB', size=base_psd.size)
+    # Then iterate over each input PSD file
     merged_psd = base_psd
-
-    # Iterate over each input PSD file
     for psd_file in input_psd_files[1:]:
-        print(f"Opening {psd_file}...")
+        print(f"  Opening {psd_file}...")
         psd = PSDImage.open(psd_file)
 
         new_num = len(psd)
         if new_num != num_layers: print('WARNING! Layer number mismatch!')
+        new_size = psd.size
+        if new_size[0] != base_psd.size[0] or new_size[1] != base_psd.size[1]:
+            print(f'WARNING! Image size mismatch - {new_size}')
 
         for i in range(new_num):
             # Merge the layers: paste layer 2 over layer 1
-            img1 = merged_psd[i].composite()
-            img2 = psd[i].composite()
+            img1 = merged_psd[i].composite() # No need to specify viewport here, since base image is supposed to be at max
+            img2 = psd[i].composite(viewport=max_viewport) # This ensures no auto-trimming occurs
+            img1.paste(img2, (0, 0), img2)
 
-            # If the PSD has transparent background, layer is automatically resized to trim out all the transparent pixel
-            # This is bad and not desirable... TODO find a way to deal with this
-            x,y = _find_top_left_in_psd(psd[i]) # This didn't work... orz
-            print(f"{psd[i].size} - {img2.size} - {x, y}")
-            x,y = 0,0
-            img1.paste(img2, (x, y), img2)
-
-            # Make the PixelLayer
+            # Make the PSD layer from merged image, then replace the existing one with it
             curr_layer = PixelLayer.frompil(
                 img1,
                 merged_psd,
-                layer_name=f"Image Layer {i}",
+                layer_name=f"GIF Frame {i+1}",
                 opacity=255, # 0-255
             )
             merged_psd[i] = curr_layer
-
-#            img2 = psd[-1].composite()
-#            print(output_psd_file)
-#            img2.save(output_psd_file, 'PNG')
-#            return
-
-        '''        
-                print(output_psd_file)
-                img1.save(output_psd_file, 'PNG')
-                return
-
-                merged_psd.append( PixelLayer.frompil(
-                    img1,
-                    merged_psd,
-                    layer_name=f"Image Layer {i}",
-                    left=0,
-                    top=0,
-                    compression=Compression.RLE # RLE compression is efficient for PSDs
-                ) )
-        '''
+    print()
 
     # Save the merged PSD
+    print('Saving merged PSD...')
     merged_psd.save(output_psd_file)
-    print(f"Merged PSD saved as: {output_psd_file}")
+    print(f"    {output_psd_file}")
+
+    print()
+    print('DONE!')
+    print()
 
 
 
 
 
-#--------------------------------------------------#
+def _CheckFolderPath(filepath):
+    '''Return the folder path after ensuring the end char is slash, print a warning if it could be invalid'''
+    ending_char = filepath[-1]
+    if (ending_char != '/') and (ending_char in filepath):
+        filepath += '/'
+    elif (ending_char != '\\') and (ending_char in filepath):
+        filepath += '\\'
+    else:
+        print(f'WARNING! Folder path {filepath} might not be valid!')
+    return filepath
 
-def _find_top_left(img):
-    # Open image and convert to RGBA to ensure alpha channel exists
-    width, height = img.size
+
+def _AdjustFilePaths(input_folder, input_psd_files, output_psd_file):
+    '''
+     If no input specified,
+       read through the input folder (default behavior)
+     Otherwise,
+       use the specified PSD as is
+    '''
+    temp_list = []
+    if input_psd_files == []: # No input file names specified
+        for entry in os.listdir(input_folder):
+            if Path(entry).suffix != EXTENSION: continue    # Ignore if is not PSD
+            full_path = os.path.join(input_folder, entry)
+            if os.path.isfile(full_path):
+                temp_list.append(full_path)
+#        temp_list.sort() # Sort temp list alphabetically
+    else:
+        for name in input_psd_files:
+            temp_list.append(input_folder + name + EXTENSION)
+    input_psd_files = temp_list
+
+    # Fix output path - Add extension ().psd) at the end of file
+#    output_psd_file = input_folder + output_psd_file + EXTENSION
+    if not EXTENSION in output_psd_file: output_psd_file += EXTENSION
     
-    # Iterate top-to-bottom, then left-to-right
-    for y in range(height):
-        for x in range(width):
-            # getpixel returns (R, G, B, A)
-            pixel = img.getpixel((x, y))
-            # Check if Alpha channel > 0
-            if pixel[3] > 0:
-                return (x, y) # Return first match
-    return (0, 0) # No non-transparent pixel found
+    return input_psd_files, output_psd_file
 
-def _find_top_left_in_psd(psd_layer):
-    # Convert to PIL Image (RGBA)
-    pil_image = psd_layer.composite()
-    width, height = pil_image.size
-    pixels = pil_image.load()
 
-    # Iterate through rows then columns
-    for y in range(height):
-        for x in range(width):
-            # Check alpha channel
-            if pixels[x, y][3] > 0:
-                return (x, y) # Return first found
-    return (0, 0)
+
+
 
 #--------------------------------------------------#
 
-merge_psd_layers(input_files, output_file)
+# merge_psd_layers(input_files, output_file)
+MergePsdLayers()
 
 
 
