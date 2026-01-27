@@ -396,6 +396,65 @@ def RemovePropertyFromObject( tiled_object, property_name ):
 
 
 #--------------------------------------------------#
+'''Relocate objects'''
+
+def MoveObjectToNewObjectgroup(playdo, obj, new_objectgroup):
+    '''
+    Docstring for MoveObjectToNewObjectgroup TODO
+    
+    :param playdo: Description
+    :param obj: Description
+    :param new_objectgroup: Description
+    '''
+    # Relocate
+    old_objectgroup = GetParentObject(obj, playdo)
+    old_objectgroup.remove(obj) 
+    new_objectgroup.append(obj)
+    log.Extra(f"      {obj.get('name')}    {old_objectgroup.get('name')} -> {new_objectgroup.get('name')}")
+
+    # Delete old objectgroup if it's empty, otherwise the level might not be able to run
+    if old_objectgroup.find('object') == None:
+        layer_name = old_objectgroup.get('name')
+        log.Extra(f'Removing objectgroup \"{layer_name}\"')
+        root = GetParentObject(old_objectgroup, playdo)
+        root.remove(old_objectgroup)
+
+
+    
+def MoveObjectgroupAfter(playdo, objectgroup, destination):
+    '''
+    Docstring for MoveObjectgroupAfter TODO
+    
+    :param playdo: Description
+    :param objectgroup: Description
+    :param destination: Description
+    '''
+
+    # Destination can be either objectgroup or tilelayer
+    old_parent = GetParentObject(objectgroup, playdo)
+    new_parent = GetParentObject(destination, playdo)
+    new_id = list(new_parent).index(destination)
+
+    old_parent.remove(objectgroup) 
+    new_parent.insert(new_id+1, objectgroup)
+
+def MoveMetaObjectgroupToBottom(playdo):
+    '''
+    Docstring for MoveMetaObjectgroupToBottom TODO
+    
+    :param playdo: Description
+    '''
+
+    objectgroup = playdo.GetObjectGroup('meta', False)
+    parent = GetParentObject(objectgroup, playdo)
+    parent.remove(objectgroup) 
+    parent.insert(0, objectgroup)
+
+
+
+
+
+#--------------------------------------------------#
 
 
 
