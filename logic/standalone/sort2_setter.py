@@ -341,6 +341,7 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
     NOTE : Only objects in 'collisions_' and 'objects_' layers are checked, not 'meta' layer
     '''
     log.Info(f"  Procedure 3 - Re-sorting objects...")
+    DEFAULT_ERROR = (True, None)
 
     # Separate objects into one of these 3 groups
     objs_to_resort = []   # These meet the criteria to be "re-sorted", and are most likely to be conflicting
@@ -372,11 +373,11 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
 
 
     # Resort normal objects
-    log.Must(f"   {len(objs_to_resort)} objects will be updated to use sort2 standard. Results:")
-    count_sort_changed = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
+    log.Must(f"   {len(objs_to_resort)} objects will be re-examined to space out the sort orders if needed")
+    count_sort_changed, dict_sortval = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
     if count_sort_changed < 0:
         log.Must("Aborting ReSort. Please correct the error and try again\n")
-        return True
+        return DEFAULT_ERROR
 
     # Resort dev objects
     if len(objs_dev_sort) > 0:
@@ -404,6 +405,10 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
     for obj in objs_losing_sort: _RemoveOldSortProperty(obj, playdo, max_name_len)
 
     log.Must("")
+
+    if is_using_sort1:
+        return False, None
+    return False, dict_sortval
 
 
 
@@ -445,7 +450,7 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
     :param is_using_sort1:    Boolean that indicates whether level is using sort1 or sort2
     '''
 
-    DEFAULT_ERROR = -1
+    DEFAULT_ERROR = -1, None
     # Any really big number - This lets me reorder both BG/FG objects without a separate dictionary
     DICT_KEY_ADDON_FG_SORT = 100000
 
@@ -521,14 +526,17 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
 
 
     # Assign new sort values in properties
+    replace_key_bef_aft = None
     for key, value in dict_all_buckets.items():
         is_fg = key[0]
         sortval = key[1]
 
-        # If not invalid
+        # If the BG OWP index is not invalid
         #  Check if current the bucket is BG and above the original OWP anchor layer
         if bg_owp_prev_index >= 0:
-            if not is_fg and sortval >= bg_owp_prev_index: sortval = 6    # OWP is always at the 6th BG tilelayer
+            if not is_fg and sortval >= bg_owp_prev_index:
+                replace_key_bef_aft = ( (is_fg, sortval), (is_fg, 6) )
+                sortval = 6    # OWP is always at the 6th BG tilelayer
 
         sortval = sortval * 5000
         for obj in value:
@@ -555,7 +563,13 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
             if sortval > 32000:
                 log.Must(f'        WARNING! \'{obj_name}\' has new sort exceeding limit : \'{sortval}\'')
         log.Must("")
-    return count_sort_changed
+
+    # After the processing, update the dictionary key to correct value before returning
+    if replace_key_bef_aft != None:
+        old_key = replace_key_bef_aft[0]
+        new_key = replace_key_bef_aft[1]
+        dict_all_buckets[new_key] = dict_all_buckets.pop(old_key)
+    return count_sort_changed, dict_all_buckets
 
 
 
@@ -625,16 +639,126 @@ def _RemoveOldSortProperty(obj, playdo, max_len):
 #--------------------------------------------------#
 '''Milestone 4'''
 
-def TBA(playdo):
+def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_view_combine = False):
+    '''
+     Docstring for RelocateSortObjects TODO
+    
+     :param playdo:              Description
+     :param dict_sortval:        Description
+     :param change_view_split:   Description
+     :param change_view_combine: Description
+    '''
+    log.Must(f"  Procedure 4 - Relocating all lighting objects")
+
+    if (not change_view_split) and (not change_view_combine):
+        log.Must("    No change needed\n")
+        return
+    if change_view_split and change_view_combine:
+        log.Must("    ERROR! Attempting to apply both \"Split View\" and \'Combine View\"\n")
+        return
+
+    if change_view_split:
+        log.Must(f"    Applying \"Split View\" into {len(dict_sortval)} groups...")
+        # Assign new sort values in properties
+        for key, value in dict_sortval.items():
+            is_fg = key[0]
+            sortval = key[1]
+            list_obj = value
+
+            # The name for the new objectgroup
+            layer_name = 'objects_'
+            if is_fg:
+                layer_name += 'fg_'
+            else:
+                layer_name += 'bg_'
+            layer_name += f'{str(sortval * 5)}k'
+            log.Must(f"     {layer_name}\t{len(list_obj)} objects")
+
+            # Relocate objects between layers
+            objectgroup_destination = playdo.GetObjectGroup(layer_name, False)
+            for obj in list_obj:
+                tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, objectgroup_destination)
+
+            # Move objectgroup next to the correct tilelayer
+            tilelayer_destination = _FindAdjacentTilelayer(playdo, layer_name)
+            tiled_utils.MoveObjectgroupAfter(playdo, objectgroup_destination, tilelayer_destination)
+
+        # Move meta objectgroup to be 1st in level, otherwise level might not load in-game
+        tiled_utils.MoveMetaObjectgroupToBottom(playdo)
+    
+    elif change_view_combine:
+        log.Must("    Applying \"Combine View\"...")
+        for key, value in dict_sortval.items():
+            is_fg = key[0]
+            sortval = key[1]
+            list_obj = value
+
+            # Relocate all sorted objects to same objectgroup
+            layer_name = 'objects_lighting_combined'
+            objectgroup_destination = playdo.GetObjectGroup(layer_name, False)
+            for obj in list_obj:
+                tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, objectgroup_destination)
+
+            # Move the objectgroup right after meta
+            meta_objectgroup = playdo.GetObjectGroup('meta', False)
+            tiled_utils.MoveObjectgroupAfter(playdo, objectgroup_destination, meta_objectgroup)
+
+    log.Must("")
+#    log.Info(f"  --- Finished relocating {1} objects! ---\n")
+
+
+def _FindAdjacentTilelayer(playdo, layer_name):
+    '''
+    Docstring for _FindAdjacentTilelayer TODO
+    
+    :param playdo: Description
+    :param layer_name: Description
+    '''
+    
+    # Extra the needed info from layer name
+    tuple = layer_name.split('_')
+    is_fg = (tuple[1] == 'fg')
+    sortval = f'_{tuple[2]}'
+#    print(f'{tuple} -> {is_fg}, {sortval}')
+    
+    # Find the correct tilelayer
+    list_layer_names = playdo.GetAllTileLayerNames()
+    for name in list_layer_names:
+        # Check FG/BG layer
+        if is_fg and not ('fg' in name): continue
+        # Check sort value
+        if not sortval in name: continue
+        return playdo.GetTilelayer(name)
+    
+    # If none is found, likely indicate it's below the first BG/FG tilelayer, e.g. fg_0k
+    # In that case, use the tilelayer right below that instead
+    log.Must('    WARNING! Cannot find tilelayer with exact sort value, may insert at wrong location.')
+    for index, name in enumerate(list_layer_names):
+        # Check FG/BG layer
+        if is_fg and not ('fg' in name): continue
+        # Check sort value
+        if not '_5k' in name: continue
+        return playdo.GetTilelayer(list_layer_names[index-1])
+
+    # If still nothing is found, log error, then return 1st tilelayer
+    log.Must('    ERROR! Sending to bottom instead...')
+    return playdo.GetTilelayer(None)
+
+
+
+
+#--------------------------------------------------#
+'''Milestone 5'''
+
+def RecolorSortObjects(playdo, dict_sortval, do_recolor = False):
     ''' TBA '''
-    log.Must(f"  Procedure 4 - ")
+    log.Must(f"  Procedure 5 - Recolor lighting objects based on color-value")
 
 
 
 
 
-
-    log.Info(f"  --- Finished renaming {1} layers! ---\n")
+    log.Info(f"  --- Finished procedure! ---\n")
 
 
 
