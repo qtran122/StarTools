@@ -31,6 +31,7 @@ import time
 
 tool_desription = "Scans a level file for relic blocks and apply the custom properties of flip_x and angle"
 arg_help_level = "Name of the tiled level XML"
+arg_help_all = "Scans ALL levels for relic blocks and apply the custom properties of flip_x and angle"
 ANGLE = [0, 90, 180, 270]
 EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_")
 
@@ -78,14 +79,14 @@ def VaryRelicBlocks(filename):
         tiled.RemovePropertyFromObject(relic_block, "flip_x")
         tiled.SetPropertyOnObject(relic_block, "angle", str(random.choice(ANGLE)))
         if random.choice([True, False]):
-            tiled.SetPropertyOnObject(relic_block, "flip_x", " ")
+            tiled.SetPropertyOnObject(relic_block, "flip_x", "")
     playdo.Write()
 
 
 def main():
     parser = argparse.ArgumentParser(description=tool_desription)
     parser.add_argument('filename', type=str, help=arg_help_level, nargs='?')
-    parser.add_argument('--all', action='store_true', help='Scans ALL levels for relic blocks and apply the custom properties of flip_x and angle')
+    parser.add_argument('--all', action='store_true', help=arg_help_all)
     args = parser.parse_args()
     
     if args.all:
