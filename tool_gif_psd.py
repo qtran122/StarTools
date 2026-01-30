@@ -1,6 +1,7 @@
 from PIL import Image
 import psd_tools
 import os
+import argparse
 
 # This script operates on a multi-layered PSD file and transforms it into a GIF.
 
@@ -13,6 +14,18 @@ FRAME_DURATION = 50  # Duration per frame in milliseconds
 STRIP_BACKGROUND = False  # If True, makes background transparent based on top-left pixel
 
 def create_animated_gif():
+    # Argument parsing in command; Optional
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--filepath', type=str, default='')
+    parser.add_argument('--noreverse', action='store_true', help = '')
+    parser.add_argument('--ms', type=int, default=-1, help = 'Millisecond between frame, default at 100')
+    parser.add_argument('--fps', type=int, default=-1, help = 'FPS in animated GIF, default at 10')
+    args = parser.parse_args()
+
+    if args.filepath != '': INPUT_PSD = args.filepath
+    if args.ms > 0: FRAME_DURATION = args.ms
+    elif args.fps > 0: FRAME_DURATION = int(1000 / args.fps)
+
     # Load PSD file
     try:
         psd = psd_tools.PSDImage.open(INPUT_PSD)
@@ -22,7 +35,8 @@ def create_animated_gif():
 
     # Prepare frames, reversing layer order (topmost layer first)
     frames = []
-    for layer in reversed(psd):  # Reverse to process topmost layer first
+    if not args.noreverse: psd = reversed(psd)
+    for layer in (psd):  # Reverse to process topmost layer first
         if not layer.is_visible():
             continue
             

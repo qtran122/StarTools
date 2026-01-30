@@ -11,10 +11,11 @@ USAGE EXAMPLE:
 	clear; python tool_merge_psd.py
 
 '''
+import os
+import argparse
+from pathlib import Path
 from psd_tools import PSDImage
 from psd_tools.api.layers import PixelLayer
-from pathlib import Path
-import os
 
 #--------------------------------------------------#
 '''Adjustable Configurations'''
@@ -44,9 +45,25 @@ output_file = output_folder + 'AFTER'
 #--------------------------------------------------#
 
 def MergePsdLayers(input_psd_files = [], output_psd_file = output_file):
+
+    # Argument parsing in command; Optional
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--filepath', type=str, default='')
+    parser.add_argument('--ms', type=int, default=-1, help = 'Millisecond between frame, default at 100')
+    parser.add_argument('--fps', type=int, default=-1, help = 'FPS in animated GIF, default at 10')
+    args = parser.parse_args()
+
+    millisecond = -1
+    if args.ms > 0: millisecond = args.ms
+    elif args.fps > 0: millisecond = int(1000 / args.fps)
+
     # Add the slash at the end of the folder path if needed
     print('Verifying paths...')
-    input_folder = _CheckFolderPath(config_folder)
+    if args.filepath != '':
+        input_folder = args.filepath
+    else:
+        input_folder = config_folder
+    input_folder = _CheckFolderPath(input_folder)
     print(f'  Folder:')
     print(f'    {input_folder}')
 
@@ -91,16 +108,23 @@ def MergePsdLayers(input_psd_files = [], output_psd_file = output_file):
             print(f'WARNING! Image size mismatch - {new_size}')
 
         for i in range(new_num):
+            if i > num_layers-1: break # If the above PSD has more layers than base PSD, skip the extra frames
+
             # Merge the layers: paste layer 2 over layer 1
-            img1 = merged_psd[i].composite() # No need to specify viewport here, since base image is supposed to be at max
+            img1 = merged_psd[i].composite(viewport=max_viewport) # No need to specify viewport here? Normally base image is supposed to be at max
             img2 = psd[i].composite(viewport=max_viewport) # This ensures no auto-trimming occurs
             img1.paste(img2, (0, 0), img2)
+
+            # If FPS specified, include it in layer name too
+            new_layer_name = f'GIF Frame {i+1}'
+            if millisecond > 0:
+                new_layer_name = f'_a_frm{i},{millisecond}'
 
             # Make the PSD layer from merged image, then replace the existing one with it
             curr_layer = PixelLayer.frompil(
                 img1,
                 merged_psd,
-                layer_name=f"GIF Frame {i+1}",
+                layer_name=new_layer_name,
                 opacity=255, # 0-255
             )
             merged_psd[i] = curr_layer
