@@ -8,6 +8,8 @@ Goals:
 
 
 """
+import time
+import sys
 import argparse
 import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
@@ -16,8 +18,27 @@ import xml.etree.ElementTree as ET
 
 
 tool_description = "Scans a level for original coord objects and convert these objects into point objects"
-arg_help_level = "Named of the tiled level XML"
+arg_help_level = "Name of the tiled level XML"
+arg_help_all = "Convert coords for all level XML"
 
+
+def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
+    """Call in a loop to create terminal progress bar"""
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filled_length = int(length * iteration // total)
+    bar = fill * filled_length + '-' * (length - filled_length)
+    sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
+    sys.stdout.flush()
+
+def _FormatName(name):
+    name = file_utils.StripFilename(name)
+    if len(name) > 20:
+        # Truncate and add "..." to the end
+        formatted_name = name[:17] + "..."
+    else:
+        # Pad with spaces to make it 20 characters
+        formatted_name = name.ljust(20)
+    return formatted_name
 
 def ConvertToPoint(coord, index):
     # get x, y, width, height values from original coord
@@ -56,11 +77,28 @@ def ReplaceCoord(filename):
 def main():
     parser = argparse.ArgumentParser(description=tool_description)
     parser.add_argument('filename', type=str, help=arg_help_level, nargs='?')
-    parser.add_argument('--all', action='store_true', help="")
+    parser.add_argument('--all', action='store_true', help=arg_help_all)
     args = parser.parse_args()
 
+    if args.all:
+        level_files = file_utils.GetAllLevelFiles()
+        print(f"Converting coords for {len(level_files)} levels")
+        for num, level_file in enumerate(level_files):
+            ReplaceCoord(level_file)
+            PrintProgressBar(num + 1, len(level_files), prefix="Converting Coords Progress", suffix=f"processing {_FormatName(level_files)}")
+        
+    else:
+        if not args.filename:
+            parser.error("File name is required when not using --all")
+        print(f"Converting coords for file level {args.filename}")
+        ReplaceCoord(args.filename)
+        
 
-    ReplaceCoord(args.filename)
+    time.sleep(0.25)
+    print("Coordinates conversion complete")
+   
+    
+
 
 
 main()
