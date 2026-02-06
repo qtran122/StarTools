@@ -7,6 +7,8 @@ This includes:
     
 USAGE EXAMPLE:
     python cli_sort.py sf1 --v 0
+    python cli_sort.py sf1 --v 0 --split_view
+    python cli_sort.py sf1 --v 0 --combined_view
 
 '''
 import argparse

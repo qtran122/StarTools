@@ -186,17 +186,17 @@ class LevelPlayDo():
 
 
 
-    def GetTilelayer(self, tilelayer_name, discard_old = True):
+    def GetTilelayer(self, tilelayer_name, discard_old):
         '''
-        Docstring for GetTilelayer TODO
-        Mostly just copied from GetTilelayer, might be buggy
+         Return tilelayer as XML Object, allowing to get its name & properties
+         Mostly just copied from GetObjectGroup, might be buggy
         
-         :param self: Description
-         :param tilelayer_name: Description
-         :param discard_old: Description
+         :param tilelayer_name: Name of the new tilelayer
+         :param discard_old:    Boolean; When true, set the tiles2D to blank
         '''
         for tilelayer in self.level_root.findall('layer'):
             if tilelayer_name is None or tilelayer.get('name') == tilelayer_name:
+                if discard_old: self.SetTiles2d(tilelayer_name, self.GetBlankTiles2d())
                 return tilelayer
         
         # If the object group does NOT exists in the level, create a new one and return it for editing

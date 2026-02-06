@@ -400,11 +400,13 @@ def RemovePropertyFromObject( tiled_object, property_name ):
 
 def MoveObjectToNewObjectgroup(playdo, obj, new_objectgroup):
     '''
-    Docstring for MoveObjectToNewObjectgroup TODO
+     Relocate an object from any objectgroup to the destinated one.
+     If the objectgroup no longer contains any object and becomes empty, objectgroup is deleted.
+     If the objectgroup was previously in a folder and it no longer contains any tilelayer or objectgroup, folder is deleted.
     
-    :param playdo: Description
-    :param obj: Description
-    :param new_objectgroup: Description
+     :param playdo:          A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+     :param obj:             Object to be relocated
+     :param new_objectgroup: Objectgroup (as XML Object), destination of the relocation
     '''
     # Relocate
     old_objectgroup = GetParentObject(obj, playdo)
@@ -416,18 +418,30 @@ def MoveObjectToNewObjectgroup(playdo, obj, new_objectgroup):
     if old_objectgroup.find('object') == None:
         layer_name = old_objectgroup.get('name')
         log.Extra(f'Removing objectgroup \"{layer_name}\"')
-        root = GetParentObject(old_objectgroup, playdo)
-        root.remove(old_objectgroup)
+        parent_folder = GetParentObject(old_objectgroup, playdo)
+        parent_folder.remove(old_objectgroup)
+
+        # If parent layer was in a folder before removal, and folder no longer contains tilelayer/objectgroup, remove folder
+        if parent_folder.tag != 'group': return
+        if parent_folder.find('objectgroup') != None: return
+        if parent_folder.find('layer') != None: return
+        folder_name = parent_folder.get('name')
+        log.Extra(f'Removing folder \"{folder_name}\"')
+        root = GetParentObject(parent_folder, playdo)
+        root.remove(parent_folder)
+        # NOTE Is unable to delete nested folder
 
 
     
 def MoveObjectgroupAfter(playdo, objectgroup, destination):
     '''
-    Docstring for MoveObjectgroupAfter TODO
+     Relocate an objectobject to right after another layer, above in in-editor view.
+     Accepts either tilelayer or objectgroup.
+     NOTE Unlike in the previous function, I haven't tested if the folder removal feature is working properly for this
     
-    :param playdo: Description
-    :param objectgroup: Description
-    :param destination: Description
+     :param playdo:      A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+     :param objectgroup: Objectgroup to be relocated
+     :param destination: Objectgroup or Tilelayer
     '''
 
     # Destination can be either objectgroup or tilelayer
@@ -438,11 +452,25 @@ def MoveObjectgroupAfter(playdo, objectgroup, destination):
     old_parent.remove(objectgroup) 
     new_parent.insert(new_id+1, objectgroup)
 
+    # If parent is a folder before removal, and folder no longer contains tilelayer/objectgroup, remove folder
+    if old_parent.tag != 'group': return
+    if old_parent.find('objectgroup') != None: return
+    if old_parent.find('layer') != None: return
+    folder_name = old_parent.get('name')
+    log.Extra(f'Removing folder \"{folder_name}\"')
+    root = GetParentObject(old_parent, playdo)
+    root.remove(old_parent)
+    # NOTE Is unable to delete nested folder
+
+
+
 def MoveMetaObjectgroupToBottom(playdo):
     '''
-    Docstring for MoveMetaObjectgroupToBottom TODO
+     Relocated the 'meta' objectgroup to bottom of level in in-editor view.
+     This aims to avoid crash when attempting to load the level, after objectgroups with lighting are relocated at various spots.
+     NOTE Currently unused, to be deprecated?
     
-    :param playdo: Description
+     :param playdo:    A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
     '''
 
     objectgroup = playdo.GetObjectGroup('meta', False)
