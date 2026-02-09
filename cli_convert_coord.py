@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 tool_description = "Scans a level for original coord objects and convert these objects into point objects"
 arg_help_level = "Name of the tiled level XML"
 arg_help_all = "Convert coords for all level XML"
+arg_help_exclude_sizes = "Ignore coords with width or height over a specific number. Default is 14.9"
 
 
 def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
@@ -78,6 +79,7 @@ def main():
     parser = argparse.ArgumentParser(description=tool_description)
     parser.add_argument('filename', type=str, help=arg_help_level, nargs='?')
     parser.add_argument('--all', action='store_true', help=arg_help_all)
+    parser.add_argument('--exclude_sizes_over', type=int, default=14.9, help=arg_help_exclude_sizes)
     args = parser.parse_args()
 
     if args.all:
