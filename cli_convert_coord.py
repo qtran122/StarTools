@@ -67,10 +67,12 @@ def ConvertToPoint(coord, index):
 
     ET.SubElement(coord, 'point')
 
-def ReplaceCoord(filename):
+def ReplaceCoord(filename, maxsize):
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
     coords = playdo.GetAllObjectsWithName("coord")
-    for num, coord in enumerate(coords):
+    # only get coords with height or width that are smaller than or equal to a specified maxsize
+    filtered_coords = [coord for coord in coords if float(coord.get('width')) <= maxsize and float(coord.get('height')) <= maxsize]
+    for num, coord in enumerate(filtered_coords):
        ConvertToPoint(coord, num + 1)
     playdo.Write()
 
@@ -79,21 +81,21 @@ def main():
     parser = argparse.ArgumentParser(description=tool_description)
     parser.add_argument('filename', type=str, help=arg_help_level, nargs='?')
     parser.add_argument('--all', action='store_true', help=arg_help_all)
-    parser.add_argument('--exclude_sizes_over', type=int, default=14.9, help=arg_help_exclude_sizes)
+    parser.add_argument('--exclude_sizes_over', type=float, default=14.9, help=arg_help_exclude_sizes)
     args = parser.parse_args()
 
     if args.all:
         level_files = file_utils.GetAllLevelFiles()
         print(f"Converting coords for {len(level_files)} levels")
         for num, level_file in enumerate(level_files):
-            ReplaceCoord(level_file)
+            ReplaceCoord(level_file, args.exclude_sizes_over)
             PrintProgressBar(num + 1, len(level_files), prefix="Converting Coords Progress", suffix=f"processing {_FormatName(level_files)}")
         
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")
         print(f"Converting coords for file level {args.filename}")
-        ReplaceCoord(args.filename)
+        ReplaceCoord(args.filename, args.exclude_sizes_over)
         
 
     time.sleep(0.25)
