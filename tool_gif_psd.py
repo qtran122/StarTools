@@ -23,9 +23,10 @@ def create_animated_gif():
     args = parser.parse_args()
 
     filename = INPUT_PSD
+    frame_duration = FRAME_DURATION
     if args.filepath != '': filename = args.filepath
-    if args.ms > 0: FRAME_DURATION = args.ms
-    elif args.fps > 0: FRAME_DURATION = int(1000 / args.fps)
+    if args.ms > 0: frame_duration = args.ms
+    elif args.fps > 0: frame_duration = int(1000 / args.fps)
 
     # Load PSD file
     try:
@@ -77,7 +78,7 @@ def create_animated_gif():
             output_path,
             save_all=True,
             append_images=frames[1:],
-            duration=FRAME_DURATION,
+            duration=frame_duration,
             loop=0,  # 0 means loop forever
             transparency=0 if STRIP_BACKGROUND else None,
             disposal=2  # Clear frame before next one
