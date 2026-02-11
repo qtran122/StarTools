@@ -22,13 +22,14 @@ def create_animated_gif():
     parser.add_argument('--fps', type=int, default=-1, help = 'FPS in animated GIF, default at 10')
     args = parser.parse_args()
 
-    if args.filepath != '': INPUT_PSD = args.filepath
+    filename = INPUT_PSD
+    if args.filepath != '': filename = args.filepath
     if args.ms > 0: FRAME_DURATION = args.ms
     elif args.fps > 0: FRAME_DURATION = int(1000 / args.fps)
 
     # Load PSD file
     try:
-        psd = psd_tools.PSDImage.open(INPUT_PSD)
+        psd = psd_tools.PSDImage.open(filename)
     except Exception as e:
         print(f"Error opening PSD file: {e}")
         return
@@ -66,7 +67,7 @@ def create_animated_gif():
         return
 
     # Get the base filename from INPUT_PSD and create output path
-    base_name = os.path.splitext(os.path.basename(INPUT_PSD))[0]  # Extract filename without extension
+    base_name = os.path.splitext(os.path.basename(filename))[0]  # Extract filename without extension
     desktop = os.path.expanduser("~/Desktop")
     output_path = os.path.join(desktop, f"{base_name}.gif")
     
