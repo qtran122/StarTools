@@ -1,6 +1,7 @@
 from PIL import Image
 import psd_tools
 import os
+import argparse
 
 # This script operates on a multi-layered PSD file and transforms it into a GIF.
 
@@ -13,16 +14,31 @@ FRAME_DURATION = 50  # Duration per frame in milliseconds
 STRIP_BACKGROUND = False  # If True, makes background transparent based on top-left pixel
 
 def create_animated_gif():
+    # Argument parsing in command; Optional
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--filepath', type=str, default='')
+    parser.add_argument('--noreverse', action='store_true', help = '')
+    parser.add_argument('--ms', type=int, default=-1, help = 'Millisecond between frame, default at 100')
+    parser.add_argument('--fps', type=int, default=-1, help = 'FPS in animated GIF, default at 10')
+    args = parser.parse_args()
+
+    filename = INPUT_PSD
+    frame_duration = FRAME_DURATION
+    if args.filepath != '': filename = args.filepath
+    if args.ms > 0: frame_duration = args.ms
+    elif args.fps > 0: frame_duration = int(1000 / args.fps)
+
     # Load PSD file
     try:
-        psd = psd_tools.PSDImage.open(INPUT_PSD)
+        psd = psd_tools.PSDImage.open(filename)
     except Exception as e:
         print(f"Error opening PSD file: {e}")
         return
 
     # Prepare frames, reversing layer order (topmost layer first)
     frames = []
-    for layer in reversed(psd):  # Reverse to process topmost layer first
+    if not args.noreverse: psd = reversed(psd)
+    for layer in (psd):  # Reverse to process topmost layer first
         if not layer.is_visible():
             continue
             
@@ -52,7 +68,7 @@ def create_animated_gif():
         return
 
     # Get the base filename from INPUT_PSD and create output path
-    base_name = os.path.splitext(os.path.basename(INPUT_PSD))[0]  # Extract filename without extension
+    base_name = os.path.splitext(os.path.basename(filename))[0]  # Extract filename without extension
     desktop = os.path.expanduser("~/Desktop")
     output_path = os.path.join(desktop, f"{base_name}.gif")
     
@@ -62,7 +78,7 @@ def create_animated_gif():
             output_path,
             save_all=True,
             append_images=frames[1:],
-            duration=FRAME_DURATION,
+            duration=frame_duration,
             loop=0,  # 0 means loop forever
             transparency=0 if STRIP_BACKGROUND else None,
             disposal=2  # Clear frame before next one
