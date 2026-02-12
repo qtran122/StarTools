@@ -31,6 +31,25 @@ class LevelPlayDo():
         self.full_file_name = file_name
         self.my_xml_tree = ET.parse(self.full_file_name)
         self.level_root = self.my_xml_tree.getroot()
+
+        # Check if more than 1 tilesheet is being used
+        # Log an error if yes, then apply the fix automatically
+        has_multiple_tilesheet = len(self.level_root.findall('tileset')) > 1
+        if has_multiple_tilesheet:
+            log.Must('\nERROR! Multiple tilesheets are being used!')
+            first_tilesheet_directory = None
+            for xml_tag in self.level_root.findall('tileset'):
+                if first_tilesheet_directory == None:
+                    first_tilesheet_directory = xml_tag.get('source')
+                else:
+                    xml_tag.set('source', first_tilesheet_directory)
+            log.Must(f'  \"{first_tilesheet_directory}\" is set to be the new location for all.\n')
+            self.Write()
+            self.my_xml_tree = None
+            self.level_root = None
+            log.Must('A fix has been applied.')
+            log.Must('Before rerunning the tool,\n please open the XML in Tiled app and save. [Ctrl]+[S]\n\n\n')
+            return
         
         # Extract map dimensions and tile size from the level
         self.map_width = int(self.level_root.get('width'))
