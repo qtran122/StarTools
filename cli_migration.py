@@ -28,6 +28,10 @@ USAGE EXAMPLE:
     
     The below command performs the run for real on the entire levels folder
     > python cli_migration.py --real_run 
+    
+TRELLO SOURCES:
+    https://trello.com/c/rzlr5Ncw <-- This contains the latest video how-to demo
+
 """
 
 

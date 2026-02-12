@@ -5,8 +5,8 @@ The tilelayer has parallax factor adjusted, such that the "frame" stays in the c
 The size inside the frame is either game's rough resolution (30x17) or a square (17x17)
 
 USAGE EXAMPLE:
-    python cli_cam.py z01
-    python cli_cam.py z01 --square
+    python cli_view.py z01
+    python cli_view.py z01 --square
 
 '''
 import argparse

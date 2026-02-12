@@ -13,6 +13,7 @@ An example usage of LevelPlayDo would be as follows:
     playdo.write()                                      # Write back our changes to the tiled xml
     
 '''
+import sys
 import random
 import copy
 import xml.etree.ElementTree as ET
@@ -32,24 +33,8 @@ class LevelPlayDo():
         self.my_xml_tree = ET.parse(self.full_file_name)
         self.level_root = self.my_xml_tree.getroot()
 
-        # Check if more than 1 tilesheet is being used
-        # Log an error if yes, then apply the fix automatically
-        has_multiple_tilesheet = len(self.level_root.findall('tileset')) > 1
-        if has_multiple_tilesheet:
-            log.Must('\nERROR! Multiple tilesheets are being used!')
-            first_tilesheet_directory = None
-            for xml_tag in self.level_root.findall('tileset'):
-                if first_tilesheet_directory == None:
-                    first_tilesheet_directory = xml_tag.get('source')
-                else:
-                    xml_tag.set('source', first_tilesheet_directory)
-            log.Must(f'  \"{first_tilesheet_directory}\" is set to be the new location for all.\n')
-            self.Write()
-            self.my_xml_tree = None
-            self.level_root = None
-            log.Must('A fix has been applied.')
-            log.Must('Before rerunning the tool,\n please open the XML in Tiled app and save. [Ctrl]+[S]\n\n\n')
-            return
+        # Check if more than 1 tilesheet is being used & gracefully handle error if so
+        self._CheckForMultiSheetError()
         
         # Extract map dimensions and tile size from the level
         self.map_width = int(self.level_root.get('width'))
@@ -333,6 +318,35 @@ class LevelPlayDo():
         self._tiles2d_hash[tile_layer_name] = set()
         for tile_row in tile_2d_map:
             self._tiles2d_hash[tile_layer_name].update(tile_row)
+            
+    def _CheckForMultiSheetError(self):
+        '''Check if more than 1 tilesheet is being used.
+        If so, prompt user if they'd like it fixed automatically. Otherwise, abort run'''
+        
+        has_multiple_tilesheet = len(self.level_root.findall('tileset')) > 1
+        if not has_multiple_tilesheet: return
+            
+        log.Must('\nERROR! Multiple tilesheets are detected! Only 1 tilesheet at a time is supported!')
+        log.Must(f"\nWould you like to apply an auto-fix? (Y/N)")
+        
+        user_input = input().strip().upper()
+        if user_input != 'Y':
+            log.Must("\nTool Run canceled...\n")
+            sys.exit()
+        
+        first_tilesheet_directory = None
+        for xml_tag in self.level_root.findall('tileset'):
+            if first_tilesheet_directory == None:
+                first_tilesheet_directory = xml_tag.get('source')
+            else:
+                xml_tag.set('source', first_tilesheet_directory)
+        
+        log.Must(f'"{first_tilesheet_directory}\" is set to be the new location for all.\n')
+        self.Write()
+        self.my_xml_tree = None
+        self.level_root = None
+        log.Must('Extra tilesheets have been discarded from the file and saved.\n\nYou may now re-run the tool safely.\n\n\n')
+        sys.exit()
 #--------------------------------------------------#
 '''...'''        
 
