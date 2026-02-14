@@ -53,11 +53,11 @@ def main():
     if has_error: return
 
     # Milestone 2
-    has_error, bg_owp_prev_index, max_layer_count = sort_logic.RenameTilelayer(playdo)
+    has_error, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count = sort_logic.RenameTilelayer(playdo)
     if has_error: return
 
     # Milestone 3
-    has_error, dict_sortval = sort_logic.ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
+    has_error, dict_sortval = sort_logic.ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1)
     if has_error: return
 
     # Milestone 4

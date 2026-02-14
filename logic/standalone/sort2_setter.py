@@ -153,7 +153,8 @@ def RenameTilelayer(playdo):
     Return a tuple (bool, int, int[2])
      1st : Whether an error has been detected
      2nd : The original layer that BG OWP was at, e.g. 4 if there were 3 BG tilelayers below it
-     3rd : Number of BG tilelayers and FG tilelayers in total respectively
+     3rd :  ^ same but for FG Parallax
+     4th : Number of BG tilelayers and FG tilelayers in total respectively
     '''
     log.Info("  Procedure 2 - Renaming tilelayers...")
 
@@ -191,7 +192,7 @@ def RenameTilelayer(playdo):
             log.Must("    ERROR! Level contains more than 6 BG/FG tilelayers!")
             return DEFAULT_ERROR
 
-        # Check for the OWP anchor
+        # Check if the OWP anchor already exists
         if layer_name.startswith('bg'):
             if contains_bg_owp:
                 log.Must(f"    ERROR! Tilelayer \'{layer_name}\' is placed above BG OWP!")
@@ -206,8 +207,9 @@ def RenameTilelayer(playdo):
 
         # Renaming
         original_name = layer_name
-        layer_name, temp_index = _GetStringOfNewName(layer_name, layer_counter)
-        if temp_index > 0: bg_anchor_prev_index = temp_index
+        layer_name, temp_index, is_owp, is_parallax = _GetStringOfNewName(layer_name, layer_counter)
+        if is_owp: bg_anchor_prev_index = temp_index
+        if is_parallax: fg_anchor_prev_index = temp_index
 
         # Apply change, then append to list
         _RenameTilelayer(playdo, original_name, layer_name)
@@ -239,7 +241,7 @@ def RenameTilelayer(playdo):
         log.Must(f"    (no object references need to be changed)")
 
     log.Must("")
-    return (False, bg_anchor_prev_index, max_layer_count)
+    return (False, bg_anchor_prev_index, fg_anchor_prev_index, max_layer_count)
 
 
 
@@ -290,8 +292,10 @@ def _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, la
     old_value = curr_property.get('value')
     new_value = old_value
     for tuple in list_name_bef_aft:
-        if tuple[0] in new_value:
-            new_value = new_value.replace(tuple[0], tuple[1])
+        name_bef = tuple[0].replace('/fx','')
+        name_aft = tuple[1].replace('/fx','')
+        if name_bef in old_value:
+            new_value = new_value.replace(name_bef, name_aft)
 
     # Set the property value if there is a change
     if new_value != old_value:
@@ -305,7 +309,10 @@ def _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, la
 
 # https://docs.google.com/document/d/1GN5UMAfNQC44met51Ms4MZ575rQlZAk61CYXeYQelzg/edit?tab=t.i244z3rn90j6
 def _GetStringOfNewName(layer_name, layer_counter):
-    '''This renames tilelayer from old to new standard'''
+    '''
+     This renames tilelayer from old to new standard
+     Returns tuple : ( new_name, layer_counter, is_bg_owp, is_fg_parallax )
+    '''
 
     # Keep track of /fx, then remove it temporarily during renaming
     has_fx = '/fx' in layer_name
@@ -315,7 +322,11 @@ def _GetStringOfNewName(layer_name, layer_counter):
     if layer_name.startswith('bg') and 'owp' in layer_name.lower():
         layer_name = "bg_owp_30k"
         if has_fx: layer_name += '/fx'
-        return (layer_name, layer_counter)
+        return (layer_name, layer_counter, True, False)
+    if layer_name.startswith('fg') and ('parallax' in layer_name.lower() or 'paralax' in layer_name.lower()):
+        layer_name = "fg_parallax_25k"
+        if has_fx: layer_name += '/fx'
+        return (layer_name, layer_counter, False, True)
 
     # Case 2 - Other layers, 'bg_1_wall' -> 'bg_wall'
     #  1. Remove the ending 'k' in previous sort2 before renaming, e.g. bg_wall_5k
@@ -331,7 +342,7 @@ def _GetStringOfNewName(layer_name, layer_counter):
     # Add the sort number at the end, then add back /fx if needed
     layer_name += f"_{layer_counter * 5}k"
     if has_fx: layer_name += '/fx'
-    return (layer_name, -1)
+    return (layer_name, -1, False, False)
 
 
 
@@ -340,7 +351,7 @@ def _GetStringOfNewName(layer_name, layer_counter):
 #--------------------------------------------------#
 '''Milestone 3'''
 
-def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_using_sort1):
+def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1):
     '''
     This fixes the _sort2 values in all objects' property.
     Old sort properties shall all be removed afterwards.
@@ -380,7 +391,7 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, max_layer_count, is_usin
 
     # Resort normal objects
     log.Must(f"   {len(objs_to_resort)} objects will be re-examined to space out the sort orders as needed")
-    count_sort_changed, dict_sortval = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1)
+    count_sort_changed, dict_sortval = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1)
     if count_sort_changed < 0:
         log.Must("Aborting ReSort. Please correct the error and try again\n")
         return DEFAULT_ERROR
@@ -442,18 +453,19 @@ def _LogObjectsToResort(objs_to_resort):
 
 
 
-def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_count, is_using_sort1):
+def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1):
     '''
       1. Scan through all input objects
       2. Sort them by existing sort values, either sort1 or sort2
       3. Set adjusted sort2 values to all objects' properties
       4. Return the number of objects whose sort value has been changed
     
-    :param objs_to_resort:    List of all relevant XML objects that are currenting using sort2, or will convert to using sort2
-    :param playdo:            A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
-    :param bg_owp_prev_index: Integer that indicates index of previous BG OWP layer, e.g. would be 4 for bg_4_owp
-    :param max_layer_count:   Integer tuple that keeps track of total numbers of BG & FG tilelayers respectively
-    :param is_using_sort1:    Boolean that indicates whether level is using sort1 or sort2
+    :param objs_to_resort:       List of all relevant XML objects that are currenting using sort2, or will convert to using sort2
+    :param playdo:               A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+    :param bg_owp_prev_index:    Integer that indicates index of previous BG OWP layer, e.g. would be 4 for bg_4_owp
+    :param fg_anchor_prev_index: Integer, ^ same but for FG Parallax
+    :param max_layer_count:      Integer tuple that keeps track of total numbers of BG & FG tilelayers respectively
+    :param is_using_sort1:       Boolean that indicates whether level is using sort1 or sort2
     '''
 
     DEFAULT_ERROR = -1, None
@@ -533,7 +545,8 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
 
 
     # Assign new sort values in properties
-    replace_key_bef_aft = None
+    replace_key_bef_aft1 = None
+    replace_key_bef_aft2 = None
     for key, value in dict_all_buckets.items():
         is_fg = key[0]
         sortval = key[1]
@@ -542,8 +555,13 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
         #  Check if current the bucket is BG and above the original OWP anchor layer
         if bg_owp_prev_index >= 0:
             if not is_fg and sortval >= bg_owp_prev_index:
-                replace_key_bef_aft = ( (is_fg, sortval), (is_fg, 6) )
+                replace_key_bef_aft1 = ( (is_fg, sortval), (is_fg, 6) )
                 sortval = 6    # OWP is always at the 6th BG tilelayer
+
+        if fg_anchor_prev_index >= 0:
+            if is_fg and sortval >= fg_anchor_prev_index:
+                replace_key_bef_aft2 = ( (is_fg, sortval), (is_fg, 5) )
+                sortval = 5    # FG Parallax is always at the 5th FG tilelayer
 
         sortval = sortval * 5000
         for obj in value:
@@ -572,10 +590,15 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, max_layer_c
         log.Must("")
 
     # After the processing, update the dictionary key to correct value before returning
-    if replace_key_bef_aft != None:
-        old_key = replace_key_bef_aft[0]
-        new_key = replace_key_bef_aft[1]
+    if replace_key_bef_aft1 != None:
+        old_key = replace_key_bef_aft1[0]
+        new_key = replace_key_bef_aft1[1]
         dict_all_buckets[new_key] = dict_all_buckets.pop(old_key)
+    if replace_key_bef_aft2 != None:
+        old_key = replace_key_bef_aft2[0]
+        new_key = replace_key_bef_aft2[1]
+        dict_all_buckets[new_key] = dict_all_buckets.pop(old_key)
+
     return count_sort_changed, dict_all_buckets
 
 
@@ -671,75 +694,93 @@ def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_
         return
 
     if change_view_split:
-        # Assign new sort values in properties
-        log.Must(f"    Applying \"Split View\" into {len(dict_sortval)} groups...")
-        for key, value in dict_sortval.items():
-            is_fg = key[0]
-            sortval = key[1]
-            list_obj = value
+        _RelocateToSplitView(playdo, dict_sortval)
+        _RelocateAllRealLight(playdo)
 
-            # The name for the new objectgroup
-            layer_name = 'objects_'
-            if is_fg:
-                layer_name += 'fg_'
-            else:
-                layer_name += 'bg_'
-            layer_name += f'{str(sortval * 5)}k'
-            log.Must(f"     {layer_name}\t{len(list_obj)} objects")
-
-            # Relocate objects between layers
-            objectgroup_destination = playdo.GetObjectGroup(layer_name, False)
-            for obj in list_obj:
-                # Ignore if is already in that objectgroup
-                parent_layer = tiled_utils.GetParentObject(obj, playdo)
-                parent_name = parent_layer.get('name')
-                if parent_name == layer_name: continue
-                tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, objectgroup_destination)
-
-            # Move objectgroup next to the correct tilelayer
-            tilelayer_destination = _FindAdjacentTilelayer(playdo, layer_name)
-            tiled_utils.MoveObjectgroupAfter(playdo, objectgroup_destination, tilelayer_destination)
-
-        # Move all objects to the "Real Light" objectgroup
-        log.Must(f"    Moving \"Real Light\" objects into objectgroup \"{REAL_LIGHT_OBJECTGROUP_NAME}\"...")
-        real_light_objectgroup = playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False)
-        meta_objectgroup = playdo.GetObjectGroup('meta', False)
-        tiled_utils.MoveObjectgroupAfter(playdo, real_light_objectgroup, meta_objectgroup)
-        for obj in playdo.GetAllObjects():
-            # Ignore if objects don't need to be moved
-            obj_name = obj.get('name')
-            if not obj_name in LIST_OBJ_REAL_LIGHT_NAME: continue
-            
-            # Ignore if is already in that objectgroup
-            parent_layer = tiled_utils.GetParentObject(obj, playdo)
-            parent_name = parent_layer.get('name')
-            if parent_name == REAL_LIGHT_OBJECTGROUP_NAME: continue
-
-            # Move object and log message
-            tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, real_light_objectgroup)
-
-        # Move meta objectgroup to be 1st in level, otherwise level might not load in-game
-#        tiled_utils.MoveMetaObjectgroupToBottom(playdo)    # Deprecated. Level no longer breaks when lighting comes first?
-    
     elif change_view_combine:
-        log.Must("    Applying \"Combine View\"...")
-        for key, value in dict_sortval.items():
-            is_fg = key[0]
-            sortval = key[1]
-            list_obj = value
-
-            # Relocate all sorted objects to same objectgroup
-            layer_name = 'objects_lighting_combined'
-            objectgroup_destination = playdo.GetObjectGroup(layer_name, False)
-            for obj in list_obj:
-                tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, objectgroup_destination)
-
-            # Move the objectgroup right after meta
-            meta_objectgroup = playdo.GetObjectGroup('meta', False)
-            tiled_utils.MoveObjectgroupAfter(playdo, objectgroup_destination, meta_objectgroup)
+        _RelocateToCombinedView(playdo, dict_sortval)
 
     log.Must("")
 #    log.Info(f"  --- Finished relocating {1} objects! ---\n")
+
+
+
+
+
+def _RelocateToSplitView(playdo, dict_sortval):
+    # Assign new sort values in properties
+    log.Must(f"    Applying \"Split View\" into {len(dict_sortval)} groups...")
+#    reversed_dict = dict(reversed(list(dict_sortval.items()))) # Reverse the order to remember insert position
+    for key, value in dict_sortval.items():
+        is_fg = key[0]
+        sortval = key[1]
+        list_obj = value
+
+        # The name for the new objectgroup
+        layer_name = 'objects_'
+        if is_fg:
+            layer_name += 'fg_'
+        else:
+            layer_name += 'bg_'
+        layer_name += f'{str(sortval * 5)}k'
+        log.Must(f"     {layer_name}\t{len(list_obj)} objects")
+
+        # Relocate objects between layers
+        objectgroup_destination = playdo.GetObjectGroup(layer_name, False)
+        for obj in list_obj:
+            # Ignore if is already in that objectgroup
+            parent_layer = tiled_utils.GetParentObject(obj, playdo)
+            parent_name = parent_layer.get('name')
+            if parent_name == layer_name: continue
+            tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, objectgroup_destination)
+
+        # Relocate/insert the objectgroup to the correct tilelayer, e.g. with matching sortval
+        #  Insert above tilelayer if exact match is found, otherwise insert below
+        insert_destination, match_found = _FindAdjacentTilelayer(playdo, layer_name)
+        tiled_utils.MoveObjectgroupAfter(playdo, objectgroup_destination, insert_destination, match_found)
+
+
+
+def _RelocateAllRealLight(playdo):
+    # Move all objects to the "Real Light" objectgroup
+    log.Must(f"    Moving \"Real Light\" objects into objectgroup \"{REAL_LIGHT_OBJECTGROUP_NAME}\"...")
+    real_light_objectgroup = playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False)
+    meta_objectgroup = playdo.GetObjectGroup('meta', False)
+    tiled_utils.MoveObjectgroupAfter(playdo, real_light_objectgroup, meta_objectgroup, False)
+    for obj in playdo.GetAllObjects():
+        # Ignore if objects don't need to be moved
+        obj_name = obj.get('name')
+        if not obj_name in LIST_OBJ_REAL_LIGHT_NAME: continue
+        
+        # Ignore if is already in that objectgroup
+        parent_layer = tiled_utils.GetParentObject(obj, playdo)
+        parent_name = parent_layer.get('name')
+        if parent_name == REAL_LIGHT_OBJECTGROUP_NAME: continue
+
+        # Move object and log message
+        tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, real_light_objectgroup)
+
+    # Move meta objectgroup to be 1st in level, otherwise level might not load in-game
+#        tiled_utils.MoveMetaObjectgroupToBottom(playdo)    # Deprecated. Level no longer breaks when lighting comes first?
+
+
+def _RelocateToCombinedView(playdo, dict_sortval):
+    log.Must("    Applying \"Combine View\"...")
+    for key, value in dict_sortval.items():
+        is_fg = key[0]
+        sortval = key[1]
+        list_obj = value
+
+        # Relocate all sorted objects to same objectgroup
+        layer_name = 'objects_lighting_combined'
+        objectgroup_destination = playdo.GetObjectGroup(layer_name, False)
+        for obj in list_obj:
+            tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, objectgroup_destination)
+
+        # Move the objectgroup right after meta
+        meta_objectgroup = playdo.GetObjectGroup('meta', False)
+        tiled_utils.MoveObjectgroupAfter(playdo, objectgroup_destination, meta_objectgroup)
+
 
 
 def _FindAdjacentTilelayer(playdo, layer_name):
@@ -753,9 +794,9 @@ def _FindAdjacentTilelayer(playdo, layer_name):
     '''
     
     # Extra the needed info from layer name
-    tuple = layer_name.split('_')
-    is_fg = (tuple[1] == 'fg')
-    sortval = f'_{tuple[2]}'
+    tuple = layer_name.split('_')    # e.g. `bg_5k`
+    is_fg = (tuple[1] == 'fg')       # e.g. False
+    sortval = f'_{tuple[2]}'         # e.g. '_5k'
 #    print(f'{tuple} -> {is_fg}, {sortval}')
     
     # Find the correct tilelayer
@@ -765,21 +806,28 @@ def _FindAdjacentTilelayer(playdo, layer_name):
         if is_fg and not ('fg' in name): continue
         # Check sort value
         if not sortval in name: continue
-        return playdo.GetTilelayer(name, False)
+        return playdo.GetTilelayer(name, False), True
     
     # If none is found, likely indicate it's below the first BG/FG tilelayer, e.g. fg_0k
     # In that case, use the tilelayer right below that instead
-    log.Must(f'    WARNING! Cannot find tilelayer with sort \'{sortval}\', may insert objectgroup at wrong spot.')
-    for index, name in enumerate(list_layer_names):
-        # Check FG/BG layer
-        if is_fg and not ('fg' in name): continue
-        # Check sort value
-        if not '_5k' in name: continue
-        return playdo.GetTilelayer(list_layer_names[index-1], False)
+    log.Extra(f'    WARNING! Cannot find tilelayer with sort \'{sortval}\', may insert objectgroup at wrong spot.')
+#    for index, name in enumerate(list_layer_names):
+    for name in list_layer_names:
+        # Skip if not in the FG/BG
+        if (is_fg) and (not ('fg' in name)): continue
+        elif (not is_fg) and (not ('bg' in name)): continue
 
-    # If still nothing is found, log error, then return 1st tilelayer
-    log.Must('    ERROR! Sending to bottom instead...')
-    return playdo.GetTilelayer(None, False)
+        # Skip if tilelayer name not found
+        # Usually this only happens for obejcts with _0k, _-5k, etc., since tilelayer starts at _5k
+        if not '_5k' in name: continue
+#        return playdo.GetTilelayer(list_layer_names[index-1], False), False
+        return playdo.GetTilelayer(name, False), False
+
+    # If still nothing is found, log error; This should never happen!
+    log.Must('    ERROR! No viable tilelayer found! Inserting before \'meta\' objectgroup...')
+#    return None, False
+#    return playdo.GetTilelayer(None, False), False
+    return playdo.GetObjectGroup('meta', False)
 
 
 

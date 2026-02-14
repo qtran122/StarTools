@@ -433,7 +433,7 @@ def MoveObjectToNewObjectgroup(playdo, obj, new_objectgroup):
 
 
     
-def MoveObjectgroupAfter(playdo, objectgroup, destination):
+def MoveObjectgroupAfter(playdo, objectgroup, destination, insert_after = True):
     '''
      Relocate an objectobject to right after another layer, above in in-editor view.
      Accepts either tilelayer or objectgroup.
@@ -447,10 +447,11 @@ def MoveObjectgroupAfter(playdo, objectgroup, destination):
     # Destination can be either objectgroup or tilelayer
     old_parent = GetParentObject(objectgroup, playdo)
     new_parent = GetParentObject(destination, playdo)
-    new_id = list(new_parent).index(destination)
-
+    
     old_parent.remove(objectgroup) 
-    new_parent.insert(new_id+1, objectgroup)
+    new_id = list(new_parent).index(destination)
+    if insert_after: new_id += 1
+    new_parent.insert(new_id, objectgroup)
 
     # If parent is a folder before removal, and folder no longer contains tilelayer/objectgroup, remove folder
     if old_parent.tag != 'group': return
