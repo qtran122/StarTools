@@ -190,6 +190,25 @@ class LevelPlayDo():
 
 
 
+    def GetTilelayer(self, tilelayer_name, discard_old):
+        '''
+         Return tilelayer as XML Object, allowing to get its name & properties
+         Mostly just copied from GetObjectGroup, might be buggy
+        
+         :param tilelayer_name: Name of the new tilelayer
+         :param discard_old:    Boolean; When true, set the tiles2D to blank
+        '''
+        for tilelayer in self.level_root.findall('layer'):
+            if tilelayer_name is None or tilelayer.get('name') == tilelayer_name:
+                if discard_old: self.SetTiles2d(tilelayer_name, self.GetBlankTiles2d())
+                return tilelayer
+        
+        # If the object group does NOT exists in the level, create a new one and return it for editing
+        new_tilelayer = ET.SubElement(self.level_root, 'layer', {'name': tilelayer_name})
+        return new_tilelayer
+
+
+
     def GetObjectGroup(self, object_group_name, discard_old = True):
         ''' Fetches the objectgroup with the provided name from the level element tree if it exists.
             If it does not exists, creates and returns an empty object group for editing.
