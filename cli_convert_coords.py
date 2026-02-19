@@ -21,6 +21,7 @@ tool_description = "Scans a level for original coord objects and convert these o
 arg_help_level = "Name of the tiled level XML"
 arg_help_all = "Convert coords for all level XML"
 arg_help_exclude_sizes = "Ignore coords with width or height over a specific number. Default is 14.9"
+default_exclude_size = 14.9
 
 
 def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
@@ -43,10 +44,10 @@ def _FormatName(name):
 
 def ConvertToPoint(coord, index):
     # get x, y, width, height values from original coord
-    x = int(coord.get('x'))
-    y = int(coord.get('y'))
-    width = int(coord.get('width'))
-    height = int(coord.get('height'))
+    x = int(float(coord.get('x')))
+    y = int(float(coord.get('y')))
+    width = int(float(coord.get('width')))
+    height = int(float(coord.get('height')))
 
     # calculate new x,y coordinates for point
     center_x = x + (width // 2)
@@ -71,7 +72,9 @@ def ReplaceCoord(filename, maxsize):
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
     coords = playdo.GetAllObjectsWithName("coord")
     # only get coords with height or width that are smaller than or equal to a specified maxsize
-    filtered_coords = [coord for coord in coords if float(coord.get('width')) <= maxsize and float(coord.get('height')) <= maxsize]
+
+    filtered_coords = [coord for coord in coords if float(coord.get('width')) <= maxsize * 16 and float(coord.get('height')) <= maxsize * 16]
+   
     for num, coord in enumerate(filtered_coords):
        ConvertToPoint(coord, num + 1)
     playdo.Write()
@@ -81,7 +84,7 @@ def main():
     parser = argparse.ArgumentParser(description=tool_description)
     parser.add_argument('filename', type=str, help=arg_help_level, nargs='?')
     parser.add_argument('--all', action='store_true', help=arg_help_all)
-    parser.add_argument('--exclude_sizes_over', type=float, default=14.9, help=arg_help_exclude_sizes)
+    parser.add_argument('--exclude_sizes_over', type=float, default=default_exclude_size, help=arg_help_exclude_sizes)
     args = parser.parse_args()
 
     if args.all:
