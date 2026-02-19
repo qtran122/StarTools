@@ -35,6 +35,9 @@ LIST_OBJ_REAL_LIGHT_NAME = {
     "light_line"
 }
 
+ORDER_4_MATERIALS = ['SPRITE_UNLIT', 'OVERLAY', 'GLOW', 'SPRITE_LIT']
+MAT_PROPERTY_NAME = '_material'
+
 
 
 
@@ -351,7 +354,7 @@ def _GetStringOfNewName(layer_name, layer_counter):
 #--------------------------------------------------#
 '''Milestone 3'''
 
-def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1):
+def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat):
     '''
     This fixes the _sort2 values in all objects' property.
     Old sort properties shall all be removed afterwards.
@@ -391,7 +394,7 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, ma
 
     # Resort normal objects
     log.Must(f"   {len(objs_to_resort)} objects will be re-examined to space out the sort orders as needed")
-    count_sort_changed, dict_sortval = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1)
+    count_sort_changed, dict_sortval = _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat)
     if count_sort_changed < 0:
         log.Must("Aborting ReSort. Please correct the error and try again\n")
         return DEFAULT_ERROR
@@ -423,8 +426,7 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, ma
 
     log.Must("")
 
-    if is_using_sort1:
-        return False, None
+#    if is_using_sort1: return False, None    # This would dis-allow split_view if was originally using sort1
     return False, dict_sortval
 
 
@@ -453,7 +455,7 @@ def _LogObjectsToResort(objs_to_resort):
 
 
 
-def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1):
+def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat):
     '''
       1. Scan through all input objects
       2. Sort them by existing sort values, either sort1 or sort2
@@ -521,7 +523,7 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
     # Show multiple objects with bad sort1 values before exiting
     if has_error: return DEFAULT_ERROR
 
-    # Sort
+    # Sort by key
     dict_all_sortval = dict(sorted(dict_all_sortval.items()))
 
 
@@ -533,11 +535,13 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
         is_fg_layer = (key > DICT_KEY_ADDON_FG_SORT * 0.8) # Slightly smaller than big number in case of negative
         if is_fg_layer: key -= DICT_KEY_ADDON_FG_SORT
 
+        # Usually has to always create new bucket for the dict, adding if-statement as fail-safe
         new_layer_num = _GetLayerNumberFromSortValue(is_fg_layer, key, max_layer_count, is_using_sort1)
         curr_key = (is_fg_layer, new_layer_num)
         if not curr_key in dict_all_buckets:
             dict_all_buckets[curr_key] = []
 
+        # Append to new bucket
         for obj in value:
             dict_all_buckets[curr_key].append(obj)
             obj_name = obj.get('name')
@@ -550,6 +554,13 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
     for key, value in dict_all_buckets.items():
         is_fg = key[0]
         sortval = key[1]
+        list_obj = value
+
+        # Sort all objects by meterials if requested
+#        old_len = len(list_obj)
+        if is_sorting_by_mat: list_obj = _SortBucketByMterials(list_obj)
+#        new_len = len(list_obj)
+#        print(f'LEN: {old_len} -> {new_len}')
 
         # If the BG OWP index is not invalid
         #  Check if current the bucket is BG and above the original OWP anchor layer
@@ -564,7 +575,7 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
                 sortval = 5    # FG Parallax is always at the 5th FG tilelayer
 
         sortval = sortval * 5000
-        for obj in value:
+        for obj in list_obj:
             sortval += 10
 
             sort2_value = ''
@@ -602,6 +613,78 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
     return count_sort_changed, dict_all_buckets
 
 
+def _SortBucketByMterials(list_obj):
+    '''
+     Docstring for _SortBucketByMterials
+    
+     :param list_obj: Description
+    '''
+    # TODO sort by mat within bucket first before appending; log
+
+#    print('NOW SORTING BY MATERIALS')
+
+    # For keeping track of which objects have no materials unregistered
+    remaining_list = []
+    for obj in list_obj: remaining_list.append(obj)
+#    print(f'FULL LIST : {len(remaining_list)} objects')
+#    print(f'  Checking {len(ORDER_4_MATERIALS)} MATS')
+
+    # Checking in reversed order to Unity, i.e. GLOW should have smaller number than SPRITE_UNLIT
+    #  NOTE Has to reverse the list each time we're using it, can't do it only once at the beginning
+    list_mat = reversed(ORDER_4_MATERIALS)
+
+    # Make a new list with all objects based on each one's material value
+    return_list = []
+    log_msg = '    Material resorted status: '
+    for mat in list_mat:
+#        print(f'  CURR MAT : {mat}')
+        obj_in_mat = []
+
+        # Check if objects have matching materials
+        for obj in remaining_list:
+            mat_value = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
+            has_match = (mat_value != '') and (mat in mat_value)
+#            if mat_value == '': continue
+#            print(f'  {mat} vs {mat_value} | Match? {has_match}')
+#            if not mat_value in mat: continue
+            if not has_match: continue
+            obj_in_mat.append(obj)
+        for obj in obj_in_mat: remaining_list.remove(obj)
+
+        # Further sort by specifications if applicable
+        # Assign a unique key to each value
+        #  e.g. 'GLOW,1.4' => key is 1400+n
+        #  e.g. 'GLOW,2.3' => key is 2300+n
+        dict_sort = {}
+        BIG_NUM = 1000
+        obj_id = 0
+        for obj in obj_in_mat:
+            mat_value = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
+            specified_value = 0
+            try:    specified_value = float(mat_value.split(',')[1])
+            except: specified_value = 0            
+            obj_id += 1
+            curr_key = obj_id + BIG_NUM * specified_value
+            dict_sort[curr_key] = obj
+        dict_sort = dict(sorted(dict_sort.items()))
+
+        # Append to final list
+#        for obj in obj_in_mat: return_list.append(obj)
+        for obj in dict_sort.values(): return_list.append(obj)
+        log_msg += f'{mat} ({len(obj_in_mat)}), '
+#        print(f'    {mat}\t{len(obj_in_mat)} objects added; Now at {len(return_list)}')
+
+    if len(remaining_list) == len(list_obj):
+        log.Must(f'    WARNING! All {len(remaining_list)} objects do not have \'_material\' property specified!')
+    elif len(remaining_list) > 0:
+        log.Must(f'    WARNING! Only first {len(list_obj) - len(remaining_list)} objects have \'_material\' property specified, the last {len(remaining_list)} objects do not!')
+    for obj in remaining_list: return_list.append(obj)
+#    print(f'  {mat}\t{len(obj_in_mat)} objects added; Now at {len(return_list)}')
+    log_msg += f'UNSPECIFIED ({len(remaining_list)})'
+#    print(log_msg)
+
+    return return_list
+    return list_obj
 
 
 
@@ -611,6 +694,8 @@ def _GetLayerNumberFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_usi
     Returns the layer number based on the input sort string,
      sort1 - fg_tiles/15    => above the 2nd FG layer => return 2
      sort2 - fg_tiles/16120 => above the 3nd FG layer => return 3
+
+    Special case for negative values - Now all set to 0
 
      :param is_fg_layer:     bool, whether current object is in FG tilelayers
      :param curr_sort:       int, the original sort value, accepts both sort1 and sort2
@@ -624,8 +709,9 @@ def _GetLayerNumberFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_usi
     else:
         layer_num = int(curr_sort/5000)
 
-    # Allows negative numbers
-    if curr_sort < 0: layer_num -=1
+    # Special case for negative numbers
+#    if curr_sort < 0: layer_num -=1    # Allows negative numbers, would revert the +1 operation
+    if curr_sort < 0: layer_num = 0    # Does not allows negative numbers, all set to 0
 
     # Cap it based on the number of tilelayers
     #  e.g. As a result, if there are only 4 BG layers, we would treat bg_tiles/31 and bg_tiles/101 the same
@@ -669,7 +755,7 @@ def _RemoveOldSortProperty(obj, playdo, max_len):
 #--------------------------------------------------#
 '''Milestone 4'''
 
-def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_view_combine = False):
+def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_view_combine = False, reveal_all_lights = False):
     '''
      Relocate all the sort2 lighting objects.
      Split View:
@@ -700,8 +786,40 @@ def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_
     elif change_view_combine:
         _RelocateToCombinedView(playdo, dict_sortval)
 
+    _SetLightVisibility(playdo, dict_sortval, reveal_all_lights)
+
     log.Must("")
 #    log.Info(f"  --- Finished relocating {1} objects! ---\n")
+
+
+
+
+def _SetLightVisibility(playdo, dict_sortval, reveal_all_lights):
+    '''
+     Docstring for _SetLightVisibility TODO
+    
+     :param playdo: Description
+     :param dict_sortval: Description
+     :param reveal_all_lights: Description
+    '''
+    # TODO log
+
+    # Always set the real-lights objectgroup's visibility to be ON
+    playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False).set('visible', '1')
+
+    # Set visibility to the sorted objectgroups based on boolean
+    visible_value = '0'
+    if reveal_all_lights: visible_value = '1'
+    for key, value in dict_sortval.items():
+        # Interpretation
+        is_fg = key[0]
+        sortval = key[1]
+        list_obj = value
+
+        # Lazy way to find the objectgroups where all sorted objects are in
+        first_obj = list_obj[0]
+        curr_objectgroup = tiled_utils.GetParentObject(first_obj, playdo)
+        curr_objectgroup.set('visible', visible_value)
 
 
 

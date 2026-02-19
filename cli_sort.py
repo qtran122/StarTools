@@ -38,6 +38,8 @@ def main():
     parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
     parser.add_argument('--split_view', action='store_true')
     parser.add_argument('--combined_view', action='store_true')
+    parser.add_argument('--sort_by_materials', action='store_true')
+    parser.add_argument('--reveal_all_lights', action='store_true')
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
@@ -57,14 +59,16 @@ def main():
     if has_error: return
 
     # Milestone 3
-    has_error, dict_sortval = sort_logic.ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1)
+    is_sorting_by_mat = args.sort_by_materials
+    has_error, dict_sortval = sort_logic.ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat)
     if has_error: return
 
     # Milestone 4
     if dict_sortval != None:
-        is_split_view = args.split_view    # TODO move these 2 into the function argument below?
+        is_split_view = args.split_view    # TODO move these directly into the function argument below?
         is_combined_view = args.combined_view
-        has_error = sort_logic.RelocateSortObjects(playdo, dict_sortval, is_split_view, is_combined_view)
+        reveal_all_lights = args.reveal_all_lights
+        has_error = sort_logic.RelocateSortObjects(playdo, dict_sortval, is_split_view, is_combined_view, reveal_all_lights)
 
     # Milestone 5
 #    if dict_sortval != None:
