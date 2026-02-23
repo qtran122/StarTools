@@ -22,6 +22,7 @@ Pseudo Algo
 
 import sys
 import argparse
+import logic.common.level_playdo as play
 import logic.common.file_utils as file_utils
 import logic.standalone.vary_block as VB
 import time
@@ -63,13 +64,19 @@ def main():
         level_files = file_utils.GetAllLevelFiles()
         print(f"Varying relic blocks for {len(level_files)} level files")
         for num, level_file in enumerate(level_files):
-            VB.VaryRelicBlocks(level_file)
+            playdo = play.LevelPlayDo(level_file)
+            VB.VaryRelicBlocks(playdo)
+            playdo.Write()
             PrintProgressBar(num + 1, len(level_files), prefix='Varying Progress:', suffix=f'processing {_FormatName(level_file)}')
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")
         print(f"Varying relic blocks for {args.filename}")
-        VB.VaryRelicBlocks(args.filename)
+        level_file = file_utils.GetFullLevelPath(args.filename)
+        playdo = play.LevelPlayDo(level_file)
+        VB.VaryRelicBlocks(playdo)
+        playdo.Write()
+    
     
     time.sleep(0.25)
     print("Finished varying all relic blocks")

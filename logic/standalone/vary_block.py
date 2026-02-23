@@ -1,6 +1,4 @@
-import logic.common.level_playdo as play
 import logic.common.tiled_utils as tiled
-import logic.common.file_utils as file_utils
 import random
 ANGLE = [0, 90, 180, 270]
 EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_")
@@ -16,11 +14,7 @@ def ValidRelicBlocks(relic_block):
     return True
 
 
-def VaryRelicBlocks(filename):
-    if filename.endswith('.xml') or filename.endswith('.tmx'):
-        playdo = play.LevelPlayDo(filename)
-    else:
-        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
+def VaryRelicBlocks(playdo):
     relic_blocks = GetAllRelicBlocks(playdo)
 
     if not relic_blocks:
@@ -33,4 +27,3 @@ def VaryRelicBlocks(filename):
         tiled.SetPropertyOnObject(relic_block, "angle", str(random.choice(ANGLE)))
         if random.choice([True, False]):
             tiled.SetPropertyOnObject(relic_block, "flip_x", "")
-    playdo.Write()
