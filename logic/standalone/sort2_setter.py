@@ -35,9 +35,14 @@ LIST_OBJ_REAL_LIGHT_NAME = {
     "light_line"
 }
 
-ORDER_4_MATERIALS = ['SPRITE_UNLIT', 'OVERLAY', 'GLOW', 'SPRITE_LIT']
+ORDER_4_MATERIALS = ['SPRITE_UNLIT', 'SPRITE_LIT', 'OVERLAY', 'GLOW', 'WINDY']    # First entry has smallest sort number
 MAT_PROPERTY_NAME = '_material'
+config_put_default_mat_highest = False    # If true, objects with no material specified would be placed above specified objects
 
+# During --sort_by_materials command,
+#  This will be the list of object name that would server as the anchor/separator
+# If you don't want any anchor, you can set the array empty, i.e. []
+config_material_anchor = ['water_line', 'water_fill']
 
 
 
@@ -237,9 +242,25 @@ def RenameTilelayer(playdo):
     # Scan through all objects to check their properties and see if affected by renaming
     log.Must("   Additional references in objects will be updated to match the new tilelayer names")
     count = 1
+    list_obj_with_multiple_properties = []
     for obj in playdo.GetAllObjects():
         has_change = _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo)
-        if has_change: count += 1
+        if has_change:
+            count += 1
+            list_obj_with_multiple_properties.append(obj)
+
+    # There is for the weird bug where only 1 property can be updated each time somehow
+    # The band-aid solution here is to keep processing objects until no name-swap can occur
+    while len(list_obj_with_multiple_properties) > 0:
+        list_temp = []
+        for obj in list_obj_with_multiple_properties:
+            has_change = _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo)
+            if has_change:
+                count += 1
+                list_temp.append(obj)
+        list_obj_with_multiple_properties = []
+        for obj in list_temp: list_obj_with_multiple_properties.append(obj)
+
     if count == 1:
         log.Must(f"    (no object references need to be changed)")
 
@@ -286,7 +307,9 @@ def _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo):
     layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
     for curr_property in properties.findall('property'):
         has_change = has_change or _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, layer_name)
-        # Does not return immediately, in case an object has more than 1 property that needs updating
+        if has_change: return True
+        # Originally, this would not not return immediately, in case an object has more than 1 property that needs updating
+        # However, it seems only 1 property can be updated at a time, returning earlier wouldn't make a difference
     return has_change
 
 def _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, layer_name):
@@ -304,7 +327,7 @@ def _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, la
     if new_value != old_value:
         curr_property.set('value', new_value)
         if obj_name == None : obj_name = 'no-name obj'
-        log.Must(f"    ({count}) \'{obj_name}\' in layer \'{layer_name}\' will change \'{curr_property.get('name')}\' to \'{new_value}\'")
+        log.Must(f"    ({count}) \'{obj_name}\' in layer \'{layer_name}\' will update \'{curr_property.get('name')}\', -> \'{new_value}\'")
         return True
     return False
 
@@ -548,6 +571,10 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
             if max_name_len < len(obj_name): max_name_len = len(obj_name)
 
 
+#    print(is_sorting_by_mat)
+#    print(is_using_sort1)
+    if is_sorting_by_mat and is_using_sort1: log.Must('    WARNING! Level is using sort1 when attempt to also sort by material.')
+
     # Assign new sort values in properties
     replace_key_bef_aft1 = None
     replace_key_bef_aft2 = None
@@ -558,7 +585,7 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
 
         # Sort all objects by meterials if requested
 #        old_len = len(list_obj)
-        if is_sorting_by_mat: list_obj = _SortBucketByMterials(list_obj)
+        if is_sorting_by_mat: list_obj = _SortBucketByMaterials(list_obj)
 #        new_len = len(list_obj)
 #        print(f'LEN: {old_len} -> {new_len}')
 
@@ -591,7 +618,12 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
             if old_sort != sort2_value:
                 change_indicator = '*'
                 count_sort_changed += 1
-            log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} {change_indicator} {old_sort} -> {sort2_value}')
+            mat_indicator = ''
+            if is_sorting_by_mat:
+                mat_indicator = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
+                if mat_indicator == '': mat_indicator =  '    (---)'
+                else:                   mat_indicator = f'    ({mat_indicator})'
+            log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} {change_indicator} {old_sort} -> {sort2_value}{mat_indicator}')
 
             tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
 
@@ -612,10 +644,48 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
 
     return count_sort_changed, dict_all_buckets
 
-
-def _SortBucketByMterials(list_obj):
+def _SortBucketByMaterials(list_obj):
     '''
-     Docstring for _SortBucketByMterials
+     Docstring for _SortBucketByMaterials
+     Each group of objects separated by water objects is treated like a "standalone bucket"
+      "Divider" Condition - Basically when encountering a water object, separate
+    
+     :param list_obj: Description
+    '''
+    # Separate the objects into multiple lists
+    list_of_list_obj = []
+    temp_list = []
+    for obj in list_obj:
+        obj_name = obj.get('name')
+        if obj_name in config_material_anchor:
+#        if obj_name == 'water_line' or obj_name == 'water_fill':
+            list_of_list_obj.append(temp_list)
+            temp_list = []
+            list_of_list_obj.append([obj])
+        else:
+            temp_list.append(obj)
+
+    # Append the temp list if the last one isn't water, meaning they haven't been appended to the full list yet
+    last_obj_name = list_obj[-1].get('name')
+    if not (last_obj_name in config_material_anchor):
+#    if not (last_obj_name == 'water_line' or last_obj_name == 'water_fill'):
+        list_of_list_obj.append(temp_list)
+
+    # Sort each smaller list, then append individual obj to full list
+    full_list = []
+    for index, curr_list in enumerate(list_of_list_obj):
+        list_of_list_obj[index] = _SortSmallerListByMterials(list_of_list_obj[index])
+        for obj in list_of_list_obj[index]:
+            obj_name = obj.get('name')
+            full_list.append(obj)
+
+#    full_list = _SortSmallerListByMterials(list_obj)
+    return full_list
+
+
+def _SortSmallerListByMterials(list_obj):
+    '''
+     Docstring for _SortSmallerListByMterials
     
      :param list_obj: Description
     '''
@@ -629,9 +699,12 @@ def _SortBucketByMterials(list_obj):
 #    print(f'FULL LIST : {len(remaining_list)} objects')
 #    print(f'  Checking {len(ORDER_4_MATERIALS)} MATS')
 
-    # Checking in reversed order to Unity, i.e. GLOW should have smaller number than SPRITE_UNLIT
+    # reference: ORDER_4_MATERIALS = ['SPRITE_UNLIT', 'SPRITE_LIT', 'OVERLAY', 'GLOW']
+    # OVERGLOWLAY should have highest number; SPRITE_UNLIT smallest
+
+    # Can do reversed(ORDER_4_MATERIALS) here if needed
     #  NOTE Has to reverse the list each time we're using it, can't do it only once at the beginning
-    list_mat = reversed(ORDER_4_MATERIALS)
+    list_mat = (ORDER_4_MATERIALS)
 
     # Make a new list with all objects based on each one's material value
     return_list = []
@@ -655,18 +728,31 @@ def _SortBucketByMterials(list_obj):
         # Assign a unique key to each value
         #  e.g. 'GLOW,1.4' => key is 1400+n
         #  e.g. 'GLOW,2.3' => key is 2300+n
+        # nvm they're all sorted alphabetically now
         dict_sort = {}
         BIG_NUM = 1000
         obj_id = 0
         for obj in obj_in_mat:
             mat_value = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
+            '''
             specified_value = 0
             try:    specified_value = float(mat_value.split(',')[1])
             except: specified_value = 0            
             obj_id += 1
             curr_key = obj_id + BIG_NUM * specified_value
             dict_sort[curr_key] = obj
+            '''
+
+#            dict_sort[obj] = mat_value
+
+#            '''
+            obj_id += 1
+            curr_key = f'{mat_value} {obj_id}'
+            dict_sort[curr_key] = obj
+#            '''
+
         dict_sort = dict(sorted(dict_sort.items()))
+#        dict_sort = dict(sorted(dict_sort.items(), key=lambda item: item[1]))
 
         # Append to final list
 #        for obj in obj_in_mat: return_list.append(obj)
@@ -674,11 +760,27 @@ def _SortBucketByMterials(list_obj):
         log_msg += f'{mat} ({len(obj_in_mat)}), '
 #        print(f'    {mat}\t{len(obj_in_mat)} objects added; Now at {len(return_list)}')
 
+    '''
+    # If there are objects with unspecified material, warn the user
     if len(remaining_list) == len(list_obj):
         log.Must(f'    WARNING! All {len(remaining_list)} objects do not have \'_material\' property specified!')
     elif len(remaining_list) > 0:
-        log.Must(f'    WARNING! Only first {len(list_obj) - len(remaining_list)} objects have \'_material\' property specified, the last {len(remaining_list)} objects do not!')
-    for obj in remaining_list: return_list.append(obj)
+        msg = f'    WARNING! Only first {len(list_obj) - len(remaining_list)} objects have \'_material\' property specified, the '
+        if config_put_default_mat_highest: msg += 'last'
+        else:                              msg += 'first'
+        msg += f' {len(remaining_list)} objects do not!'
+        log.Must(msg)
+    '''
+
+    # If config is true, append the default mat after other objects to put default objs above all
+    if config_put_default_mat_highest:
+        for obj in remaining_list: return_list.append(obj)
+    else:
+        temp_list = []
+        for obj in remaining_list: temp_list.append(obj)
+        for obj in return_list: temp_list.append(obj)
+        return_list = temp_list
+
 #    print(f'  {mat}\t{len(obj_in_mat)} objects added; Now at {len(return_list)}')
     log_msg += f'UNSPECIFIED ({len(remaining_list)})'
 #    print(log_msg)

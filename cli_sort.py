@@ -9,6 +9,8 @@ USAGE EXAMPLE:
     python cli_sort.py sf1 --v 0
     python cli_sort.py sf1 --v 0 --split_view
     python cli_sort.py sf1 --v 0 --combined_view
+    python cli_sort.py sf1 --v 0 --sort_by_materials
+    python cli_sort.py sf1 --v 0 --reveal_all_lights
 
 '''
 import argparse
