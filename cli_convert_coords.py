@@ -68,8 +68,12 @@ def ConvertToPoint(coord, index):
 
     ET.SubElement(coord, 'point')
 
-def ReplaceCoord(filename, maxsize):
-    playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
+def ReplaceCoord(filename, maxsize, full_path=False):
+    if full_path: # when user runs --all, each level file is already an absolute path
+        file_path = filename
+    else: # for individual level, we need to return the absolute path
+        file_path = file_utils.GetFullLevelPath(filename)
+    playdo = play.LevelPlayDo(file_path)
     coords = playdo.GetAllObjectsWithName("coord")
     # only get coords with height or width that are smaller than or equal to a specified maxsize
 
@@ -91,8 +95,8 @@ def main():
         level_files = file_utils.GetAllLevelFiles()
         print(f"Converting coords for {len(level_files)} levels")
         for num, level_file in enumerate(level_files):
-            ReplaceCoord(level_file, args.exclude_sizes_over)
-            PrintProgressBar(num + 1, len(level_files), prefix="Converting Coords Progress", suffix=f"processing {_FormatName(level_files)}")
+            ReplaceCoord(level_file, args.exclude_sizes_over, full_path=True)
+            PrintProgressBar(num + 1, len(level_files), prefix="Converting Coords Progress", suffix=f"processing {_FormatName(level_file)}")
         
     else:
         if not args.filename:
