@@ -117,9 +117,16 @@ def main():
         level_files = file_utils.GetAllLevelFiles()
         print(f"Converting coords for {len(level_files)} levels")
         for num, level_file in enumerate(level_files):
-            ReplaceCoord(level_file, args.exclude_sizes_over, full_path=True)
+            try:
+                ReplaceCoord(level_file, args.exclude_sizes_over, full_path=True)
+            except Exception as e:
+                unconverted_files.append(file_utils.StripFilename(level_file))
             PrintProgressBar(num + 1, len(level_files), prefix="Converting Coords Progress", suffix=f"processing {_FormatName(level_file)}")
         
+        if unconverted_files:
+            print(f"Unable to convert {len(unconverted_files)} files")
+            for file in unconverted_files:
+                print(f"unable to complete cli_convert_coords on {file}")
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")
