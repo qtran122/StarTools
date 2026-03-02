@@ -42,7 +42,7 @@ def _FormatName(name):
         formatted_name = name.ljust(20)
     return formatted_name
 
-def ConvertToPoint(coord, index):
+def ConvertToPoint(coord):
     # get x, y, width, height values from original coord
     x = int(float(coord.get('x')))
     y = int(float(coord.get('y')))
@@ -53,10 +53,12 @@ def ConvertToPoint(coord, index):
     center_x = x + (width // 2)
     center_y = y + (height // 2)
 
+    # extract name from the "ref" custom property
+    ref_name = tiled.GetPropertyFromObject(coord, "ref")
     # update coordinates
     coord.set('x', str(center_x))
     coord.set('y', str(center_y))
-    coord.set('name', str(f"k{index}"))
+    coord.set('name', ref_name)
     coord.set('type', "coord")
 
     # remove the old custom property, since we are renaming the new point object (k1, k2, k3 etc...)
@@ -80,8 +82,16 @@ def ReplaceCoord(filename, maxsize, full_path=False):
     filtered_coords = [coord for coord in coords if float(coord.get('width')) <= maxsize * 16 and float(coord.get('height')) <= maxsize * 16]
    
     for num, coord in enumerate(filtered_coords):
-       ConvertToPoint(coord, num + 1)
+       ConvertToPoint(coord)
     playdo.Write()
+
+# def PrintRefName(filename):
+#     file_path = file_utils.GetFullLevelPath(filename)
+#     playdo = play.LevelPlayDo(file_path)
+#     coords = playdo.GetAllObjectsWithName("coord")
+#     for coord in coords:
+#         ref_name = tiled.GetPropertyFromObject(coord, "ref")
+#         print(ref_name)
 
 
 def main():
@@ -103,6 +113,7 @@ def main():
             parser.error("File name is required when not using --all")
         print(f"Converting coords for file level {args.filename}")
         ReplaceCoord(args.filename, args.exclude_sizes_over)
+
         
 
     time.sleep(0.25)
