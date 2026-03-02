@@ -84,15 +84,15 @@ def ReplaceCoord(filename, maxsize, full_path=False):
         file_path = file_utils.GetFullLevelPath(filename)
 
     if not os.path.exists(file_path):
-        print(f"File not found, skipping: {file_path}")
-        return
+        print(f"File not found, skipping: {file_utils.StripFilename(filename)}")
+        raise Exception("File not found")
 
     playdo = play.LevelPlayDo(file_path)
     coords = playdo.GetAllObjectsWithName("coord")
 
     if not coords:
         print(f"No coord objects found in {file_utils.StripFilename(file_path)}")
-        return
+        raise Exception("No coords object found")
 
     # only get coords with height or width that are smaller than or equal to a specified maxsize
     filtered_coords = [coord for coord in coords if float(coord.get('width')) <= maxsize * 16 and float(coord.get('height')) <= maxsize * 16]
@@ -125,8 +125,8 @@ def main():
         
         if unconverted_files:
             print(f"Unable to convert {len(unconverted_files)} files")
-            for file in unconverted_files:
-                print(f"unable to complete cli_convert_coords on {file}")
+            # for file in unconverted_files:
+            #     print(f"unable to complete cli_convert_coords on {file}")
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")
@@ -137,7 +137,7 @@ def main():
         
 
     time.sleep(0.25)
-    print("Coordinates conversion complete")
+    
    
     
 
