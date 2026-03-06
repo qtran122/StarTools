@@ -35,7 +35,7 @@ LIST_OBJ_REAL_LIGHT_NAME = {
     "light_line"
 }
 
-ORDER_4_MATERIALS = ['SPRITE_UNLIT', 'SPRITE_LIT', 'OVERLAY', 'GLOW', 'WINDY']    # First entry has smallest sort number
+ORDER_4_MATERIALS = []    # First entry has smallest sort number; Argument is supplied from CLI
 MAT_PROPERTY_NAME = '_material'
 config_put_default_mat_highest = False    # If true, objects with no material specified would be placed above specified objects
 
@@ -44,6 +44,8 @@ config_put_default_mat_highest = False    # If true, objects with no material sp
 # If you don't want any anchor, you can set the array empty, i.e. []
 config_material_anchor = ['water_line', 'water_fill']
 
+# If objectgroup contains these, the objects inside are unaffected by the split-view procedure
+split_view_exclusion_name = ["break", "fade", "secret"]
 
 
 
@@ -376,6 +378,9 @@ def _GetStringOfNewName(layer_name, layer_counter):
 
 #--------------------------------------------------#
 '''Milestone 3'''
+
+def SetMaterialList(cli_order):
+    for mat_property in cli_order: ORDER_4_MATERIALS.append(mat_property)
 
 def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat):
     '''
@@ -857,7 +862,7 @@ def _RemoveOldSortProperty(obj, playdo, max_len):
 #--------------------------------------------------#
 '''Milestone 4'''
 
-def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_view_combine = False, reveal_all_lights = False):
+def RelocateSortObjects(playdo, dict_sortval, change_view_split, change_view_combine, reveal_all_lights):
     '''
      Relocate all the sort2 lighting objects.
      Split View:
@@ -889,6 +894,7 @@ def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_
         _RelocateToCombinedView(playdo, dict_sortval)
 
     _SetLightVisibility(playdo, dict_sortval, reveal_all_lights)
+    _ChangeObjectColorByMaterial(playdo)
 
     log.Must("")
 #    log.Info(f"  --- Finished relocating {1} objects! ---\n")
@@ -952,6 +958,13 @@ def _RelocateToSplitView(playdo, dict_sortval):
             parent_layer = tiled_utils.GetParentObject(obj, playdo)
             parent_name = parent_layer.get('name')
             if parent_name == layer_name: continue
+
+            # Object is excluded from the split_view separation algorithm if parent layer contains substring from array
+            is_obj_excluded = False
+            for excluded_name in split_view_exclusion_name:
+                if excluded_name in parent_name: is_obj_excluded = True
+            if is_obj_excluded: continue
+
             tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, objectgroup_destination)
 
         # Relocate/insert the objectgroup to the correct tilelayer, e.g. with matching sortval
@@ -964,9 +977,7 @@ def _RelocateToSplitView(playdo, dict_sortval):
 def _RelocateAllRealLight(playdo):
     # Move all objects to the "Real Light" objectgroup
     log.Must(f"    Moving \"Real Light\" objects into objectgroup \"{REAL_LIGHT_OBJECTGROUP_NAME}\"...")
-    real_light_objectgroup = playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False)
-    meta_objectgroup = playdo.GetObjectGroup('meta', False)
-    tiled_utils.MoveObjectgroupAfter(playdo, real_light_objectgroup, meta_objectgroup, False)
+    list_real_light_obj = []
     for obj in playdo.GetAllObjects():
         # Ignore if objects don't need to be moved
         obj_name = obj.get('name')
@@ -977,8 +988,20 @@ def _RelocateAllRealLight(playdo):
         parent_name = parent_layer.get('name')
         if parent_name == REAL_LIGHT_OBJECTGROUP_NAME: continue
 
-        # Move object and log message
+        list_real_light_obj.append(obj)
+
+    # Skip function if there is no real light object in level yet
+    if list_real_light_obj == []:
+        log.Must(f"     No \"Real Light\" object found, so objectgroup is not created here")
+        return
+
+    # Move object and log message
+    real_light_objectgroup = playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False)
+    meta_objectgroup = playdo.GetObjectGroup('meta', False)
+    tiled_utils.MoveObjectgroupAfter(playdo, real_light_objectgroup, meta_objectgroup, False)
+    for obj in list_real_light_obj:
         tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, real_light_objectgroup)
+#    tiled_utils.DeleteObjectgroupIfEmpty(playdo, real_light_objectgroup)
 
     # Move meta objectgroup to be 1st in level, otherwise level might not load in-game
 #        tiled_utils.MoveMetaObjectgroupToBottom(playdo)    # Deprecated. Level no longer breaks when lighting comes first?
@@ -1048,6 +1071,40 @@ def _FindAdjacentTilelayer(playdo, layer_name):
 #    return None, False
 #    return playdo.GetTilelayer(None, False), False
     return playdo.GetObjectGroup('meta', False)
+
+
+def _ChangeObjectColorByMaterial(playdo):
+    '''
+    If object name is light_global, give it type = 10
+    If object name is light_<anything else>, give it type = 11
+    If AT object has material NONE, give it type = 12
+    If AT object has material SPRITE_UNLIT, give it type = 13
+    If AT object has material SPRITE_LIT, give it type = 14
+    If AT object has material OVERLAY, give it type = 15
+    If AT object has material GLOW , give it type = 16
+    If AT object has material WINDY , give it type = 17
+    '''
+    log.Must(f"    Coloring in-editor colors of objects based on their materials...")
+    for obj in playdo.GetAllObjects():
+        # Ignore if objects don't need to be moved
+        obj_name = obj.get('name')
+        mat_value = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
+
+        if obj_name == None:                continue
+        elif obj_name == 'light_global':    _ChangeObjectType(obj, '10')
+        elif 'light_' in obj_name:          _ChangeObjectType(obj, '11')
+        elif not obj_name.startswith('AT'): continue
+        elif mat_value == '':               _ChangeObjectType(obj, '12')
+        elif mat_value == 'SPRITE_UNLIT':   _ChangeObjectType(obj, '13')
+        elif mat_value == 'SPRITE_LIT':     _ChangeObjectType(obj, '14')
+        elif mat_value == 'OVERLAY':        _ChangeObjectType(obj, '15')
+        elif mat_value == 'GLOW':           _ChangeObjectType(obj, '16')
+        elif mat_value == 'WINDY':          _ChangeObjectType(obj, '17')
+
+def _ChangeObjectType(obj, type_str):
+    log.Must(f"      Object \"{obj.get('name')}\" has changed type to \"{type_str}\"")
+    obj.set('type', type_str)
+
 
 
 
