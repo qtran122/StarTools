@@ -7,8 +7,10 @@ This includes:
     
 USAGE EXAMPLE:
     python cli_sort.py sf1 --v 0
-    python cli_sort.py sf1 --v 0 --split_view
+    python cli_sort.py sf1 --v 0 --do_not_split
     python cli_sort.py sf1 --v 0 --combined_view
+    python cli_sort.py sf1 --v 0 --sort_by_materials
+    python cli_sort.py sf1 --v 0 --reveal_all_lights
 
 '''
 import argparse
@@ -20,6 +22,7 @@ import logic.standalone.sort2_setter as sort_logic
 #--------------------------------------------------#
 '''Adjustable Configurations'''
 
+ORDER_4_MATERIALS = ['SPRITE_UNLIT', 'SPRITE_LIT', 'OVERLAY', 'GLOW', 'WINDY']    # First entry has smallest sort number
 
 
 
@@ -36,7 +39,7 @@ def main():
     parser = argparse.ArgumentParser(description = arg_description)
     parser.add_argument('filename', type=str, help = arg_help1)
     parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
-    parser.add_argument('--split_view', action='store_true')
+    parser.add_argument('--do_not_split', action='store_true')
     parser.add_argument('--combined_view', action='store_true')
     parser.add_argument('--sort_by_materials', action='store_true')
     parser.add_argument('--reveal_all_lights', action='store_true')
@@ -60,12 +63,17 @@ def main():
 
     # Milestone 3
     is_sorting_by_mat = args.sort_by_materials
+    if is_using_sort1 and is_sorting_by_mat:
+        log.Must('\n  WARNING! Attempting to do sort by materials when level is using sort1 standard!')
+        log.Must('   Tool will now proceed without sorting by materials.\n\n')
+        is_sorting_by_mat = False
+    sort_logic.SetMaterialList(ORDER_4_MATERIALS)
     has_error, dict_sortval = sort_logic.ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat)
     if has_error: return
 
     # Milestone 4
     if dict_sortval != None:
-        is_split_view = args.split_view    # TODO move these directly into the function argument below?
+        is_split_view = not args.do_not_split    # TODO move these directly into the function argument below?
         is_combined_view = args.combined_view
         reveal_all_lights = args.reveal_all_lights
         has_error = sort_logic.RelocateSortObjects(playdo, dict_sortval, is_split_view, is_combined_view, reveal_all_lights)

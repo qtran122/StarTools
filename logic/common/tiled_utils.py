@@ -415,21 +415,34 @@ def MoveObjectToNewObjectgroup(playdo, obj, new_objectgroup):
     log.Extra(f"      {obj.get('name')}    {old_objectgroup.get('name')} -> {new_objectgroup.get('name')}")
 
     # Delete old objectgroup if it's empty, otherwise the level might not be able to run
-    if old_objectgroup.find('object') == None:
-        layer_name = old_objectgroup.get('name')
-        log.Extra(f'Removing objectgroup \"{layer_name}\"')
-        parent_folder = GetParentObject(old_objectgroup, playdo)
-        parent_folder.remove(old_objectgroup)
+    DeleteObjectgroupIfEmpty(playdo, old_objectgroup)
 
-        # If parent layer was in a folder before removal, and folder no longer contains tilelayer/objectgroup, remove folder
-        if parent_folder.tag != 'group': return
-        if parent_folder.find('objectgroup') != None: return
-        if parent_folder.find('layer') != None: return
-        folder_name = parent_folder.get('name')
-        log.Extra(f'Removing folder \"{folder_name}\"')
-        root = GetParentObject(parent_folder, playdo)
-        root.remove(parent_folder)
-        # NOTE Is unable to delete nested folder
+def DeleteObjectgroupIfEmpty(playdo, objectgroup):
+    '''
+     Delete old objectgroup if it's empty, otherwise the level might not be able to run
+
+     :param playdo:      A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+     :param objectgroup: Objectgroup to be relocated
+    '''
+    if objectgroup.find('object') != None: return
+
+    # Delete current objectgroup
+    layer_name = objectgroup.get('name')
+    log.Extra(f'Removing objectgroup \"{layer_name}\"')
+    parent_folder = GetParentObject(objectgroup, playdo)
+    parent_folder.remove(objectgroup)
+
+    # If parent layer was in a folder before removal, and folder no longer contains tilelayer/objectgroup, remove folder
+    if parent_folder.tag != 'group': return                 # Do nothing if current objectgroup is not in folder
+    if parent_folder.find('objectgroup') != None: return    #  ^ if folder contains at least 1 objectgroup
+    if parent_folder.find('layer') != None: return          #  ^ if folder contains at least 1 tilelayer
+
+    # Delete folder that houses the current objectgroup
+    folder_name = parent_folder.get('name')
+    log.Extra(f'Removing folder \"{folder_name}\"')
+    root = GetParentObject(parent_folder, playdo)
+    root.remove(parent_folder)
+    # NOTE Is unable to delete nested folder
 
 
     
