@@ -71,6 +71,10 @@ def ConvertToPoint(coord):
     # remove the old custom property, since we are renaming the new point object to the extracted ref value
     tiled.RemovePropertyFromObject(coord, 'ref')
 
+    # certain levels contain coords with rotation property. We want to remove this if it exists
+    if coord.get('rotation'):
+        del coord.attrib['rotation']
+
     # delete width and height XML attribute
     del coord.attrib['width']
     del coord.attrib['height']
