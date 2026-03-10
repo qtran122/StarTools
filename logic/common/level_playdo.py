@@ -147,7 +147,7 @@ class LevelPlayDo():
         for objectgroup in self.GetAllObjectgroup():
             # Ignore object layers if not read by level
             layer_name = objectgroup.get('name')
-            if not (layer_name.startswith('objects') or layer_name.startswith('collisions')): continue
+            if not (layer_name.startswith('objects_') or layer_name.startswith('collisions_')): continue
             # Append to list
             for obj in objectgroup: list_object.append(obj)
         return list_object

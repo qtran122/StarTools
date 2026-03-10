@@ -92,7 +92,7 @@ def ReplaceCoord(filename, maxsize, full_path=False):
         raise Exception("File not found")
 
     playdo = play.LevelPlayDo(file_path)
-    coords = playdo.GetAllObjectsWithName("coord")
+    coords = [obj for obj in playdo.GetAllObjects() if obj.get("name") == "coord"]
 
     if not coords:
         print(f"No coord objects found in {file_utils.StripFilename(file_path)}")
