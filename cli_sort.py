@@ -75,12 +75,9 @@ def main():
     if dict_sortval != None:
         is_split_view = not args.do_not_split    # TODO move these directly into the function argument below?
         is_combined_view = args.combined_view
+        if is_combined_view: is_split_view = False    # Force to use combined view if specified
         reveal_all_lights = args.reveal_all_lights
         has_error = sort_logic.RelocateSortObjects(playdo, dict_sortval, is_split_view, is_combined_view, reveal_all_lights)
-
-    # Milestone 5
-#    if dict_sortval != None:
-#        has_error = sort_logic.RecolorSortObjects(playdo, dict_sortval, True)
 
     user_input = input(f"Commit changes to \'{level_name}\'? (Y/N) ")
     if user_input[0].lower() == 'y': playdo.Write()
