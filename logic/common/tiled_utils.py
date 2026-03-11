@@ -296,6 +296,13 @@ def GetVerticesFromObject( tiled_object ):
 
 
 
+def IsTilelayerNameValid(tilelayer_name):
+    if tilelayer_name.startswith('fg_'): return True
+    if tilelayer_name.startswith('bg_'): return True
+    return False
+
+
+
 
 
 #--------------------------------------------------#
