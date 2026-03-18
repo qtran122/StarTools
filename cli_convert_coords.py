@@ -60,7 +60,8 @@ def ConvertToPoint(coord):
 
     # extract the value from the "ref" custom property. This value will be the new name of the point object
     ref_name = tiled.GetPropertyFromObject(coord, "ref")
-    if ref_name is None:
+    if not ref_name:
+        print("Missing 'ref' custom property")
         raise ValueError(f"Coord at ({x}, {y}) is missing a 'ref' custom property")
     # update coordinates
     coord.set('x', str(center_x))
@@ -95,15 +96,14 @@ def ReplaceCoord(filename, maxsize, full_path=False):
     coords = [obj for obj in playdo.GetAllObjects() if obj.get("name") == "coord"]
 
     if not coords:
-        print(f"No coord objects found in {file_utils.StripFilename(file_path)}")
-        raise Exception("No coords object found")
+        return
 
     # only get coords with height or width that are smaller than or equal to a specified maxsize
     filtered_coords = [coord for coord in coords if float(coord.get('width')) <= maxsize * 16 and float(coord.get('height')) <= maxsize * 16]
 
     if not filtered_coords:
         print(f"No coords within size limit, skipping {file_utils.StripFilename(file_path)}")
-        return
+        raise Exception("No coords within size limit")
 
     for num, coord in enumerate(filtered_coords):
        ConvertToPoint(coord)
@@ -128,15 +128,17 @@ def main():
             PrintProgressBar(num + 1, len(level_files), prefix="Converting Coords Progress", suffix=f"processing {_FormatName(level_file)}")
         
         if unconverted_files:
-            print(f"Unable to convert {len(unconverted_files)} files")
-            # for file in unconverted_files:
-            #     print(f"unable to complete cli_convert_coords on {file}")
+            print(f"Successfully converted {len(level_files) - len(unconverted_files)} out of {len(level_files)}. Unsuccessfully converted {len(unconverted_files)} ")
+            for file in unconverted_files:
+                print(f"unable to complete cli_convert_coords on {file}")
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")
         print(f"Converting coords for file level {args.filename}")
-        ReplaceCoord(args.filename, args.exclude_sizes_over)
-      
+        try:
+            ReplaceCoord(args.filename, args.exclude_sizes_over)
+        except Exception as e:
+            print(f"Error: {e}")
 
         
 
