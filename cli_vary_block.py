@@ -23,27 +23,15 @@ Pseudo Algo
 import sys
 import argparse
 import logic.common.level_playdo as play
-import logic.common.tiled_utils as tiled
 import logic.common.file_utils as file_utils
-import random
+import logic.standalone.vary_block as VB
 import time
 
 
 tool_desription = "Scans a level file for relic blocks and apply the custom properties of flip_x and angle"
 arg_help_level = "Name of the tiled level XML"
 arg_help_all = "Scans ALL levels for relic blocks and apply the custom properties of flip_x and angle"
-ANGLE = [0, 90, 180, 270]
-EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_")
 
-def GetAllRelicBlocks(playdo):
-    relic_blocks = playdo.GetAllObjectsWithName("relic_block")
-    return relic_blocks
-
-def ValidRelicBlocks(relic_block):
-    block_type = tiled.GetPropertyFromObject(relic_block, "_type")
-    if block_type and block_type.startswith(EXCLUDED_PREFIXES):
-        return False
-    return True
 
 def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
     """Call in a loop to create terminal progress bar"""
@@ -63,24 +51,7 @@ def _FormatName(name):
         formatted_name = name.ljust(20)
     return formatted_name
 
-def VaryRelicBlocks(filename):
-    if filename.endswith('.xml') or filename.endswith('.tmx'):
-        playdo = play.LevelPlayDo(filename)
-    else:
-        playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(filename))
-    relic_blocks = GetAllRelicBlocks(playdo)
 
-    if not relic_blocks:
-        return
-    
-    relic_blocks_to_configure = [relic_block for relic_block in relic_blocks if ValidRelicBlocks(relic_block)]
-    for relic_block in relic_blocks_to_configure:
-        tiled.RemovePropertyFromObject(relic_block, "autoset")
-        tiled.RemovePropertyFromObject(relic_block, "flip_x")
-        tiled.SetPropertyOnObject(relic_block, "angle", str(random.choice(ANGLE)))
-        if random.choice([True, False]):
-            tiled.SetPropertyOnObject(relic_block, "flip_x", "")
-    playdo.Write()
 
 
 def main():
@@ -93,13 +64,19 @@ def main():
         level_files = file_utils.GetAllLevelFiles()
         print(f"Varying relic blocks for {len(level_files)} level files")
         for num, level_file in enumerate(level_files):
-            VaryRelicBlocks(level_file)
+            playdo = play.LevelPlayDo(level_file)
+            VB.VaryRelicBlocks(playdo)
+            playdo.Write()
             PrintProgressBar(num + 1, len(level_files), prefix='Varying Progress:', suffix=f'processing {_FormatName(level_file)}')
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")
         print(f"Varying relic blocks for {args.filename}")
-        VaryRelicBlocks(args.filename)
+        level_file = file_utils.GetFullLevelPath(args.filename)
+        playdo = play.LevelPlayDo(level_file)
+        VB.VaryRelicBlocks(playdo)
+        playdo.Write()
+    
     
     time.sleep(0.25)
     print("Finished varying all relic blocks")

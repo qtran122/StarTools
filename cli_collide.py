@@ -18,6 +18,7 @@ import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
 import logic.remapper.tile_remapper as TM
+import logic.standalone.vary_block as VB
 
 #--------------------------------------------------#
 '''Pattern Lists'''
@@ -121,6 +122,7 @@ def main():
     pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_overlap = False)
     pattern_matcher_asteroid.FindAndCreate(playdo, "_asteroids", "objects_asteroids", allow_overlap = False)
     
+    VB.VaryRelicBlocks(playdo)
     # Flush changes to File!
     playdo.Write()
 
