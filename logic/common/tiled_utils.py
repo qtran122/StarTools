@@ -230,17 +230,22 @@ def GetNameFromObject( tiled_object ):
 
 
 
-def GetPropertyFromObject( tiled_object, property_name ):
+def GetPropertyFromObject( tiled_object, property_name, return_none_if_not_found = False ):
     '''Extract the property as string, e.g. returns "20" from GetProperty('_sort')'''
     # Check if the object has any property
     properties = tiled_object.find('properties')
-    if properties == None: return ''
+    if properties == None:
+        if return_none_if_not_found: return None
+        else:                        return ''
 
     # Continue searching the object's list for specific property
     for curr_property in properties.findall('property'):
         if curr_property.get('name') == property_name:
             return curr_property.get('value')
-    return ''    # returning None would crash when attempted to be converted into string
+
+    # Returning None would crash when attempted to be converted into string
+    if return_none_if_not_found: return None
+    else:                        return ''
 
 
 

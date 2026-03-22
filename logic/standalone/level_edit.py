@@ -1,0 +1,195 @@
+'''
+Logic module that can
+ - TBA
+
+USAGE EXAMPLE:
+    raw_dict = conflict.CheckConflicts(playdo, _LIST_LIGHTING_OBJ)
+    pruned_dict = conflict.PruneConflicts(playdo, conflict_dictionary)
+    conflict.FixConflicts(playdo, pruned_dict)
+'''
+
+import os
+import logic.common.log_utils as log
+import logic.common.tiled_utils as tiled_utils
+import logic.common.file_utils as file_utils
+
+#--------------------------------------------------#
+'''Variables'''
+
+# Valid keys
+KEY_OBJ_LAYER = 'ACTIVE_OBJ_LAYERS_ONLY'
+KEY_E_NAME    = 'EXC_FILTER_OBJ_NAME'
+KEY_I_NAME    = 'INC_FILTER_OBJ_NAME'
+KEY_E_PARENT  = 'EXC_FILTER_LAYER_NAME'
+KEY_I_PARENT  = 'INC_FILTER_LAYER_NAME'
+KEY_I_PROP    = 'INC_FILTER_LHS'
+
+KEY_ACTION         = 'ACTION'
+ACTION_REMOVE_PROP = 'REMOVE_PROPERTY'
+
+VALUE_PROPERTY = [ACTION_REMOVE_PROP, 'RENAME_LHS']
+
+
+has_printed_criteria = []
+
+
+
+
+
+#--------------------------------------------------#
+'''Public Functions'''
+
+def FilterObjects(playdo, dict_config):
+	'''
+	 TODO
+	'''
+	name = file_utils.StripFilename(playdo.full_file_name)
+#	name = playdo.full_file_name
+
+	# Exclusion Rules
+	exclude_inactive_objectgroup = False
+	exclude_name_list = []
+	include_name_list = []
+	exclude_parent_list = []
+	include_parent_list = []
+	include_prop_list = []
+	for key, value in dict_config.items():
+		if key == KEY_OBJ_LAYER and value.lower() == 'true': exclude_inactive_objectgroup = True
+		if key == KEY_E_NAME: exclude_name_list = value
+		if key == KEY_I_NAME: include_name_list = value
+		if key == KEY_I_PROP: include_prop_list = value
+
+		if key == KEY_E_PARENT: exclude_parent_list = value
+		if key == KEY_I_PARENT: include_parent_list = value
+
+		if key == KEY_ACTION:
+			if value[0] in VALUE_PROPERTY:
+				include_prop_list.append(value[1])
+
+	# Only log all the rules in the first time
+	if len(has_printed_criteria) == 0:
+		log.Extra('')
+		log.Info('-----')
+		log.Info(f' Action : {dict_config[KEY_ACTION]}')
+		log.Info(' Checking Exclusion Rules...')
+		if len(exclude_name_list) > 0:   log.Info(f'  Exclude Objects with Name     : {exclude_name_list}')
+		if len(exclude_parent_list) > 0: log.Info(f'  Exclude Objects in Layer      : {exclude_parent_list}')
+
+		log.Extra('')
+		log.Info(' Checking Inclusion Rules...')
+		log.Info(f'  Include non-active objects    : {not exclude_inactive_objectgroup}')
+		if len(include_name_list) > 0:   log.Info(f'  Include Objects with Name     : {include_name_list}')
+		if len(include_prop_list) > 0:   log.Info(f'  Include Objects with Property : {include_prop_list}')
+		if len(include_parent_list) > 0: log.Info(f'  Include Objects in Layer      : {include_parent_list}')
+
+		log.Info('-----')
+#		log.Info('')
+		has_printed_criteria.append("x")
+
+	# Fetch all objects from playdo, then log the total number
+	list_obj = []
+	all_obj = playdo.GetAllObjects(False)
+
+	msg = ''
+	debug_filtered_out = False
+	count = 1
+	for obj in all_obj:
+		# Get variables
+		obj_name = obj.get('name')
+		parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+		has_property = False
+
+		# Debug
+		if debug_filtered_out: msg += '  \tFILTERED OUT'
+#		print(msg)
+		msg = f'  ({count})  \"{obj_name}\"    \t\"{parent_name}\"'
+		count += 1
+		debug_filtered_out = True
+
+		# Check name
+		if include_name_list != []:
+			if not obj_name in include_name_list: continue
+		if obj_name in exclude_name_list: continue
+
+		# Check property
+		if include_prop_list != []:
+			has_property = False
+			for property in include_prop_list:
+				property_value = tiled_utils.GetPropertyFromObject(obj, property, True)
+				if property_value != None: has_property = True
+			if has_property == False: continue
+
+		# Check parent name
+		if include_parent_list != []:
+			if not parent_name in include_parent_list: continue
+		if parent_name in exclude_parent_list: continue
+
+		list_obj.append(obj)
+#		print(f'  \"{obj_name}\"  \t\"{parent_name}\"')
+		debug_filtered_out = False
+#		msg += '  \tINCLUDED'
+	if debug_filtered_out: msg += '  \tFILTERED OUT'
+#	print(msg)
+
+	# Summary log
+	print('')
+	filtered_num = len(list_obj)
+	full_num = len(all_obj)
+	if filtered_num == 0:
+		log.Must(f' None of the {full_num} objects match filter criteria in \"{name}\"')
+	else:
+		log.Must(f' {filtered_num} of {full_num} objects match filter criteria in \"{name}\"')
+#	print('')
+
+	return list_obj
+
+
+
+
+
+#--------------------------------------------------#
+'''Actions'''
+
+def PerformAction(playdo, list_obj, do_action):
+	'''
+	 TODO
+	'''
+	count = 1
+	for obj in list_obj:
+		# Get variables
+		obj_name = obj.get('name')
+		parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+
+		# Do action
+		if do_action[0] == ACTION_REMOVE_PROP:
+			tiled_utils.RemovePropertyFromObject(obj, do_action[1])
+
+		# Print
+		count_str = ' '
+		if count < 10: count_str += ' '
+		count_str += f'{count})'
+		msg = f'  {count_str}  \"{parent_name}\"  \t\"{obj_name}\"'
+		print(msg)
+		count += 1
+
+
+
+
+
+#--------------------------------------------------#
+
+
+
+
+#--------------------------------------------------#
+
+
+
+
+
+
+
+
+
+
+# End of File
