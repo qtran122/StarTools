@@ -1,0 +1,27 @@
+# This is the big sample TOML that contains all possible arguments
+# Will be updating this TOML from time to time
+
+
+
+# Currently Available Actions:
+#  - REMOVE_PROPERTY
+#  - (more TBA)
+	ACTION = ["REMOVE_PROPERTY", "_material"]
+
+
+# Target levels
+	TARGET_LEVEL_FILES = ["z01", "a02"]                    # If first item starts with 'ALL', all levels would be checked
+#	TARGET_LEVEL_FILES = ["aLl_lv", "2nd item ignored"]    # Another example value
+
+
+# Inclusion Rules 
+	TARGET_ACTIVE_OBJECT_LAYERS_ONLY    = "nAh"                          # If starts with "true", only active objects would be included
+	TARGET_OBJECTS_WITH_NAME            = ["door", "AT", "AT_radial"]    # If this key is absent, all objects would be targetted
+	TARGET_OBJECTS_WITH_PROPERTY        = ["_sort2"]                     #  ^
+#	TARGET_OBJECTGROUP_WITH_THESE_WORDS = ["breakwall"]                  #  ^ ; Check whether the object's layer contain any of it as substring
+
+# Exclusion Rules
+#	IGNORE_OBJECTS_WITH_NAME            = ["door", "AT", "AT_radial"]
+	IGNORE_OBJECTGROUP_WITH_THESE_WORDS = ["breakwall"]                  # (same as in Inclusion Rule)
+
+

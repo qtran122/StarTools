@@ -5,6 +5,7 @@ Can also be used as template for creating new files
 USAGE EXAMPLE:
 	cd /Users/Jimmy/20-GitHub/StarTools
 	clear; python cli_level_edit.py --v 1
+	clear; python /Users/Jimmy/20-GitHub/StarTools/cli_level_edit.py --v 1
 
 '''
 import argparse
@@ -18,9 +19,12 @@ import logic.standalone.level_edit as level_edit
 '''Adjustable Configurations'''
 
 # In-editor object layers for nodes & routes
-toml_path = 'input/level-26_03_18.toml'
+curr_toml = 'level_edit-remove_example'
+curr_toml = 'level_edit-sample'
+EXTENSION = '.toml'
 
-
+KEY_TARGET = 'TARGET_LEVEL_FILES'
+KEY_ACTION = 'ACTION'    # Make sure it's the same in the logic file
 
 
 
@@ -42,13 +46,16 @@ def main():
 	log.SetVerbosityLevel(args.v)
 
 	# Read TOML
+	toml_path = curr_toml
+	if not EXTENSION in toml_path: toml_path += EXTENSION
+	toml_path = file_utils.GetInputFolder() + toml_path
 	dict_config = toml.load(toml_path)
 
 	# Get the list of playdo that needs changing
 	list_paths = []
-	target_list = dict_config['TARGET']
+	target_list = dict_config[KEY_TARGET]
 	if target_list[0].lower().startswith('all'):
-		list_paths = file_utils.GetAllLevelFiles()
+		list_paths = file_utils.GetAllLevelFiles(True)
 		target_list = "ALL Levels"
 	else:
 		for target in target_list:
@@ -58,6 +65,7 @@ def main():
 	do_action = dict_config['ACTION']
 	action_name = do_action[0]
 	log.Must(f'Tool will perform \"{action_name}\" to {target_list}')
+	if target_list == "ALL Levels": log.Must(' Note that this tool would not check inside auto-tiling folders')
 	log.Info('')
 
     # Filter objects, then perform the action
