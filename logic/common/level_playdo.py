@@ -19,6 +19,7 @@ import copy
 import xml.etree.ElementTree as ET
 import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
+import logic.common.file_utils as file_utils
 
 
 
@@ -145,13 +146,13 @@ class LevelPlayDo():
             log.Extra(f'-- level_playdo.py : objectgroup found : {len(list_objectgroup)}')
         return list_objectgroup
 
-    def GetAllObjects(self):
+    def GetAllObjects(self, ignore_inactive_objectgroup = True):
         '''Fetches all XML objects and return them as an array'''
         list_object = []
         for objectgroup in self.GetAllObjectgroup():
             # Ignore object layers if not read by level
             layer_name = objectgroup.get('name')
-            if not (layer_name.startswith('objects_') or layer_name.startswith('collisions_')): continue
+            if (ignore_inactive_objectgroup) and not (layer_name.startswith('objects') or layer_name.startswith('collisions')): continue
             # Append to list
             for obj in objectgroup: list_object.append(obj)
         return list_object
@@ -345,8 +346,8 @@ class LevelPlayDo():
         has_multiple_tilesheet = len(self.level_root.findall('tileset')) > 1
         if not has_multiple_tilesheet: return
             
-        log.Must('\nERROR! Multiple tilesheets are detected! Only 1 tilesheet at a time is supported!')
-        log.Must(f"\nWould you like to apply an auto-fix? (Y/N)")
+        log.Must(f'\nERROR! Multiple tilesheets detected in "{file_utils.StripFilename(self.full_file_name)}"! Only 1 tilesheet at a time is supported!')
+        log.Must(f"\nWould you like to fix it now? (Y/N)")
         
         user_input = input().strip().upper()
         if user_input != 'Y':
@@ -360,11 +361,15 @@ class LevelPlayDo():
             else:
                 xml_tag.set('source', first_tilesheet_directory)
         
-        log.Must(f'"{first_tilesheet_directory}\" is set to be the new location for all.\n')
+        log.Must(f'\tMade "{first_tilesheet_directory}\" the only existant tileset in the level file.\n')
         self.Write()
         self.my_xml_tree = None
         self.level_root = None
-        log.Must('Extra tilesheets have been discarded from the file and saved.\n\nYou may now re-run the tool safely.\n\n\n')
+        log.Must('\tHowever, this is only one-half of the fix.\n')
+        log.Must('\tNext, you must open the problem level XML in Tiled and manually save [Ctrl]+[S]')
+        log.Must('\t(Perform a no-op operation if you must to trigger the ability to save)\n')
+        log.Must('\tTiled will see the unusually high tile IDs and normalize them (Tile ID 16385 becomes ID 1, etc)')
+        log.Must('\tAfter this step is performed, you may re-run the tool safely!\n')
         sys.exit()
 #--------------------------------------------------#
 '''...'''        
