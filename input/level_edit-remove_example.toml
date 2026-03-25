@@ -1,0 +1,11 @@
+# This is the example TOML for deleting certain property from all levels
+
+	ACTION = ["REMOVE_PROPERTY", "is_lit"]
+
+	TARGET_LEVEL_FILES = ["ALL"]
+
+	TARGET_ACTIVE_OBJECT_LAYERS_ONLY    = "false"
+	TARGET_OBJECTS_WITH_NAME            = ["door", "AT", "AT_radial"]
+	IGNORE_OBJECTGROUP_WITH_THESE_WORDS = ["breakwall"]
+
+

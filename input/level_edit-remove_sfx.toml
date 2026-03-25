@@ -1,0 +1,11 @@
+# This TOML is for deleting the "#Q" property from all collisions objects
+
+	ACTION = ["REMOVE_PROPERTY", "sfx", "#Q"]
+
+	TARGET_LEVEL_FILES = ["ALL"]
+
+	TARGET_ACTIVE_OBJECT_LAYERS_ONLY    = "false"
+	TARGET_OBJECTS_WITH_NAME            = ["NAMELESS"]	# not needed?
+	TARGET_OBJECTGROUP_WITH_THESE_WORDS = ["collisions"]
+
+
