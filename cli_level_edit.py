@@ -18,11 +18,15 @@ import logic.standalone.level_edit as level_edit
 #--------------------------------------------------#
 '''Adjustable Configurations'''
 
-# In-editor object layers for nodes & routes
-curr_toml = 'level_edit-remove_example'
-curr_toml = 'level_edit-sample'
 EXTENSION = '.toml'
 
+# In-editor object layers for nodes & routes
+# DEBUG Only the bottommost one is used
+curr_toml = 'level_edit-MASTER_example'
+curr_toml = 'level_edit-remove_example'
+curr_toml = 'level_edit-remove_sfx'
+
+# Keys in TOML
 KEY_TARGET = 'TARGET_LEVEL_FILES'
 KEY_ACTION = 'ACTION'    # Make sure it's the same in the logic file
 
@@ -48,15 +52,18 @@ def main():
 	# Read TOML
 	toml_path = curr_toml
 	if not EXTENSION in toml_path: toml_path += EXTENSION
+	log.Must(f'LEVEL EDIT will run file \"{toml_path}\"\n')
 	toml_path = file_utils.GetInputFolder() + toml_path
 	dict_config = toml.load(toml_path)
 
 	# Get the list of playdo that needs changing
 	list_paths = []
+	target_all = False
 	target_list = dict_config[KEY_TARGET]
 	if target_list[0].lower().startswith('all'):
 		list_paths = file_utils.GetAllLevelFiles(True)
-		target_list = "ALL Levels"
+		target_list = "[ALL Levels]"
+		target_all = True
 	else:
 		for target in target_list:
 			list_paths.append(file_utils.GetFullLevelPath(target))
@@ -65,8 +72,8 @@ def main():
 	do_action = dict_config['ACTION']
 	action_name = do_action[0]
 	log.Must(f'Tool will perform \"{action_name}\" to {target_list}')
-	if target_list == "ALL Levels": log.Must(' Note that this tool would not check inside auto-tiling folders')
-	log.Info('')
+	if target_all: log.Must(' (Note this tool does not check inside auto-tiling folders)')
+	log.Must('')
 
     # Filter objects, then perform the action
 	list_playdo = []
@@ -78,14 +85,17 @@ def main():
 		list_playdo.append(playdo)
 
 	# Confirm actions with the user first before committing to changes
-	log.Info('')
-	user_input = input(f"  Commit to changes? (Y/N) ")
-	if user_input[0].lower() != 'y': log.Info(''); return
-	for playdo in list_playdo: playdo.Write()
+	log.Must('')
+	log.Must(f'Summary: {len(list_paths)} level files scanned, {len(list_playdo)} files met criteria and will be edited.')
+	if len(list_playdo) > 0:
+		user_input = input(f"  Commit to changes? (Y/N) ")
+		if user_input[0].lower() != 'y': log.Must(''); return
+		for playdo in list_playdo: playdo.Write()
+	else:
+		log.Must('')
 
-	log.Info('')
-	log.Info(' ~~All Procedures Completed~~')
-	log.Info('')
+	log.Must(' ~~All Procedures Completed~~')
+	log.Must('')
 
 
 
