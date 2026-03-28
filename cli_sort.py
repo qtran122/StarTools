@@ -15,6 +15,7 @@ USAGE EXAMPLE:
 '''
 import argparse
 import logic.common.file_utils as file_utils
+import logic.common.backup_utils as backup_utils
 import logic.common.level_playdo as play
 import logic.common.log_utils as log
 import logic.standalone.sort2_setter as sort_logic
@@ -43,15 +44,20 @@ def main():
     parser.add_argument('--combined_view', action='store_true')
     parser.add_argument('--sort_by_materials', action='store_true')
     parser.add_argument('--reveal_all_lights', action='store_true')
+    parser.add_argument('--rewind', action='store_true')
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
-    # Scan through each level in folder directory
-    # TODO replace with a loop to scan through all levels in a folder
-    has_error = False
-
     level_name = args.filename
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(level_name))
+    has_error = False
+
+    # If choosing to rewind, restore and skip procedures
+    if args.rewind:
+        log.Must('Will now rewind to the newest backup...')
+        log.Must(' No sorting procedure will happen')
+        backup_utils.RestoreBackup(playdo)
+        return
 
     # Milestone 1
     has_error, is_using_sort1 = sort_logic.ErrorCheckSortOrder(playdo)
@@ -80,7 +86,7 @@ def main():
         has_error = sort_logic.RelocateSortObjects(playdo, dict_sortval, is_split_view, is_combined_view, reveal_all_lights)
 
     user_input = input(f"Commit changes to \'{level_name}\'? (Y/N) ")
-    if user_input[0].lower() == 'y': playdo.Write()
+    if user_input[0].lower() == 'y': playdo.Write(make_auto_backup=True)
 
     log.Must("\nReSORT Run Completed...\n")
 

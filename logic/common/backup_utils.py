@@ -49,16 +49,16 @@ def CreateBackup(playdo):
 	backup_path = f'{folder_path}/{level_name}{curr_date}{EXTENSION}'
 
 	# Copy file
-	log.Info(f' Creating backup at \"{backup_path}\"...')
+	log.Extra(f' Creating backup at \"{backup_path}\"...')
 	shutil.copy2(level_path, backup_path)
 
 	# Delete oldest file if limit is exceeded
 	list_backup_lane = _GetBackupList(playdo)
 	if len(list_backup_lane) > MAX_BACKUP_PER_FILE:
 		oldest_filename = f'{folder_path}/{list_backup_lane[0]}'
-		print(f'  Deleting OLDEST backup at \"{oldest_filename}\"')
+		log.Extra(f'  Deleting OLDEST backup at \"{oldest_filename}\"')
 		os.remove(oldest_filename)
-	print()
+	log.Extra()
 
 
 
@@ -76,11 +76,11 @@ def RestoreBackup(playdo, restore_newest = True):
 
 	# Copy backup to real directory
 	level_path = playdo.full_file_name
-	log.Info(f' Copying {"NEWEST" if restore_newest else "OLDEST"} backup')
-	log.Info(f'  from {backup_path}')
-	log.Info(f'  to   {level_path}')
-	print()
-#	shutil.copy2(backup_path, level_path)
+	log.Must(f' Restoring {"NEWEST" if restore_newest else "OLDEST"} backup')
+	log.Must(f'  from {backup_path}')
+	log.Must(f'  to   {level_path}')
+	log.Must('')
+	shutil.copy2(backup_path, level_path)
 
 
 
