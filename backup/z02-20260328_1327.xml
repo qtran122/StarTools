@@ -1,0 +1,196 @@
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" compressionlevel="0" width="12" height="9" tilewidth="16" tileheight="16" infinite="0" nextlayerid="2764" nextobjectid="1043">
+ <tileset firstgid="1" source="WhaleNebulaTileset.tsx" />
+ <group id="5000" name="transparent" visible="0" opacity="0.7" />
+ <group id="5000" name="FG" visible="0" />
+ <group id="5000" name="_backup" />
+ <layer id="9999" name="DELETE THIS" width="12" height="9" opacity="0.5">
+  <data encoding="base64" compression="zlib">
+   eAHjYGVg4BjFQyYMAKtoBX0=
+  </data>
+ </layer>
+ <layer id="9999" name="DELETE THIS" width="12" height="9" opacity="0.7">
+  <data encoding="base64" compression="zlib">
+   eAFjYBgFQykEAAGwAAE=
+  </data>
+ </layer>
+ <layer id="9999" name="raw_g_blank" width="12" height="9" opacity="0.5">
+  <data encoding="base64" compression="zlib">
+   eAFjYBgFQykEAAGwAAE=
+  </data>
+ </layer>
+ <layer id="9999" name="raw_door" width="12" height="9" opacity="0.5">
+  <data encoding="base64" compression="zlib">
+   eAFjYBgFQykEAAGwAAE=
+  </data>
+ </layer>
+ <layer id="2759" name="bg_owp" width="12" height="9" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFrZGBgaKQDBlqBF6C7Aa9ioORgV4/uPmrxATFLIkU=
+  </data>
+ </layer>
+ <layer id="9999" name="_placeholder" width="12" height="9" opacity="0.5">
+  <data encoding="base64" compression="zlib">
+   eAFjYBgFQykEAAGwAAE=
+  </data>
+ </layer>
+ <group id="5000" name="_fg_ground" visible="0">
+  <layer id="9999" name="raw_caves_ground" width="12" height="9" opacity="0.5">
+   <data encoding="base64" compression="zlib">
+   eAFrZGBgaKQD5mBlYMCH0d2ATy1IbrCrR3cftfgA62IkTQ==
+  </data>
+  </layer>
+  <layer id="9999" name="_fg_1_ground caves" width="12" height="9" opacity="0.7">
+   <data encoding="base64" compression="zlib">
+   eAFjYBgFQykEAAGwAAE=
+  </data>
+  </layer>
+  <layer id="2757" name="fg_raw" width="12" height="9" visible="0">
+   <data encoding="base64" compression="zlib">
+   eAFrZGBgaKQDBlqBF6C7Aa9ioORgV4/uPmrxATFLIkU=
+  </data>
+  </layer>
+ </group>
+ <layer id="2760" name="fg_1" width="12" height="9" visible="0">
+  <data encoding="base64" compression="zlib">
+   eAFrZGBgaKQDBlqBF6C7Aa9ioORgV4/uPmrxATFLIkU=
+  </data>
+ </layer>
+ <objectgroup id="2763" name="collisions">
+  <object id="1042" type="1" x="48" y="-64" width="32" height="32">
+   <properties>
+    <property name="#Q" value="" />
+    <property name="sfx" value="dirt" />
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="2756" name="objects_elipse">
+  <object id="1017" name="square" type="0" x="-256" y="-48" width="224" height="224">
+   <properties>
+    <property name="follow" value="blythe" />
+   </properties>
+  </object>
+  <object id="1018" name="circle" type="0" x="224" y="-48" width="224" height="224">
+   <properties>
+    <property name="follow" value="blythe" />
+   </properties>
+   <ellipse />
+  </object>
+ </objectgroup>
+ <objectgroup id="2758" name="objects_sort2">
+  <object id="1022" name="AT" type="0" x="16" y="16" width="32" height="32">
+   <properties>
+    <property name="_material" value="" />
+    <property name="_sort" value="bg_tiles/1" />
+   </properties>
+  </object>
+  <object id="1025" name="AT" type="0" x="80" y="16" width="32" height="32">
+   <properties>
+    <property name="_material" value="" />
+    <property name="_sort" value="bg_tiles/2" />
+   </properties>
+  </object>
+  <object id="1026" name="AT" type="0" x="144" y="16" width="32" height="32">
+   <properties>
+    <property name="_material" value="" />
+    <property name="_sort" value="bg_tiles/3" />
+   </properties>
+  </object>
+  <object id="1027" name="AT" type="0" x="16" y="64" width="32" height="32">
+   <properties>
+    <property name="_material" value="WINDY,spd=1.4,wind=5,bend=3" />
+    <property name="_sort" value="bg_tiles/4" />
+   </properties>
+  </object>
+  <object id="1028" name="AT" type="0" x="80" y="64" width="32" height="32">
+   <properties>
+    <property name="_material" value="WINDY,spd=1.4,wind=5,bend=3" />
+    <property name="_sort" value="bg_tiles/5" />
+   </properties>
+  </object>
+  <object id="1029" name="AT" type="0" x="144" y="64" width="32" height="32">
+   <properties>
+    <property name="_material" value="WINDY,spd=1.6,wind=5,bend=3" />
+    <property name="_sort" value="bg_tiles/6" />
+   </properties>
+  </object>
+  <object id="1030" name="AT" type="0" x="16" y="160" width="32" height="32">
+   <properties>
+    <property name="_material" value="SPRITE_LIT" />
+    <property name="_sort" value="bg_tiles/7" />
+   </properties>
+  </object>
+  <object id="1031" name="AT" type="0" x="80" y="160" width="32" height="32">
+   <properties>
+    <property name="_material" value="OVERLAY,2.3" />
+    <property name="_sort" value="bg_tiles/8" />
+   </properties>
+  </object>
+  <object id="1032" name="AT" type="0" x="144" y="160" width="32" height="32">
+   <properties>
+    <property name="_material" value="GLOW" />
+    <property name="_sort" value="bg_tiles/9" />
+   </properties>
+  </object>
+  <object id="1033" name="AT" type="0" x="16" y="112" width="32" height="32">
+   <properties>
+    <property name="_material" value="WINDY,spd=1.6,wind=5,bend=3" />
+    <property name="_sort" value="bg_tiles/4" />
+   </properties>
+  </object>
+  <object id="1034" name="AT" type="0" x="80" y="112" width="32" height="32">
+   <properties>
+    <property name="_material" value="WINDY,spd=1.4,wind=5,bend=3" />
+    <property name="_sort" value="bg_tiles/5" />
+   </properties>
+  </object>
+  <object id="1035" name="AT" type="0" x="144" y="112" width="32" height="32">
+   <properties>
+    <property name="_material" value="WINDY,spd=1.4,wind=5,bend=3" />
+    <property name="_sort" value="bg_tiles/6" />
+   </properties>
+  </object>
+  <object id="1036" name="AT" type="0" x="16" y="208" width="32" height="32">
+   <properties>
+    <property name="_material" value="OVERLAY,1.1" />
+    <property name="_sort" value="bg_tiles/7" />
+   </properties>
+  </object>
+  <object id="1037" name="AT" type="0" x="144" y="208" width="32" height="32">
+   <properties>
+    <property name="_material" value="OVERLAY,1.1" />
+    <property name="_sort" value="bg_tiles/9" />
+   </properties>
+  </object>
+  <object id="1038" name="water_fill" type="0" x="16" y="256" width="32" height="32">
+   <properties>
+    <property name="_sort" value="bg_tiles/7" />
+   </properties>
+  </object>
+  <object id="1039" name="water_fill" type="0" x="80" y="256" width="32" height="32">
+   <properties>
+    <property name="_sort" value="bg_tiles/4" />
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="2761" name="objects_door">
+  <object id="1040" name="door" type="10" x="112" y="-128" width="32" height="32">
+   <properties>
+    <property name="_material" value="abcd" />
+    <property name="_sort" value="bg_tiles/3" />
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="2762" name="objects_breakwall">
+  <object id="1041" name="door" type="1" x="48" y="-128" width="32" height="32">
+   <properties>
+    <property name="_material" value="abcd" />
+    <property name="_sort" value="bg_tiles/3" />
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="9999" name="_dummy" width="1" height="1">
+  <data encoding="base64" compression="zlib">
+   eAFjYGBgAAAABAAB
+  </data>
+ </layer>
+</map>
