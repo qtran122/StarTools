@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
 import logic.common.file_utils as file_utils
+import logic.common.backup_utils as backup_utils
 
 
 
@@ -292,7 +293,7 @@ class LevelPlayDo():
                 elem.set('value', elem.get('value').replace(target_text, new_number_string))
 
 
-    def Write(self, location = None):
+    def Write(self, location = None, make_auto_backup = False):
         '''Stamps the Playdo back into an XML file and writes to disk'''
         if location is None:
             log.Extra(f"-- level_playdo.py : flushing changes...")
@@ -300,6 +301,10 @@ class LevelPlayDo():
         else:
             log.Extra(f"-- level_playdo.py : flushing changes to new location...")
             self.my_xml_tree.write(location)
+
+        if make_auto_backup:
+            log.Extra('\nMaking backup...\n')
+            backup_utils.CreateBackup(self)
 
 
 
