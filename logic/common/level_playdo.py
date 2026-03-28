@@ -210,9 +210,10 @@ class LevelPlayDo():
 
 
 
-    def GetObjectGroup(self, object_group_name, discard_old = True):
+    def GetObjectGroup(self, object_group_name, discard_old = True, create_new = True):
         ''' Fetches the objectgroup with the provided name from the level element tree if it exists.
             If it does not exists, creates and returns an empty object group for editing.
+            Update: It can now return None instead of creating a new objectgroup
             
             If NONE is provided for object_group_name, returns first object_group found
             
@@ -220,14 +221,16 @@ class LevelPlayDo():
         '''
         
         # Check if object group already exists in the level. If so, return that one for editing
-        
         for object_group in self.level_root.findall('objectgroup'):
             if object_group_name is None or object_group.get('name') == object_group_name:
                 if (discard_old):
                     for object in object_group.findall('object'):
                         object_group.remove(object)
                 return object_group
-        
+
+        # When no objectgroup found, return None if specified to not create a new one
+        if not create_new: return None
+
         # If the object group does NOT exists in the level, create a new one and return it for editing
         new_object_group = ET.SubElement(self.level_root, 'objectgroup', {'name': object_group_name})
         return new_object_group

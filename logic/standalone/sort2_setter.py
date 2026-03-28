@@ -35,10 +35,17 @@ LIST_OBJ_REAL_LIGHT_NAME = {
     "light_line"
 }
 
-ORDER_4_MATERIALS = ['SPRITE_UNLIT', 'OVERLAY', 'GLOW', 'SPRITE_LIT']
+ORDER_4_MATERIALS = []    # First entry has smallest sort number; Argument is supplied from CLI
 MAT_PROPERTY_NAME = '_material'
+config_put_default_mat_highest = False    # If true, objects with no material specified would be placed above specified objects
 
+# During --sort_by_materials command,
+#  This will be the list of object name that would server as the anchor/separator
+# If you don't want any anchor, you can set the array empty, i.e. []
+config_material_anchor = ['water_line', 'water_fill']
 
+# If objectgroup contains these, the objects inside are unaffected by the split-view procedure
+split_view_exclusion_name = ["break", "fade", "secret"]
 
 
 
@@ -162,7 +169,7 @@ def RenameTilelayer(playdo):
     log.Info("  Procedure 2 - Renaming tilelayers...")
 
     # Default error value; 2nd & 3rd value are irrelevant since the program would exit upon detecting an error
-    DEFAULT_ERROR = (True, -1, [-1,-1])
+    DEFAULT_ERROR = (True, -1, -1, -1)
 
     list_name_bef_aft = []    # List of tuple, each stores a (<name_before>, <name_after>)
     contains_bg_owp = False
@@ -173,6 +180,10 @@ def RenameTilelayer(playdo):
     bg_anchor_prev_index = -1    # For later : BG "anchor" from OWP; Ensure objects previously above OWP remains above after renaming
     fg_anchor_prev_index = -1    # For later : FG "anchor" from Parallax; same as above
     max_layer_count = []         # For later : Total layer numbers for BG & FG tilelayers
+
+    # Check to make sure there is no "overlapping" in tilelayer names (continued)
+    if _CheckIfTilelayerNamesOverlap(playdo): return DEFAULT_ERROR
+
 
     for layer_name in playdo.GetAllTileLayerNames():
         if not (layer_name.startswith('fg') or layer_name.startswith('bg')): continue
@@ -231,15 +242,13 @@ def RenameTilelayer(playdo):
 
     # Inform user that there is no OWP layer, ask if want to proceed normally or exit
     if not contains_bg_owp:
-        log.Must("    WARNING! Level does not contain the BG OWP anchor")
-
+        log.Must("    WARNING! Level does not contain the BG OWP anchor\n")
 
     # Scan through all objects to check their properties and see if affected by renaming
     log.Must("   Additional references in objects will be updated to match the new tilelayer names")
     count = 1
     for obj in playdo.GetAllObjects():
-        has_change = _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo)
-        if has_change: count += 1
+        count = _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo)
     if count == 1:
         log.Must(f"    (no object references need to be changed)")
 
@@ -250,65 +259,52 @@ def RenameTilelayer(playdo):
 
 
 
+def _CheckIfTilelayerNamesOverlap(playdo):
+    '''
+     Returns True if one tilelayer name contains another name as substring, which is bad.
+     Prints out error message when it happens.
+     TODO Print a warning instead? Will return the list of problematic layer name instead
+     
+     :param playdo: A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+    '''
+    list_all_tilelayer_name = playdo.GetAllTileLayerNames()
+    log.Info('    Checking if tilelayer names overlap with one another...')
+
+    # Compare each tilelayer's name with one another, until one is found to be substring of another
+    overlapped_pair = None
+    for name1 in list_all_tilelayer_name:
+        if not tiled_utils.IsTilelayerNameValid(name1): continue
+        skip_same_name = False
+        for name2 in list_all_tilelayer_name:
+            if not tiled_utils.IsTilelayerNameValid(name2): continue
+#            print(f'\"{name1}\" and \"{name2}\"')
+            if (name1 == name2) and (not skip_same_name):
+                skip_same_name = True
+                continue
+            if name1 in name2:
+                overlapped_pair = f' (\"{name1}\" & \"{name2}\")'
+                break
+        if overlapped_pair != None: break
+    if overlapped_pair == None:
+        log.Info('     All good!')
+        return False
+
+    # Log the error message
+    log.Must(f'    ERROR! Some tilelayers have overlapping names!{overlapped_pair}')
+    log.Must(f'     This may cause error when updating name references in object properties.')
+    log.Must(f'     Please rename tilelayers to ensure none is a substring of another, e.g.')
+    log.Must(f'      \"fg_ground_below\" & \"fg_ground\"  : NOT okay')
+    log.Must(f'      \"fg_ground_below\" & \"fg_ground1\" : okay')
+    log.Must("")
+    return True
+
+
+
 def _TilelayerHasSortProperty(playdo, layer_name):
     for layer in playdo.level_root.findall('.//layer'):
         if layer.get('name') != layer_name: continue
         if tiled_utils.GetPropertyFromObject(layer, '_sort') != '': return True
     return False
-
-
-
-def _RenameTilelayer(playdo, original_name, layer_name):
-    for layer in playdo.level_root.findall('.//layer'):
-        if layer.get('name') != original_name: continue
-        layer.set('name', layer_name)
-        return
-
-
-
-def _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo):
-    '''
-     Check through an object's properties to see if there is any outdated tilelayer name references.
-     Return True if the object's reference has been updated
-    
-     :param obj:               XML Object, its properties would be checked
-     :param list_name_bef_aft: (string, string), stores the tilelayer name before and after renaming respectively
-     :param count:             int, number of objects that have been updated so far
-     :param playdo:            A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
-    '''
-    # Only proceed if the object contains properties
-    properties = obj.find('properties')
-    if properties == None: return
-
-    # Check each property individually
-    has_change = False
-    obj_name = obj.get('name')
-    layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
-    for curr_property in properties.findall('property'):
-        has_change = has_change or _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, layer_name)
-        # Does not return immediately, in case an object has more than 1 property that needs updating
-    return has_change
-
-def _RenameLayerInProperty(curr_property, list_name_bef_aft, count, obj_name, layer_name):
-    '''Adjust the property value if it contains a tilelayer name that needs to be renamed'''
-    # Scan through all properties
-    old_value = curr_property.get('value')
-    new_value = old_value
-    for tuple in list_name_bef_aft:
-        name_bef = tuple[0].replace('/fx','')
-        name_aft = tuple[1].replace('/fx','')
-        if name_bef in old_value:
-            new_value = new_value.replace(name_bef, name_aft)
-
-    # Set the property value if there is a change
-    if new_value != old_value:
-        curr_property.set('value', new_value)
-        if obj_name == None : obj_name = 'no-name obj'
-        log.Must(f"    ({count}) \'{obj_name}\' in layer \'{layer_name}\' will change \'{curr_property.get('name')}\' to \'{new_value}\'")
-        return True
-    return False
-
-
 
 # https://docs.google.com/document/d/1GN5UMAfNQC44met51Ms4MZ575rQlZAk61CYXeYQelzg/edit?tab=t.i244z3rn90j6
 def _GetStringOfNewName(layer_name, layer_counter):
@@ -347,12 +343,73 @@ def _GetStringOfNewName(layer_name, layer_counter):
     if has_fx: layer_name += '/fx'
     return (layer_name, -1, False, False)
 
+def _RenameTilelayer(playdo, original_name, layer_name):
+    for layer in playdo.level_root.findall('.//layer'):
+        if layer.get('name') != original_name: continue
+        layer.set('name', layer_name)
+        return
+
+
+
+def _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo):
+    '''
+     Check through an object's properties to see if there is any outdated tilelayer name references.
+     Return the cumulative count of properties that have been updated thus far
+    
+     :param obj:               XML Object, its properties would be checked
+     :param list_name_bef_aft: (string, string), stores the tilelayer name before and after renaming respectively
+     :param count:             int, number of objects that have been updated so far
+     :param playdo:            A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+    '''
+
+    # Only proceed if the object contains properties
+    properties = obj.find('properties')
+    if properties == None: return count
+
+    # Grab all properties into a dictionary, only add item if there is change in property value
+    dict_property = {}    # Dictionary of the updated properties, empty if none is update
+    for curr_property in properties.findall('property'):
+        prop_name = curr_property.get('name')
+        old_value = curr_property.get('value')
+        new_value = _RenameLayerInProperty(curr_property, list_name_bef_aft)
+        if new_value != old_value: dict_property[prop_name] = new_value
+    if len(dict_property) == 0: return count
+
+    # For logging purpose
+    obj_name = obj.get('name')
+    layer_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+    
+    # Loop through the dictionary to update the applicable objects with changes
+    for key, value in dict_property.items():
+        prop_name  = key
+        prop_value = value
+        tiled_utils.SetPropertyOnObject(obj, prop_name, prop_value)
+        log.Must(f"    ({count}) \'{obj_name}\' in layer \'{layer_name}\' will update \'{prop_name}\', -> \'{prop_value}\'")
+        count += 1
+    return count
+
+def _RenameLayerInProperty(curr_property, list_name_bef_aft):
+    '''Adjust the property value if it contains a tilelayer name that needs to be renamed'''
+    # Scan through all properties
+    old_value = curr_property.get('value')
+    new_value = old_value
+    for tuple in list_name_bef_aft:
+        name_bef = tuple[0].replace('/fx','')
+        name_aft = tuple[1].replace('/fx','')
+        if name_bef in old_value:
+            new_value = new_value.replace(name_bef, name_aft)
+    return new_value    # Property value is unchanged if it doesn't contain any of the tilelayer name before-change
+
+
 
 
 
 
 #--------------------------------------------------#
 '''Milestone 3'''
+
+def SetMaterialList(cli_order):
+    for mat_property in cli_order: ORDER_4_MATERIALS.append(mat_property)
 
 def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat):
     '''
@@ -502,7 +559,6 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
                 log.Must(f'     WARNING! \'{obj_name}\' in \'{layer_name}\' has no assigned sort2')
                 continue
 
-
         # Create the "key" that allows sorting items by values
         #  e.g. As string, it has trouble handling single-digit numbers
         # old_sort example : "fg_tiles/13"
@@ -547,6 +603,7 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
             obj_name = obj.get('name')
             if max_name_len < len(obj_name): max_name_len = len(obj_name)
 
+    if is_sorting_by_mat and is_using_sort1: log.Must('    WARNING! Level is using sort1 when attempt to also sort by material.')
 
     # Assign new sort values in properties
     replace_key_bef_aft1 = None
@@ -557,10 +614,7 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
         list_obj = value
 
         # Sort all objects by meterials if requested
-#        old_len = len(list_obj)
-        if is_sorting_by_mat: list_obj = _SortBucketByMterials(list_obj)
-#        new_len = len(list_obj)
-#        print(f'LEN: {old_len} -> {new_len}')
+        if is_sorting_by_mat: list_obj = _SortBucketByMaterials(list_obj)
 
         # If the BG OWP index is not invalid
         #  Check if current the bucket is BG and above the original OWP anchor layer
@@ -591,7 +645,12 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
             if old_sort != sort2_value:
                 change_indicator = '*'
                 count_sort_changed += 1
-            log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} {change_indicator} {old_sort} -> {sort2_value}')
+            mat_indicator = ''
+            if is_sorting_by_mat:
+                mat_indicator = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
+                if mat_indicator == '': mat_indicator =  '    (---)'
+                else:                   mat_indicator = f'    ({mat_indicator})'
+            log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} {change_indicator} {old_sort} -> {sort2_value}{mat_indicator}')
 
             tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
 
@@ -612,79 +671,89 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
 
     return count_sort_changed, dict_all_buckets
 
-
-def _SortBucketByMterials(list_obj):
+def _SortBucketByMaterials(list_obj):
     '''
-     Docstring for _SortBucketByMterials
-    
-     :param list_obj: Description
+     Objects separated by a "divider object" are treated like in a "standalone bucket"
+      "Divider" condition - Basically when encountering a water object currently
+     :param list_obj: The list of XML objects in the currently processed bucket
     '''
-    # TODO sort by mat within bucket first before appending; log
+    # Separate the objects into multiple lists
+    list_of_list_obj = []
+    temp_list = []
+    for obj in list_obj:
+        obj_name = obj.get('name')
+        if obj_name in config_material_anchor:
+            list_of_list_obj.append(temp_list)
+            temp_list = []
+            list_of_list_obj.append([obj])
+        else:
+            temp_list.append(obj)
 
-#    print('NOW SORTING BY MATERIALS')
+    # Append the temp list if the last one isn't water, meaning they haven't been appended to the full list yet
+    last_obj_name = list_obj[-1].get('name')
+    if not (last_obj_name in config_material_anchor):
+        list_of_list_obj.append(temp_list)
 
+    # Sort each smaller list, then append individual obj to full list
+    full_list = []
+    for index, curr_list in enumerate(list_of_list_obj):
+        list_of_list_obj[index] = _SortSmallerListByMaterials(list_of_list_obj[index])
+        for obj in list_of_list_obj[index]:
+            obj_name = obj.get('name')
+            full_list.append(obj)
+    return full_list
+
+def _SortSmallerListByMaterials(list_obj):
+    '''
+     Does a sort for smaller groups inside a bucket, separated by aforementioned "divider object"
+     :param list_obj: The list of XML objects in the currently processed bucket
+    '''
     # For keeping track of which objects have no materials unregistered
     remaining_list = []
     for obj in list_obj: remaining_list.append(obj)
-#    print(f'FULL LIST : {len(remaining_list)} objects')
-#    print(f'  Checking {len(ORDER_4_MATERIALS)} MATS')
 
-    # Checking in reversed order to Unity, i.e. GLOW should have smaller number than SPRITE_UNLIT
+    # Can do reversed(ORDER_4_MATERIALS) here if needed
     #  NOTE Has to reverse the list each time we're using it, can't do it only once at the beginning
-    list_mat = reversed(ORDER_4_MATERIALS)
+    list_mat = (ORDER_4_MATERIALS)
 
     # Make a new list with all objects based on each one's material value
     return_list = []
-    log_msg = '    Material resorted status: '
     for mat in list_mat:
-#        print(f'  CURR MAT : {mat}')
         obj_in_mat = []
 
         # Check if objects have matching materials
         for obj in remaining_list:
             mat_value = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
             has_match = (mat_value != '') and (mat in mat_value)
-#            if mat_value == '': continue
-#            print(f'  {mat} vs {mat_value} | Match? {has_match}')
-#            if not mat_value in mat: continue
             if not has_match: continue
             obj_in_mat.append(obj)
         for obj in obj_in_mat: remaining_list.remove(obj)
 
-        # Further sort by specifications if applicable
-        # Assign a unique key to each value
-        #  e.g. 'GLOW,1.4' => key is 1400+n
-        #  e.g. 'GLOW,2.3' => key is 2300+n
+        # Further sort, based on the material list provided in CLI
+        # Key is a unique string based on each value, e.g. 'GLOW,1.4 0' 'GLOW,1.4 1' 'GLOW,2.3 2' 'GLOW,0.9 3'
+        # Value is the XML object associated
         dict_sort = {}
         BIG_NUM = 1000
         obj_id = 0
         for obj in obj_in_mat:
             mat_value = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
-            specified_value = 0
-            try:    specified_value = float(mat_value.split(',')[1])
-            except: specified_value = 0            
             obj_id += 1
-            curr_key = obj_id + BIG_NUM * specified_value
+            curr_key = f'{mat_value} {obj_id}'
             dict_sort[curr_key] = obj
         dict_sort = dict(sorted(dict_sort.items()))
 
         # Append to final list
-#        for obj in obj_in_mat: return_list.append(obj)
         for obj in dict_sort.values(): return_list.append(obj)
-        log_msg += f'{mat} ({len(obj_in_mat)}), '
-#        print(f'    {mat}\t{len(obj_in_mat)} objects added; Now at {len(return_list)}')
 
-    if len(remaining_list) == len(list_obj):
-        log.Must(f'    WARNING! All {len(remaining_list)} objects do not have \'_material\' property specified!')
-    elif len(remaining_list) > 0:
-        log.Must(f'    WARNING! Only first {len(list_obj) - len(remaining_list)} objects have \'_material\' property specified, the last {len(remaining_list)} objects do not!')
-    for obj in remaining_list: return_list.append(obj)
-#    print(f'  {mat}\t{len(obj_in_mat)} objects added; Now at {len(return_list)}')
-    log_msg += f'UNSPECIFIED ({len(remaining_list)})'
-#    print(log_msg)
-
+    # If config is true, append the default mat after other objects to put default objs above all
+    if config_put_default_mat_highest:
+        for obj in remaining_list: return_list.append(obj)
+    else:
+        temp_list = []
+        for obj in remaining_list: temp_list.append(obj)
+        for obj in return_list: temp_list.append(obj)
+        return_list = temp_list
     return return_list
-    return list_obj
 
 
 
@@ -702,7 +771,6 @@ def _GetLayerNumberFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_usi
      :param max_layer_count: int, maximum number of BG or FG tilelayers, whichever applicable
      :param is_using_sort1:  bool, whether current object is using sort1
     '''
-
     # Formula is different between sort1 and sort2
     if is_using_sort1:
         layer_num = int(curr_sort/10) + 1
@@ -725,6 +793,9 @@ def _GetLayerNumberFromSortValue(is_fg_layer, curr_sort, max_layer_count, is_usi
 
 
 def _Resort_DevObjects(obj):
+    '''
+     Set the debugging sort1 property to a fixed sort2 value
+    '''
     obj_name = obj.get('name')
     old_sort = tiled_utils.GetPropertyFromObject(obj, 'sort')
     old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
@@ -741,6 +812,10 @@ def _Resort_DevObjects(obj):
 
 
 def _RemoveOldSortProperty(obj, playdo, max_len):
+    '''
+     If the object is still using sort1 properties, they are removed from object immediately
+     Utility function also automatically removes <properties> tag is it's the last property in object
+    '''
     has_old_sort_a = tiled_utils.RemovePropertyFromObject(obj, 'sort')
     has_old_sort_b = tiled_utils.RemovePropertyFromObject(obj, '_sort')
     if has_old_sort_a or has_old_sort_b:
@@ -755,7 +830,7 @@ def _RemoveOldSortProperty(obj, playdo, max_len):
 #--------------------------------------------------#
 '''Milestone 4'''
 
-def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_view_combine = False, reveal_all_lights = False):
+def RelocateSortObjects(playdo, dict_sortval, change_view_split, change_view_combine, reveal_all_lights):
     '''
      Relocate all the sort2 lighting objects.
      Split View:
@@ -787,25 +862,26 @@ def RelocateSortObjects(playdo, dict_sortval, change_view_split = False, change_
         _RelocateToCombinedView(playdo, dict_sortval)
 
     _SetLightVisibility(playdo, dict_sortval, reveal_all_lights)
+    _ChangeObjectColorByMaterial(playdo)
 
     log.Must("")
-#    log.Info(f"  --- Finished relocating {1} objects! ---\n")
+
 
 
 
 
 def _SetLightVisibility(playdo, dict_sortval, reveal_all_lights):
     '''
-     Docstring for _SetLightVisibility TODO
-    
-     :param playdo: Description
-     :param dict_sortval: Description
-     :param reveal_all_lights: Description
+     Set the visibility (eye icon in Tiled app) on all the objectgroups with lighting objects    
+     :param playdo:            A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+     :param dict_sortval:      Dictionary from resorting sort2 objects, key stores the "bucket" info and value stores the array of objects
+     :param reveal_all_lights: If True, all lighting objectgroups have visibility set ON
     '''
-    # TODO log
+#    log.Must("Setting objectgroups with lighting objects' visibility to {reveal_all_lights}")
 
     # Always set the real-lights objectgroup's visibility to be ON
-    playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False).set('visible', '1')
+    real_light_objectgroup = playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False, False)
+    if real_light_objectgroup != None: real_light_objectgroup.set('visible', '1')
 
     # Set visibility to the sorted objectgroups based on boolean
     visible_value = '0'
@@ -816,16 +892,23 @@ def _SetLightVisibility(playdo, dict_sortval, reveal_all_lights):
         sortval = key[1]
         list_obj = value
 
-        # Lazy way to find the objectgroups where all sorted objects are in
-        first_obj = list_obj[0]
-        curr_objectgroup = tiled_utils.GetParentObject(first_obj, playdo)
-        curr_objectgroup.set('visible', visible_value)
+        # Some objects are not relocated, so I'm grabbing the parent one by one
+        for obj in list_obj:
+            curr_objectgroup = tiled_utils.GetParentObject(obj, playdo)
+            curr_objectgroup.set('visible', visible_value)
 
 
 
 
 
 def _RelocateToSplitView(playdo, dict_sortval):
+    '''
+     Move the lighting objectgroups next to the tilelayers they are above of.
+     Certain objects are excluded from being moved if they originally reside in certain layers, e.g. breakwall
+
+     :param playdo:       A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+     :param dict_sortval: Dictionary from resorting sort2 objects, key stores the "bucket" info and value stores the array of objects
+    '''
     # Assign new sort values in properties
     log.Must(f"    Applying \"Split View\" into {len(dict_sortval)} groups...")
 #    reversed_dict = dict(reversed(list(dict_sortval.items()))) # Reverse the order to remember insert position
@@ -842,6 +925,18 @@ def _RelocateToSplitView(playdo, dict_sortval):
             layer_name += 'bg_'
         layer_name += f'{str(sortval * 5)}k'
         log.Must(f"     {layer_name}\t{len(list_obj)} objects")
+
+        # Object is excluded from the split_view separation algorithm if parent layer contains substring from array
+        list_obj_not_excluded = []
+        for obj in list_obj:
+            parent_layer = tiled_utils.GetParentObject(obj, playdo)
+            parent_name = parent_layer.get('name')
+            is_obj_excluded = False
+            for excluded_name in split_view_exclusion_name:
+                if excluded_name in parent_name: is_obj_excluded = True
+            if is_obj_excluded: continue
+            list_obj_not_excluded.append(obj)
+        if list_obj_not_excluded == []: continue    # Skip creating new objectgroup if all objects are excluded
 
         # Relocate objects between layers
         objectgroup_destination = playdo.GetObjectGroup(layer_name, False)
@@ -860,11 +955,15 @@ def _RelocateToSplitView(playdo, dict_sortval):
 
 
 def _RelocateAllRealLight(playdo):
+    '''
+     Create a new objectgroup for all "Real Light" objects
+     Does nothing is no such objects exist in the level yet
+
+     :param playdo: A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+    '''
     # Move all objects to the "Real Light" objectgroup
     log.Must(f"    Moving \"Real Light\" objects into objectgroup \"{REAL_LIGHT_OBJECTGROUP_NAME}\"...")
-    real_light_objectgroup = playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False)
-    meta_objectgroup = playdo.GetObjectGroup('meta', False)
-    tiled_utils.MoveObjectgroupAfter(playdo, real_light_objectgroup, meta_objectgroup, False)
+    list_real_light_obj = []
     for obj in playdo.GetAllObjects():
         # Ignore if objects don't need to be moved
         obj_name = obj.get('name')
@@ -875,14 +974,30 @@ def _RelocateAllRealLight(playdo):
         parent_name = parent_layer.get('name')
         if parent_name == REAL_LIGHT_OBJECTGROUP_NAME: continue
 
-        # Move object and log message
+        list_real_light_obj.append(obj)
+
+    # Skip function if there is no real light object in level yet
+    if list_real_light_obj == []:
+        log.Must(f"     No \"Real Light\" object found, so objectgroup is not created here")
+        return
+
+    # Move object and log message
+    real_light_objectgroup = playdo.GetObjectGroup(REAL_LIGHT_OBJECTGROUP_NAME, False)
+    meta_objectgroup = playdo.GetObjectGroup('meta', False)
+    tiled_utils.MoveObjectgroupAfter(playdo, real_light_objectgroup, meta_objectgroup, False)
+    for obj in list_real_light_obj:
         tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, real_light_objectgroup)
 
-    # Move meta objectgroup to be 1st in level, otherwise level might not load in-game
-#        tiled_utils.MoveMetaObjectgroupToBottom(playdo)    # Deprecated. Level no longer breaks when lighting comes first?
 
 
 def _RelocateToCombinedView(playdo, dict_sortval):
+    '''
+     Move all lighting objects into one single objectgroup
+     NOTE The exclusion-check from the split-view function is not present for this function
+
+     :param playdo:       A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
+     :param dict_sortval: Dictionary from resorting sort2 objects, key stores the "bucket" info and value stores the array of objects
+    '''
     log.Must("    Applying \"Combine View\"...")
     for key, value in dict_sortval.items():
         is_fg = key[0]
@@ -910,12 +1025,10 @@ def _FindAdjacentTilelayer(playdo, layer_name):
      :param playdo:     A TILED level in an easily moldable state (wrapped around ElementTree + some helpers)
      :param layer_name: Name of the objectgroup, e.g. objects_fg_15k
     '''
-    
     # Extra the needed info from layer name
     tuple = layer_name.split('_')    # e.g. `bg_5k`
     is_fg = (tuple[1] == 'fg')       # e.g. False
     sortval = f'_{tuple[2]}'         # e.g. '_5k'
-#    print(f'{tuple} -> {is_fg}, {sortval}')
     
     # Find the correct tilelayer
     list_layer_names = playdo.GetAllTileLayerNames()
@@ -929,7 +1042,6 @@ def _FindAdjacentTilelayer(playdo, layer_name):
     # If none is found, likely indicate it's below the first BG/FG tilelayer, e.g. fg_0k
     # In that case, use the tilelayer right below that instead
     log.Extra(f'    WARNING! Cannot find tilelayer with sort \'{sortval}\', may insert objectgroup at wrong spot.')
-#    for index, name in enumerate(list_layer_names):
     for name in list_layer_names:
         # Skip if not in the FG/BG
         if (is_fg) and (not ('fg' in name)): continue
@@ -938,40 +1050,45 @@ def _FindAdjacentTilelayer(playdo, layer_name):
         # Skip if tilelayer name not found
         # Usually this only happens for obejcts with _0k, _-5k, etc., since tilelayer starts at _5k
         if not '_5k' in name: continue
-#        return playdo.GetTilelayer(list_layer_names[index-1], False), False
         return playdo.GetTilelayer(name, False), False
 
     # If still nothing is found, log error; This should never happen!
     log.Must('    ERROR! No viable tilelayer found! Inserting before \'meta\' objectgroup...')
-#    return None, False
-#    return playdo.GetTilelayer(None, False), False
-    return playdo.GetObjectGroup('meta', False)
+    return playdo.GetObjectGroup('meta', False), False
 
 
 
+def _ChangeObjectColorByMaterial(playdo):
+    '''
+        If object name is light_global, give it type = 10
+        If object name is light_<anything else>, give it type = 11
+        If AT object has material NONE, give it type = 12
+        If AT object has material SPRITE_UNLIT, give it type = 13
+        If AT object has material SPRITE_LIT, give it type = 14
+        If AT object has material OVERLAY, give it type = 15
+        If AT object has material GLOW , give it type = 16
+        If AT object has material WINDY , give it type = 17
+    '''
+    log.Must(f"    Coloring in-editor colors of objects based on their materials...")
+    for obj in playdo.GetAllObjects():
+        # Ignore if objects don't need to be moved
+        obj_name = obj.get('name')
+        mat_value = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
 
-#--------------------------------------------------#
-'''Milestone 5'''
+        if obj_name == None:                continue
+        elif obj_name == 'light_global':    _ChangeObjectType(obj, '10')
+        elif 'light_' in obj_name:          _ChangeObjectType(obj, '11')
+        elif not obj_name.startswith('AT'): continue
+        elif mat_value == '':               _ChangeObjectType(obj, '12')
+        elif mat_value == 'SPRITE_UNLIT':   _ChangeObjectType(obj, '13')
+        elif mat_value == 'SPRITE_LIT':     _ChangeObjectType(obj, '14')
+        elif mat_value == 'OVERLAY':        _ChangeObjectType(obj, '15')
+        elif mat_value == 'GLOW':           _ChangeObjectType(obj, '16')
+        elif mat_value == 'WINDY':          _ChangeObjectType(obj, '17')
 
-def RecolorSortObjects(playdo, dict_sortval, do_recolor = False):
-    ''' TBA '''
-    log.Must(f"  Procedure 5 - Recolor lighting objects based on color-value")
-
-
-
-
-
-    log.Info(f"  --- Finished procedure! ---\n")
-
-
-
-
-
-
-#--------------------------------------------------#
-'''To be deleted'''
-
-
+def _ChangeObjectType(obj, type_str):
+    log.Extra(f"      Object \"{obj.get('name')}\" has changed type to \"{type_str}\"")
+    obj.set('type', type_str)
 
 
 
