@@ -15,6 +15,7 @@ USAGE EXAMPLE:
 import argparse
 import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
+import logic.common.backup_utils as backup_utils
 import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
 import logic.remapper.tile_remapper as TM
@@ -84,12 +85,20 @@ def main():
     parser = argparse.ArgumentParser(description = arg_description)
     parser.add_argument('filename', type=str, help = arg_help1)
     parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+    parser.add_argument('--rewind', action='store_true')
     args = parser.parse_args()
     log.SetVerbosityLevel(args.v)
 
     # Use a playdo to read/process the XML
     pattern_root = file_utils.GetPatternRoot()
     playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
+
+    # If choosing to rewind, restore and skip procedures
+    if args.rewind:
+        log.Must('Will now rewind to the newest backup...')
+        log.Must(' No sorting procedure will happen')
+        backup_utils.RestoreBackup(playdo)
+        return
 
     # Remap rotated & flipped solid greyblocks to not have any transformation applied
     tile_remapper = TM.TileRemapper()
@@ -124,7 +133,7 @@ def main():
     
     VB.VaryRelicBlocks(playdo)
     # Flush changes to File!
-    playdo.Write()
+    playdo.Write(make_auto_backup=True)
 
 
 

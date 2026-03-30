@@ -45,7 +45,7 @@ def CreateBackup(playdo):
 	folder_path = _GetBackupFolder()
 	level_path = playdo.full_file_name
 	level_name = file_utils.StripFilename(level_path)
-	curr_date = f'{SPLIT_CHAR}{datetime.datetime.now().strftime("%Y%m%d_%H%M")}'
+	curr_date = f'{SPLIT_CHAR}{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}'
 	backup_path = f'{folder_path}/{level_name}{curr_date}{EXTENSION}'
 
 	# Copy file
@@ -58,7 +58,7 @@ def CreateBackup(playdo):
 		oldest_filename = f'{folder_path}/{list_backup_lane[0]}'
 		log.Extra(f'  Deleting OLDEST backup at \"{oldest_filename}\"')
 		os.remove(oldest_filename)
-	log.Extra()
+	log.Extra('')
 
 
 
