@@ -295,16 +295,16 @@ class LevelPlayDo():
 
     def Write(self, location = None, make_auto_backup = False):
         '''Stamps the Playdo back into an XML file and writes to disk'''
+        if make_auto_backup:
+            log.Extra('\nMaking backup...\n')
+            backup_utils.CreateBackup(self)
+
         if location is None:
             log.Extra(f"-- level_playdo.py : flushing changes...")
             self.my_xml_tree.write(self.full_file_name)
         else:
             log.Extra(f"-- level_playdo.py : flushing changes to new location...")
             self.my_xml_tree.write(location)
-
-        if make_auto_backup:
-            log.Extra('\nMaking backup...\n')
-            backup_utils.CreateBackup(self)
 
 
 
