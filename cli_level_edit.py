@@ -25,6 +25,7 @@ EXTENSION = '.toml'
 curr_toml = 'level_edit-MASTER_example'
 curr_toml = 'level_edit-remove_example'
 curr_toml = 'level_edit-remove_sfx'
+curr_toml = 'level_edit-add_material'
 
 # Keys in TOML
 KEY_TARGET = 'TARGET_LEVEL_FILES'

@@ -23,15 +23,18 @@ KEY_I_PROP    = 'TARGET_OBJECTS_WITH_PROPERTY'
 KEY_I_PARENT  = 'TARGET_OBJECTGROUP_WITH_THESE_WORDS'
 
 KEY_E_NAME    = 'IGNORE_FILTER_OBJ_NAME'
+KEY_E_PROP    = 'IGNORE_OBJECTS_WITH_PROPERTY'
 KEY_E_PARENT  = 'IGNORE_OBJECTGROUP_WITH_THESE_WORDS'
 
 # Keys for Actions
 KEY_ACTION         = 'ACTION'    # Make sure it's the same in the CLI file
 ACTION_REMOVE_PROP = 'REMOVE_PROPERTY'
-VALUE_PROPERTY = [ACTION_REMOVE_PROP, 'RENAME_LHS'] # If the Key is this, include the 2nd arg as property
+ACTION_ADD_PROP    = 'ADD_PROPERTY'
+VALUE_PROPERTY = [ACTION_REMOVE_PROP, 'RENAME_LHS'] # If the Key is this, include the 2nd+ ACTION arguments as property
 
 
 NAMELESS = 'NAMELESS' # For when we want to specify nameless objects
+AT_ANY   = 'AT_ANY'   # For checking any object whose name starts with AT
 
 has_printed_criteria = []
 
@@ -52,11 +55,13 @@ def FilterObjects(playdo, dict_config):
 	include_name_list = []
 	exclude_parent_list = []
 	include_parent_list = []
+	exclude_prop_list = []
 	include_prop_list = []
 	for key, value in dict_config.items():
 		if key == KEY_ACTIVE and value.lower() == 'true': exclude_inactive_objectgroup = True
 		if key == KEY_E_NAME: exclude_name_list = value
 		if key == KEY_I_NAME: include_name_list = value
+		if key == KEY_E_PROP: exclude_prop_list = value
 		if key == KEY_I_PROP: include_prop_list = value
 		if key == KEY_E_PARENT: exclude_parent_list = value
 		if key == KEY_I_PARENT: include_parent_list = value
@@ -82,6 +87,7 @@ def FilterObjects(playdo, dict_config):
 		log.Must(' Checking Exclusion Rules...')
 		has_ex = False
 		if len(exclude_name_list)   > 0: has_ex = True; log.Must(f'  Exclude Objects with Name       : {exclude_name_list}')
+		if len(exclude_prop_list)   > 0: has_ex = True; log.Must(f'  Exclude Objects with Property   : {exclude_prop_list}')
 		if len(exclude_parent_list) > 0: has_ex = True; log.Must(f'  Exclude Objects whose Layer has : {exclude_parent_list}')
 		if not has_ex: log.Must(f'  No object will be excluded')
 
@@ -99,11 +105,17 @@ def FilterObjects(playdo, dict_config):
 
 		# Check name
 		if include_name_list != []:
-			if obj_name in include_name_list: dummy()
-			elif NAMELESS in include_name_list and obj_name == None: dummy()
-			else: continue
-		if obj_name in exclude_name_list: continue
-		if NAMELESS in exclude_name_list and obj_name == None: continue
+			if obj_name == None:
+				if not NAMELESS in include_name_list: continue
+			else:
+				if obj_name in include_name_list: dummy()
+				elif AT_ANY in include_name_list and (obj_name == 'AT' or obj_name.startswith('AT_')): dummy()
+				else: continue
+		if obj_name == None:
+			if NAMELESS in exclude_name_list: continue
+		else:
+			if obj_name in exclude_name_list: continue
+			if AT_ANY in exclude_name_list and (obj_name == 'AT' or obj_name.startswith('AT_')): continue
 
 		# Check property
 		if include_prop_list != []:
@@ -112,8 +124,16 @@ def FilterObjects(playdo, dict_config):
 				property_value = tiled_utils.GetPropertyFromObject(obj, property, True)
 				if property_value != None: has_property = True
 			if has_property == False: continue
+		if exclude_prop_list != []:
+			has_property = False
+			for property in exclude_prop_list:
+				property_value = tiled_utils.GetPropertyFromObject(obj, property, True)
+				if property_value != None: has_property = True
+			if has_property == True: continue
 
 		# Check parent name
+		if exclude_inactive_objectgroup:
+			if not (parent_name.startswith('objects') or parent_name.startswith('collisions')): continue
 		if include_parent_list != []:
 			if not any(substring in parent_name for substring in include_parent_list): continue
 		if any(substring in parent_name for substring in exclude_parent_list): continue
@@ -155,6 +175,14 @@ def PerformAction(playdo, list_obj, do_action):
 		if do_action[0] == ACTION_REMOVE_PROP:
 			for property in do_action[1:]:
 				tiled_utils.RemovePropertyFromObject(obj, property)
+		if do_action[0] == ACTION_ADD_PROP:
+			prop_name = do_action[1]
+			default_value = do_action[2]
+			curr_value = tiled_utils.GetPropertyFromObject(obj, prop_name)
+			if curr_value != '':	# If object already has default value, ignore object
+				log.Extra(f'  Ignore obj with \"{prop_name}\" - {obj.get("name")} \t{curr_value}')
+				continue
+			tiled_utils.SetPropertyOnObject(obj, prop_name, default_value)
 
 
 		# Skip setting the Print string if not necessary

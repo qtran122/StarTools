@@ -6,8 +6,8 @@
 # Currently Available Actions:
 #  - REMOVE_PROPERTY
 #  - (more TBA)
-	ACTION           = ["REMOVE_PROPERTY", "_material", "#Q"]	# These are automatically added to the property list
-#	ACTION_REMOVE_#Q = "true"									# Special action? I actually want to reuse the same action... TBD
+	ACTION = ["REMOVE_PROPERTY", "_material", "#Q"]			# These are automatically added to the property list
+#	ACTION = ["ADD_PROPERTY", "_material", "SPRITE_UNLIT"]	# Automatically add property to objects, set default value if empty
 
 
 # Target levels
@@ -17,7 +17,7 @@
 
 # Inclusion Rules 
 	TARGET_ACTIVE_OBJECT_LAYERS_ONLY    = "nAh"								# If starts with "true", only active objects would be included
-	TARGET_OBJECTS_WITH_NAME            = ["NAMELESS", "AT", "AT_radial"]	# If this key is absent, all objects would be targetted
+	TARGET_OBJECTS_WITH_NAME            = ["NAMELESS", "AT_ANY", "door"]	# If this key is absent, all objects would be targetted
 	TARGET_OBJECTS_WITH_PROPERTY        = ["_sort2"]						#  ^
 #	TARGET_OBJECTGROUP_WITH_THESE_WORDS = ["breakwall"]						#  ^ ; Check whether the object's layer contain any of it as substring
 
