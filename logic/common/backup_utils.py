@@ -1,12 +1,10 @@
 '''
-Logic module that can
- - TBA
+Logic module for creating and restoring level files as backup
 
 
 USAGE EXAMPLE:
-    raw_dict = conflict.CheckConflicts(playdo, _LIST_LIGHTING_OBJ)
-    pruned_dict = conflict.PruneConflicts(playdo, conflict_dictionary)
-    conflict.FixConflicts(playdo, pruned_dict)
+    playdo.Write(make_auto_backup=True)		# Creates backup
+    backup_utils.RestoreBackup(playdo)		# Restores backup
 '''
 
 import os
@@ -19,14 +17,8 @@ import logic.common.file_utils as file_utils
 #--------------------------------------------------#
 '''Variables'''
 
-# Output
-_output_folder1 = "output/"
-_output_folder2 = _output_folder1 + "levels/"
-_output_file    = _output_folder1 + "_merged.txt"
-
 EXTENSION = '.xml'
 SPLIT_CHAR = '-'
-
 MAX_BACKUP_PER_FILE = 4    # Number of backups for any specific level
 
 
@@ -38,8 +30,8 @@ MAX_BACKUP_PER_FILE = 4    # Number of backups for any specific level
 
 def CreateBackup(playdo):
 	'''
-	 TODO
-	 Note that the file backup is BEFORE applying the changes
+	 Creates a file backup BEFORE applying the changes to playdo
+	 This is called within playdo.Write(), but only when make_auto_backup is True
 	'''
 	# File name
 	folder_path = _GetBackupFolder()
@@ -63,7 +55,11 @@ def CreateBackup(playdo):
 
 
 def RestoreBackup(playdo, restore_newest = True):
-	'''TODO'''
+	'''
+	 Restores the backup level, from tool folder to the real level folder.
+	 The newest file is restored by default, this means
+	  the file is reverted to right before the previous command.
+	'''
 	# Check through the folder to find the backups
 	list_backup_lane = _GetBackupList(playdo)
 	if len(list_backup_lane) <= 0: log.Must(f'ERROR! No backup found!'); return
@@ -84,14 +80,23 @@ def RestoreBackup(playdo, restore_newest = True):
 
 
 
+
+
+#--------------------------------------------------#
+'''Utility Functions'''
+
 def _GetBackupFolder():
+	'''Returns the path of the folder, where the backup files are kept inside the tool folder'''
 	folder_path = Path( file_utils.GetInputFolder() )
 	folder_path = folder_path.parent
 	folder_path /= 'backup/'    # This adds the folder to the directory
 	return folder_path
 
 def _GetBackupList(playdo):
-	'''TODO'''
+	'''
+	 Returns a list of paths, leading to the backups of levels with same name as the input playdo
+	  List is SORTED from oldest to newest, meaning [0] is the oldest
+	'''
 	# Get variables
 	list_backup_lane = []
 	folder_path = _GetBackupFolder()
@@ -100,16 +105,15 @@ def _GetBackupList(playdo):
 	level_name = file_utils.StripFilename(level_path)
 
 	# Check through the folder
-#	print('\tDEBUG print unsorted')
 	for bu_name in list_all_backup:
 		if not EXTENSION in bu_name: continue
-		curr_name = bu_name.split(SPLIT_CHAR)[0]
-		if curr_name != level_name: continue		
+		curr_name = bu_name.split(SPLIT_CHAR)[0]    # Format is "{name}-{YYMMDD}_{hhmmss}.xml"
+		if curr_name != level_name: continue
 		list_backup_lane.append(bu_name)
-#		print(f'\t {bu_name}')
-	list_backup_lane = sorted(list_backup_lane)    # Sorted by date
-#	print('\tDEBUG\n')
+	list_backup_lane = sorted(list_backup_lane)    # Sorted by date & time
 	return list_backup_lane
+
+
 
 
 
