@@ -116,6 +116,11 @@ def main():
     for pattern in _LIST_ASTEROIDS:
         pattern_matcher_asteroid.LoadPattern(pattern_root + pattern + ".xml")
     
+    # Check if fg_raw or _BB is in the available_layers list, only raises an error if BOTH layers are missing
+    available_layers = playdo.GetAllTileLayerNames()
+    if "fg_raw" not in available_layers and "_BB" not in available_layers:
+        raise Exception("Could not add collisions. Neither fg_raw nor _BB tile layers were found!")
+
     # Perform the matching - mold the playdo
     pattern_matcher_bb.FindAndCreate(playdo, "_BB", "collisions_BB", allow_overlap = False)
     pattern_matcher_ground.FindAndCreate(playdo, "fg_raw", "collisions", allow_overlap = False)

@@ -39,11 +39,6 @@ class PatternMatcher():
     def FindAndCreate(self, playdo, tile_layer_name, objects_layer_to_create, allow_overlap = True, discard_old = True):
         '''<FILL IN DESCRIPTION>'''
         
-        # Check if fg_raw or _BB is in the available_layers list, only raises an error if BOTH layers are missing
-        available_layers = playdo.GetAllTileLayerNames()
-        if "fg_raw" not in available_layers and "_BB" not in available_layers:
-            raise Exception("Could not add collisions. Neither fg_raw nor _BB title layers were found!")
-        
         # Get the target tile layer that will be searched for pattern matches
         target_tiles2d = playdo.GetTiles2d(tile_layer_name)
         if target_tiles2d is None:
