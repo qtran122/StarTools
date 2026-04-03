@@ -1,7 +1,10 @@
 import logic.common.tiled_utils as tiled
+import logic.common.level_playdo as play
 import random
 ANGLE = [0, 90, 180, 270]
 EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_")
+
+
 
 def GetAllRelicBlocks(playdo):
     relic_blocks = playdo.GetAllObjectsWithName("relic_block")
@@ -12,6 +15,12 @@ def ValidRelicBlocks(relic_block):
     if block_type and block_type.startswith(EXCLUDED_PREFIXES):
         return False
     return True
+
+
+def VaryRelicBlocksFromFile(file_path):
+    playdo = play.LevelPlayDo(file_path)
+    VaryRelicBlocks(playdo)
+    playdo.Write()
 
 
 def VaryRelicBlocks(playdo):
