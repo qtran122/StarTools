@@ -25,33 +25,13 @@ import argparse
 import logic.common.level_playdo as play
 import logic.common.file_utils as file_utils
 import logic.standalone.vary_block as VB
+import logic.common.multi_target as multi
 import time
 
 
 tool_desription = "Scans a level file for relic blocks and apply the custom properties of flip_x and angle"
 arg_help_level = "Name of the tiled level XML"
 arg_help_all = "Scans ALL levels for relic blocks and apply the custom properties of flip_x and angle"
-
-
-def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
-    """Call in a loop to create terminal progress bar"""
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filled_length = int(length * iteration // total)
-    bar = fill * filled_length + '-' * (length - filled_length)
-    sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
-    sys.stdout.flush()
-
-def _FormatName(name):
-    name = file_utils.StripFilename(name)
-    if len(name) > 20:
-        # Truncate and add "..." to the end
-        formatted_name = name[:17] + "..."
-    else:
-        # Pad with spaces to make it 20 characters
-        formatted_name = name.ljust(20)
-    return formatted_name
-
-
 
 
 def main():
@@ -61,13 +41,10 @@ def main():
     args = parser.parse_args()
     
     if args.all:
-        level_files = file_utils.GetAllLevelFiles()
-        print(f"Varying relic blocks for {len(level_files)} level files")
-        for num, level_file in enumerate(level_files):
-            playdo = play.LevelPlayDo(level_file)
-            VB.VaryRelicBlocks(playdo)
-            playdo.Write()
-            PrintProgressBar(num + 1, len(level_files), prefix='Varying Progress:', suffix=f'processing {_FormatName(level_file)}')
+        multi.Init(VB.VaryRelicBlocksFromFile)
+        errors = multi.ExecuteOnAll(prefix="Varying Progress:")
+        if errors:
+            print(errors)
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")

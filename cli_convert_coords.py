@@ -15,6 +15,7 @@ import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
 import logic.common.tiled_utils as tiled
 import xml.etree.ElementTree as ET
+import logic.common.multi_target as multi
 import os
 
 
@@ -23,26 +24,7 @@ arg_help_level = "Name of the tiled level XML"
 arg_help_all = "Convert coords for all level XML"
 arg_help_exclude_sizes = "Ignore coords with width or height over a specific number. Default is 14.9"
 default_exclude_size = 14.9
-unconverted_files = []
 
-
-def PrintProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=50, fill='='):
-    """Call in a loop to create terminal progress bar"""
-    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-    filled_length = int(length * iteration // total)
-    bar = fill * filled_length + '-' * (length - filled_length)
-    sys.stdout.write(f'\r{prefix} |{bar}| {percent}% {suffix}')
-    sys.stdout.flush()
-
-def _FormatName(name):
-    name = file_utils.StripFilename(name)
-    if len(name) > 20:
-        # Truncate and add "..." to the end
-        formatted_name = name[:17] + "..."
-    else:
-        # Pad with spaces to make it 20 characters
-        formatted_name = name.ljust(20)
-    return formatted_name
 
 def ConvertToPoint(coord):
     # get x, y, width, height values from original coord
@@ -118,19 +100,12 @@ def main():
     args = parser.parse_args()
 
     if args.all:
-        level_files = file_utils.GetAllLevelFiles()
-        print(f"Converting coords for {len(level_files)} levels")
-        for num, level_file in enumerate(level_files):
-            try:
-                ReplaceCoord(level_file, args.exclude_sizes_over, full_path=True)
-            except Exception as e:
-                unconverted_files.append(file_utils.StripFilename(level_file))
-            PrintProgressBar(num + 1, len(level_files), prefix="Converting Coords Progress", suffix=f"processing {_FormatName(level_file)}")
-        
-        if unconverted_files:
-            print(f"Successfully converted {len(level_files) - len(unconverted_files)} out of {len(level_files)}. Unsuccessfully converted {len(unconverted_files)} ")
-            for file in unconverted_files:
-                print(f"unable to complete cli_convert_coords on {file}")
+        multi.Init(lambda f: ReplaceCoord(f, args.exclude_sizes_over, full_path=True))
+        errors = multi.ExecuteOnAll(prefix="Converting Coords Progress:")
+        if errors:
+            print(f"\nUnable to convert {len(errors)} files:")
+            for filename, errormsg in errors:
+                print(f"({filename}, {errormsg})")
     else:
         if not args.filename:
             parser.error("File name is required when not using --all")
