@@ -136,7 +136,7 @@ def main():
     pattern_matcher_crystal.FindAndCreate(playdo, "fg_crystal", "collisions_crystal", allow_overlap = False)
     pattern_matcher_asteroid.FindAndCreate(playdo, "_asteroids", "objects_asteroids", allow_overlap = False)
     
-    VB.VaryRelicBlocks(playdo)
+    VB.VaryBreakBlocks(playdo)
     # Flush changes to File!
     playdo.Write(make_auto_backup=True)
 
