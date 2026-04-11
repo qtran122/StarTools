@@ -24,7 +24,7 @@ MAX_BACKUP_PER_FILE = 4    # Number of backups for any specific level / ZIP of a
 
 ALL_BACKUP_NAMES = 'all_levels'
 ZIP_EXTENSION = '.zip'
-
+ZIP_PREFIX = f'{ALL_BACKUP_NAMES}{SPLIT_CHAR}20' # Backups made in year 20xx
 
 
 
@@ -133,7 +133,7 @@ def DecompressAllBackups(restore_newest = True):
 	backup_path = list_zip[-1]
 	if not restore_newest: backup_path = list_zip[0]
 	backup_path = f'{folder_path}/{backup_path}'
-	print(backup_path)
+	log.Must(f' at \"{backup_path}\"')
 
 	# Extract directly to the root folder
 	level_root_folder = file_utils.GetLevelRoot()
@@ -185,6 +185,11 @@ def _GetZipList():
 	# Check through the folder to filter out non-ZIP
 	for bu_name in list_all_backup:
 		if not ZIP_EXTENSION in bu_name: continue
+		log.Extra(f' {bu_name}')
+		if not bu_name.startswith(ZIP_PREFIX):
+			log.Must(f'\nERROR! File \"{bu_name}\" does not match current naming convention!')
+			log.Must(' Please delete all the old ZIPs generated from previous tool versions\n')
+			return []
 		list_backup_lane.append(bu_name)
 	list_backup_lane = sorted(list_backup_lane)    # Sorted by date & time
 	return list_backup_lane
