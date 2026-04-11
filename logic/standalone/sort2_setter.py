@@ -44,8 +44,10 @@ config_put_default_mat_highest = False    # If true, objects with no material sp
 # If you don't want any anchor, you can set the array empty, i.e. []
 config_material_anchor = ['water_line', 'water_fill']
 
-# If objectgroup contains these, the objects inside are unaffected by the split-view procedure
-split_view_exclusion_name = ["break", "fade", "secret"]
+# These exclude certain objects from sorting / split-view procedure
+sort_exclusion_property   = "do_not_sort"     # Object has property
+sort_exclusion_name       = "do_not_sort"     # Layer has substring
+split_view_exclusion_name = ["no_split_view"] # Layer has substring
 
 
 
@@ -82,7 +84,14 @@ def ErrorCheckSortOrder(playdo):
         layer_name = objectgroup.get('name')
         if not (layer_name.startswith('objects') or layer_name.startswith('collisions')): continue
 
+        # Ignore if object layer contain certain substring
+        if sort_exclusion_name in layer_name: continue
+
         for obj in objectgroup:
+            # Ignore if object contains certain property
+            if tiled_utils.GetPropertyFromObject(obj, sort_exclusion_property, True) != None:
+                continue
+
             # Check properties
             sort0_value = tiled_utils.GetPropertyFromObject(obj, 'sort')
             sort1_value = tiled_utils.GetPropertyFromObject(obj, '_sort')
@@ -425,8 +434,11 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, ma
     objs_dev_sort = []    # These are placeholder objects, used for development but not meant to be in the game
     objs_losing_sort = [] # These no longer need a sort property because of the new sort2 standard
     for obj in playdo.GetAllObjects():
+        # Ignore if object has no name, layer name has exclusion substring, or contains certain property
         obj_name = obj.get('name')
         if obj_name == None: continue
+        if sort_exclusion_name in tiled_utils.GetParentObject(obj, playdo).get('name'): continue
+        if tiled_utils.GetPropertyFromObject(obj, sort_exclusion_property, True) != None: continue
 
         # Is in resort group?
         if obj_name in LIST_OBJ_RESORT_NAME:
