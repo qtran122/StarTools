@@ -3,7 +3,7 @@
     
 USAGE EXAMPLE:
     cd /Users/Jimmy/20-GitHub/StarTools
-    python cli_test.py z01 --v 0
+    python cli_test.py z01 --v 2
 
 '''
 import argparse

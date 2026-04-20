@@ -36,14 +36,20 @@ def GetGfxFolder():
     raise Exception("Could not find your 'GFX' directory. Please update input/root_dir.toml")
 
 
-def GetAllLevelFiles():
+def GetAllLevelFiles(ignore_folders = False):
     folder_location = GetLevelRoot()
     files_to_process = []
-    for root, dirs, files in os.walk(folder_location):
-        for file in files:
+    if ignore_folders:
+        for file in os.listdir(folder_location):
             if file.lower().endswith(('.xml', '.tmx')):
-                file_path = os.path.join(root, file)
+                file_path = os.path.join(folder_location, file)
                 files_to_process.append(file_path)
+    else:
+        for root, dirs, files in os.walk(folder_location):
+            for file in files:
+                if file.lower().endswith(('.xml', '.tmx')):
+                    file_path = os.path.join(root, file)
+                    files_to_process.append(file_path)
     return files_to_process
 
     
