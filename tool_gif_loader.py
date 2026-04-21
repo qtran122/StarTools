@@ -8,6 +8,7 @@ USAGE EXAMPLE:
 '''
 import argparse
 import logic.common.log_utils as log
+import logic.common.file_utils as file_utils
 import os
 from PIL import Image
 
@@ -16,8 +17,17 @@ from PIL import Image
 # When attempting to change these values, make sure the changes are matched in the Unity module as well
 
 # Folder Directories
-FOLDER_GIF    = "/Users/Jimmy/Desktop/PSD/dev_load_gif/"
-FOLDER_FRAMES = "/Users/Jimmy/Desktop/PSD/dev_load_frames/"
+#  Home folder is where you put the PNGs and GIFs (to be loaded in Unity)
+#  The other one is the hidden folder, which houses the pre-processed frames of GIFs
+
+# TY's folders
+#HOME_FOLDER              = r"/Users/Jimmy/Desktop/PSD/dev_load_gif"
+#PREPROCESSED_GIFS_FOLDER = r"/Users/Jimmy/Desktop/PSD/dev_load_gif/_GIF"
+# Quang's folders
+HOME_FOLDER              = r"C:\\Users\\qtran\\Desktop\\Star Iliad Image Dev"
+PREPROCESSED_GIFS_FOLDER = r"C:\\Users\\qtran\\Desktop\\Star Iliad Image Dev\\_GIF"
+
+
 
 # Naming Conventinos
 SPLIT_CHAR = '-'
@@ -48,7 +58,7 @@ def main():
 
 	# Loop through all the GIF in folder, export only if needed
 	# Use argparse to get the filename & other optional arguments from the command line
-	list_gif    = os.listdir(FOLDER_GIF)
+	list_gif    = os.listdir(HOME_FOLDER)
 	list_frames = _GetSlicedFrames()
 	for filename in list_gif:
 		# Ignore non-GIF
@@ -67,18 +77,27 @@ def main():
 
 
 def _GetSlicedFrames():
-	list_frames = []
-	entries = os.listdir(FOLDER_FRAMES)
-	for filename in entries:
-		if not filename.endswith(EXTENSION_O): continue
-		prefix = filename.split(SPLIT_CHAR)[0]
-		if prefix in list_frames: continue
-		list_frames.append(prefix)
-	return list_frames
+	'''
+	 This function return a list of GIF names that have already been sliced previously
+	'''
+	list_exported_gif = []
+	file_utils.CreateFolderAt(PREPROCESSED_GIFS_FOLDER)
+
+	# Check if individual folders exist; If yes, it means the GIF has already been exported prior
+	entries = os.scandir(PREPROCESSED_GIFS_FOLDER)
+	for entry in entries:
+		if not entry.is_dir(): continue
+		list_exported_gif.append(entry.name)
+	return list_exported_gif
 
 def _ExportGifToFrames(name):
-	path_raw_gif       = f'{FOLDER_GIF}{name}{EXTENSION_I}'
-	log.Must(f'\"{path_raw_gif}\" will be exported...')
+	'''
+	 This function exports the raw GIF into individual frames as PNGs
+	 The naming convention should be the same as how it's read in Unity
+	'''
+	gif_folder = file_utils.FixFolderPath(HOME_FOLDER)
+	path_raw_gif = f'{gif_folder}{name}{EXTENSION_I}'
+	log.Must(f' \"{path_raw_gif}\" will be exported...')
 
 	# Open the animated GIF
 	with Image.open(path_raw_gif) as img:
@@ -86,12 +105,16 @@ def _ExportGifToFrames(name):
 		num_frames = img.n_frames
 		frame_duration = int(img.info.get('duration', 0) * (60 / 1000))
 
-		# Output path name
+		# Ensure name doesn't conflict with naming format, and folder directory will exist when exporting
+		new_folder = file_utils.FixFolderPath(PREPROCESSED_GIFS_FOLDER)
+		new_folder = f'{new_folder}{name}/'
+		new_folder = file_utils.FixFolderPath(new_folder)
+
+		# Output path name in specific format
 		if SPLIT_CHAR in name: name = name.replace(SPLIT_CHAR, "")
-		path_frames_prefix = f'{FOLDER_FRAMES}{name}{SPLIT_CHAR}'
+		path_frames_prefix = f'{new_folder}{name}{SPLIT_CHAR}'
 		path_frames_prefix += f'{frame_duration}{SPLIT_CHAR}'
 		path_frames_prefix += f'{num_frames}{SPLIT_CHAR}'
-#		return
 
 		# Iterate over every frame in the GIF
 		for i in range(img.n_frames):
@@ -99,22 +122,15 @@ def _ExportGifToFrames(name):
 			if num_frames >= 10  and i < 10:  num_str += '0'
 			if num_frames >= 100 and i < 100: num_str += '0'
 			num_str += f'{i}'
-
 			curr_name = f'{path_frames_prefix}{num_str}{EXTENSION_O}'
 			log.Extra(f'  {curr_name}')
-#			continue
 
 			# Convert to RGBA to ensure transparency is preserved
 			img.seek(i)
 			frame = img.convert("RGBA")
 			frame.save(curr_name)
-#			break
 
 	log.Must('')
-
-
-
-
 
 
 
