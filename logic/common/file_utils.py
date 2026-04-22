@@ -146,8 +146,17 @@ def StripFilename(file_path):
 
 
 
+def CreateFolderAt(folder_path):
+    '''Basically just creates a folder at the designated directory'''
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f'Created new directory: {folder_path}')
+
 def EnsureFolderExists(filename):
-    '''Create new folders if provided one does not exist, also accepts full filename'''
+    '''
+     Create new folders if provided one does not exist
+     Also accepts full filename, e.g. if provided "Desktop/Folder/image.png", check if "Desktop/Folder" exists
+    '''
 
     # If provided string is not a folder's path, remove characters past the last /
     folder_path = filename
@@ -155,9 +164,26 @@ def EnsureFolderExists(filename):
         folder_path = "/".join( filename.split("/")[0:-1] )
 
     # Create new folder if not already exist
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        print(f'Created new directory: {folder_path}')
+    CreateFolderAt(folder_path)
+
+def FixFolderPath(folder_path):
+    '''
+     Creates a new folder if one doesn't exist yet
+     Return a fixed string of the folder path to ensure it ends with \ or /
+    '''
+
+    # TODO Check if it's a folder path, and not like a PNG file
+    
+    # Create new folder if not already exist
+    CreateFolderAt(folder_path)
+
+    # Add the slash character at the end. This allows the path to directly append filename as string
+    #  e.g. full_path = "Desktop/Folder/" + filename
+    if '/' in folder_path:
+        if not folder_path.endswith('/'): folder_path += '/'
+    elif '\\' in folder_path:
+        if not folder_path.endswith('\\'): folder_path += '\\'
+    return folder_path
 
 
 
