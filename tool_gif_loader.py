@@ -5,6 +5,7 @@ It's the pre-requisites for using dev_load to load GIF in Unity project
 USAGE EXAMPLE:
 	cd /Users/Jimmy/20-GitHub/StarTools
 	clear; python tool_gif_loader.py --v 2
+	clear; python tool_gif_loader.py --v 2 --preserve_bg
 '''
 import argparse
 import logic.common.log_utils as log
@@ -52,6 +53,7 @@ arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly 
 def main():
 	# Use argparse to get the filename & other optional arguments from the command line
 	parser = argparse.ArgumentParser(description = arg_description)
+	parser.add_argument('--preserve_bg', action='store_true')
 	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
 	args = parser.parse_args()
 	log.SetVerbosityLevel(args.v)
@@ -69,8 +71,7 @@ def main():
 		if name_without_extension in list_frames: continue
 
 		# Export for GIF not yet sliced
-		_ExportGifToFrames(name_without_extension)
-#		print(name_without_extension)
+		_ExportGifToFrames(name_without_extension, args.preserve_bg)
 
 
 
@@ -90,7 +91,7 @@ def _GetSlicedFrames():
 		list_exported_gif.append(entry.name)
 	return list_exported_gif
 
-def _ExportGifToFrames(name):
+def _ExportGifToFrames(name, preserve_bg):
 	'''
 	 This function exports the raw GIF into individual frames as PNGs
 	 The naming convention should be the same as how it's read in Unity
@@ -112,11 +113,14 @@ def _ExportGifToFrames(name):
 
 		# Output path name in specific format
 		if SPLIT_CHAR in name: name = name.replace(SPLIT_CHAR, "")
-		path_frames_prefix = f'{new_folder}{name}{SPLIT_CHAR}'
-		path_frames_prefix += f'{frame_duration}{SPLIT_CHAR}'
-		path_frames_prefix += f'{num_frames}{SPLIT_CHAR}'
+		path_frames_prefix = f'{new_folder}'
+#		path_frames_prefix += f'{name}{SPLIT_CHAR}'
+#		path_frames_prefix += f'{frame_duration}{SPLIT_CHAR}'
+#		path_frames_prefix += f'{num_frames}{SPLIT_CHAR}'
 
 		# Iterate over every frame in the GIF
+		bg_color = _CheckBackgroundColor(img)
+		if bg_color == None: preserve_bg = True    # Ignore the check if the function returns None
 		for i in range(img.n_frames):
 			num_str = ''
 			if num_frames >= 10  and i < 10:  num_str += '0'
@@ -128,9 +132,41 @@ def _ExportGifToFrames(name):
 			# Convert to RGBA to ensure transparency is preserved
 			img.seek(i)
 			frame = img.convert("RGBA")
+			if not preserve_bg: frame = _RemoveTransparentBackground(frame, bg_color)
 			frame.save(curr_name)
 
 	log.Must('')
+
+def _CheckBackgroundColor(img):
+	'''Return the bg color if all 4 corners share the same color, otherwise return None'''
+
+	# Grab color from 4 corners of image
+	frame = img.convert("RGBA")
+	h, w = img.size
+	color_tl = frame.getpixel((  0,   0))
+	color_tr = frame.getpixel((  0, w-1))
+	color_bl = frame.getpixel((h-1,   0))
+	color_br = frame.getpixel((h-1, w-1))
+
+	# Return None if all 4 corners are not in same color
+	if color_tl != color_tr: return None
+	if color_tr != color_bl: return None
+	if color_bl != color_br: return None
+	return color_tl
+
+def _RemoveTransparentBackground(img, color_to_remove):
+	'''
+	 Return same frame, where the target color is set to be transparent
+	 It only checks the RGB value, with the alpha value being ignored
+	'''
+	datas = img.getdata()
+	new_data = []
+	for item in datas:
+		# Check if the pixel matches the target color (R, G, B)
+		if item[:3] == color_to_remove[:3]: new_data.append((0,0,0,0))  # Full Transparency
+		else:                        new_data.append(item)
+	img.putdata(new_data)
+	return img
 
 
 
