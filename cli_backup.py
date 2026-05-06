@@ -1,10 +1,13 @@
 '''
-Command-Line Tool for TODO
+Command-Line Tool for backing up current levels, as well as restoring backups to current levels' folder
+ - Use either the level name or "all" to target either a single or all levels
+  - When backing up all levels, they are turned into a ZIP file
+  - Use --name to specify the ZIP name 
+ - By default, levels are backed up from tool folder into level folder
+  - Use --rewind to restore instead
+ - This ignores all levels in smaller folders, e.g. auto-tiling rulesets
 	
 USAGE EXAMPLE:
-    cd /Users/Jimmy/20-GitHub/StarTools
-	clear; python cli_backup.py z01 --v 2
-
 	python cli_backup.py z01 --v 0
 	python cli_backup.py all --v 0 --name ZIP_SPECIFIED_NAME
 	python cli_backup.py z01 --rewind --v 0
@@ -27,8 +30,8 @@ import logic.common.level_playdo as play
 #--------------------------------------------------#
 '''Main'''
 
-arg_description = 'Process a tiled level XML and <TBA>'
-arg_help1 = 'Name of the tiled level XML'
+arg_description = 'Back up tiled levels with this tool'
+arg_help1 = 'Name of the tiled level XML, use "all" to target all levels in folder'
 arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
 
 
@@ -38,8 +41,8 @@ def main():
 	parser = argparse.ArgumentParser(description = arg_description)
 	parser.add_argument('target_lv', type=str, help = arg_help1)
 	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
-	parser.add_argument('--rewind',      action='store_true')
-	parser.add_argument('--name',        type=str)
+	parser.add_argument('--rewind', action='store_true')
+	parser.add_argument('--name',   type=str)
 	args = parser.parse_args()
 	log.SetVerbosityLevel(args.v)
 
@@ -60,7 +63,6 @@ def main():
 		log.Must(f"Restoring backup for level \"{filename}\"")
 		backup_utils.RestoreBackupViaName(file_utils.GetFullLevelPath(filename))
 		return
-
 
 	# Case 3 - Whole folder backup
 	if is_all_levels and not args.rewind:

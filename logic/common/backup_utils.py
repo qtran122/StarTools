@@ -1,10 +1,10 @@
 '''
 Logic module for creating and restoring level files as backup
-
+Will only back up XML files I believe
 
 USAGE EXAMPLE:
-    playdo.Write(make_auto_backup=True)		# Creates backup
-    backup_utils.RestoreBackup(playdo)		# Restores backup
+    playdo.Write(make_auto_backup=True)		# Creates backup; Same function but enabled backing with specified argument
+    backup_utils.RestoreBackup(playdo)		# Restores backup; Backups can be retrieved manually from tool folder
 '''
 
 import os
@@ -30,12 +30,13 @@ ZIP_PREFIX = f'{ALL_BACKUP_NAMES}{SPLIT_CHAR}20' # Backups made in year 20xx
 
 
 #--------------------------------------------------#
-'''Public Functions'''
+'''General Public Functions'''
 
 def CreateBackup(playdo):
 	'''
 	 Creates a file backup BEFORE applying the changes to playdo
 	 This is called within playdo.Write(), but only when make_auto_backup is True
+	 Oldest XML exceeding the backup limit would be automatically deleted
 	'''
 	# File name
 	folder_path = _GetBackupFolder()
@@ -63,6 +64,14 @@ def RestoreBackup(playdo, restore_newest = True):
 	 Restores the backup level, from tool folder to the real level folder.
 	 The newest file is restored by default, this means
 	  the file is reverted to right before the previous command.
+
+	It does sound a bit confusing via just text, so let me illustrate a bit more here:
+		1st-bef ----(cli)-----> 1st-aft
+		2nd-bef ---(rewind)---> 2nd-aft
+	  During 1st run, the level "1st-bef" is automatically backed up inside the tool folder
+	  During 2nd run, the --rewind command is called,
+	   - Checks the newest backup made, which is "1st-bef", then restores it
+	   - Rest of operation is skipped, i.e. tool does nothing
 	'''
 	# Check through the folder to find the backups
 	level_path = playdo.full_file_name
@@ -91,10 +100,13 @@ def RestoreBackupViaName(level_path, restore_newest = True):
 
 
 #--------------------------------------------------#
-'''ZIP-ing Functions'''
+'''ZIP Functions, only for cli_backup.py'''
 
 def CompressAllBackupsIntoZip(specified_name):
-	'''TODO'''
+	'''
+	 Back up all curent level files into one big ZIP and kept in the tool folder
+	 Ignore all levels in folders, e.g. auto-tiling rulesets
+	'''
 	list_filepath = file_utils.GetAllLevelFiles(True)
 	folder_path = _GetBackupFolder().name
 	zip_name = f'{ALL_BACKUP_NAMES}{SPLIT_CHAR}{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}'
@@ -122,7 +134,10 @@ def CompressAllBackupsIntoZip(specified_name):
 
 def DecompressAllBackups(restore_newest = True):
 	'''
-	 TODO
+	 Extract the newest backup ZIP into the current level folder
+	 Note that if the level folders contain XML not inside ZIP, that levels would be ignored
+	  e.g. If after backing up a ZIP, a new level "a99" is added to level folder
+	        restoring the ZIP would not result in any change to the new "a99" level
 	'''
 	# Read all ZIP
 	list_zip = _GetZipList()
@@ -176,7 +191,10 @@ def _GetBackupList(level_path):
 	return list_backup_lane
 
 def _GetZipList():
-	'''TODO'''
+	'''
+	 Returns a list of paths, but for ZIP instead of individual backup XMLs
+	  List is SORTED from oldest to newest, meaning [0] is the oldest
+	'''
 	# Get variables
 	list_backup_lane = []
 	folder_path = _GetBackupFolder()
@@ -193,6 +211,7 @@ def _GetZipList():
 		list_backup_lane.append(bu_name)
 	list_backup_lane = sorted(list_backup_lane)    # Sorted by date & time
 	return list_backup_lane
+
 
 
 
