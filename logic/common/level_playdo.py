@@ -19,6 +19,8 @@ import copy
 import xml.etree.ElementTree as ET
 import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
+import logic.common.file_utils as file_utils
+import logic.common.backup_utils as backup_utils
 
 
 
@@ -209,9 +211,10 @@ class LevelPlayDo():
 
 
 
-    def GetObjectGroup(self, object_group_name, discard_old = True):
+    def GetObjectGroup(self, object_group_name, discard_old = True, create_new = True):
         ''' Fetches the objectgroup with the provided name from the level element tree if it exists.
             If it does not exists, creates and returns an empty object group for editing.
+            Update: It can now return None instead of creating a new objectgroup
             
             If NONE is provided for object_group_name, returns first object_group found
             
@@ -219,14 +222,16 @@ class LevelPlayDo():
         '''
         
         # Check if object group already exists in the level. If so, return that one for editing
-        
         for object_group in self.level_root.findall('objectgroup'):
             if object_group_name is None or object_group.get('name') == object_group_name:
                 if (discard_old):
                     for object in object_group.findall('object'):
                         object_group.remove(object)
                 return object_group
-        
+
+        # When no objectgroup found, return None if specified to not create a new one
+        if not create_new: return None
+
         # If the object group does NOT exists in the level, create a new one and return it for editing
         new_object_group = ET.SubElement(self.level_root, 'objectgroup', {'name': object_group_name})
         return new_object_group
@@ -288,8 +293,12 @@ class LevelPlayDo():
                 elem.set('value', elem.get('value').replace(target_text, new_number_string))
 
 
-    def Write(self, location = None):
+    def Write(self, location = None, make_auto_backup = False):
         '''Stamps the Playdo back into an XML file and writes to disk'''
+        if make_auto_backup:
+            log.Extra('\nMaking backup...\n')
+            backup_utils.CreateBackup(self)
+
         if location is None:
             log.Extra(f"-- level_playdo.py : flushing changes...")
             self.my_xml_tree.write(self.full_file_name)
@@ -345,8 +354,8 @@ class LevelPlayDo():
         has_multiple_tilesheet = len(self.level_root.findall('tileset')) > 1
         if not has_multiple_tilesheet: return
             
-        log.Must('\nERROR! Multiple tilesheets are detected! Only 1 tilesheet at a time is supported!')
-        log.Must(f"\nWould you like to apply an auto-fix? (Y/N)")
+        log.Must(f'\nERROR! Multiple tilesheets detected in "{file_utils.StripFilename(self.full_file_name)}"! Only 1 tilesheet at a time is supported!')
+        log.Must(f"\nWould you like to fix it now? (Y/N)")
         
         user_input = input().strip().upper()
         if user_input != 'Y':
@@ -360,11 +369,15 @@ class LevelPlayDo():
             else:
                 xml_tag.set('source', first_tilesheet_directory)
         
-        log.Must(f'"{first_tilesheet_directory}\" is set to be the new location for all.\n')
+        log.Must(f'\tMade "{first_tilesheet_directory}\" the only existant tileset in the level file.\n')
         self.Write()
         self.my_xml_tree = None
         self.level_root = None
-        log.Must('Extra tilesheets have been discarded from the file and saved.\n\nYou may now re-run the tool safely.\n\n\n')
+        log.Must('\tHowever, this is only one-half of the fix.\n')
+        log.Must('\tNext, you must open the problem level XML in Tiled and manually save [Ctrl]+[S]')
+        log.Must('\t(Perform a no-op operation if you must to trigger the ability to save)\n')
+        log.Must('\tTiled will see the unusually high tile IDs and normalize them (Tile ID 16385 becomes ID 1, etc)')
+        log.Must('\tAfter this step is performed, you may re-run the tool safely!\n')
         sys.exit()
 #--------------------------------------------------#
 '''...'''        
