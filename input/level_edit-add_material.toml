@@ -1,0 +1,16 @@
+# This TOML is for deleting the "#Q" property from all collisions objects
+
+	ACTION = ["ADD_PROPERTY", "_material", "SPRITE_UNLIT"]
+
+	TARGET_LEVEL_FILES = ["ALL"]
+#	TARGET_LEVEL_FILES = ["a02"]
+
+	TARGET_ACTIVE_OBJECT_LAYERS_ONLY    = "true"
+	TARGET_OBJECTS_WITH_NAME            = ["AT_ANY"]
+
+	IGNORE_OBJECTS_WITH_PROPERTY        = ["_material"]	# Comment this to disable
+
+#  [NOTE]
+# This assumes no object is having "_material" property with empty value
+#  If there are indeed such objects, you can comment out the last Exclusion Rule
+#  Just that doing so makes the tool run slower
