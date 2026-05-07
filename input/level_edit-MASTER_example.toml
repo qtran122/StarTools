@@ -1,28 +1,57 @@
 # This is the big sample TOML that contains all possible arguments
 # Will be updating this TOML from time to time
 
+# Notes : 
+#  - Some values can be in lowercase
+#   - If the example value is in ALL-CAP, it means value has to be an exact match
 
 
-# Currently Available Actions:
-#  - REMOVE_PROPERTY
-#  - (more TBA)
-	ACTION = ["REMOVE_PROPERTY", "_material", "#Q"]			# These are automatically added to the property list
-#	ACTION = ["ADD_PROPERTY", "_material", "SPRITE_UNLIT"]	# Automatically add property to objects, set default value if empty
+# ---------- [Actions] ---------- #
+	ACTION = ["REMOVE_PROPERTY", "_material"]				# This removes the "_material" property in included objects
+	ACTION = ["REMOVE_PROPERTY", "_material", "#Q"]			# This removes both "_material" and "#Q" property in included objects
+
+	ACTION = ["ADD_PROPERTY", "_material", "SPRITE_UNLIT"]	# This adds the "_material" property AND set the value to be "SPRITE_UNLIT"
+															# If the object already has an assigned value, no action would be done
 
 
-# Target levels
-	TARGET_LEVEL_FILES = ["z01", "a02"]						# If first item starts with 'ALL', all levels would be checked
-#	TARGET_LEVEL_FILES = ["aLl_lv", "2nd item ignored"]		# Another example value
+
+# ---------- [Target Levels] ---------- #
+	TARGET_LEVEL_FILES = ["all"]			# This targets all levels in folder
+	TARGET_LEVEL_FILES = ["z01"]			# This targets 1 specific level
+	TARGET_LEVEL_FILES = ["z01", "a02"]		# This targets all specific levels in the list
+
+	TARGET_ACTIVE_OBJECT_LAYERS_ONLY    = "true"		# If "true", only active objects would be included
+														# This ignores layers not starting in "collision_" or "objects_"
 
 
-# Inclusion Rules 
-	TARGET_ACTIVE_OBJECT_LAYERS_ONLY    = "nAh"								# If starts with "true", only active objects would be included
-	TARGET_OBJECTS_WITH_NAME            = ["NAMELESS", "AT_ANY", "door"]	# If this key is absent, all objects would be targetted
-	TARGET_OBJECTS_WITH_PROPERTY        = ["_sort2"]						#  ^
-#	TARGET_OBJECTGROUP_WITH_THESE_WORDS = ["breakwall"]						#  ^ ; Check whether the object's layer contain any of it as substring
 
-# Exclusion Rules
-#	IGNORE_OBJECTS_WITH_NAME            = ["door", "AT", "AT_radial"]
-	IGNORE_OBJECTGROUP_WITH_THESE_WORDS = ["breakwall"]                  # (same as in Inclusion Rule)
+# ---------- [Inclusion Rules] ---------- #
+# When these not specified, the check is skipped, so the tool basically does this:
+#  If no name       is specified, all objects would be targetted regardless of name
+#  If no property   is specified, all objects would be targetted regardless of properties
+#  If no layer name is specified, all objects would be targetted regardless of layer name
 
+
+	TARGET_OBJECTS_WITH_NAME            = ["door"]				# This targets objects named exactly as "door"
+	TARGET_OBJECTS_WITH_NAME            = ["door", "water"]		# This targets objects named exactly as "door" OR "water"
+	TARGET_OBJECTS_WITH_NAME            = ["NAMELESS"]			#  Special Case - This targets objects without name, e.g. for nameless terrain objects
+	TARGET_OBJECTS_WITH_NAME            = ["AT_ANY"]			#  Special Case - This targets objects exactly named "AT" OR with prefix "AT_"
+
+	TARGET_OBJECTS_WITH_PROPERTY        = ["_sort2"]			# This targets objects containing "_sort2" as its property
+	TARGET_OBJECTS_WITH_PROPERTY        = ["_sort2", "_sort"]	# This targets objects containing "_sort2" OR "_sort" as its property
+
+	TARGET_OBJECTGROUP_WITH_THESE_WORDS = ["collisions"]		# This targets objects with "collisions_" in layer name, so nothing from "objects_"
+	TARGET_OBJECTGROUP_WITH_THESE_WORDS = ["_fg_", "_bg_"]		# This targets basically the lighting objects in split-view, e.g. "objects_fg_10k" or "objects_bg_5k"
+
+
+
+# ---------- [Exclusion Rules] ---------- #
+# Usually mirror the corresponding Inclusion Rules
+
+	IGNORE_OBJECTS_WITH_NAME            = ["door", "AT", "AT_radial"]		# If object name is an exact match of ANY of this, object gets ignored
+
+	IGNORE_OBJECTS_WITH_PROPERTY        = ["_material"]						# If object contains ANY of these properties, object gets ignored
+
+	IGNORE_OBJECTGROUP_WITH_THESE_WORDS = ["breakwall"]						# If layer name contains ANY of these as substring, object gets ignored
+																			# e.g. Lets you skip altering objects inside "objects_breakwall"
 

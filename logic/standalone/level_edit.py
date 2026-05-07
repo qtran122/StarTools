@@ -103,7 +103,7 @@ def FilterObjects(playdo, dict_config):
 		parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
 		has_property = False
 
-		# Check name
+		# Check name; Skip checking if target list is empty
 		if include_name_list != []:
 			if obj_name == None:
 				if not NAMELESS in include_name_list: continue
@@ -111,13 +111,14 @@ def FilterObjects(playdo, dict_config):
 				if obj_name in include_name_list: dummy()
 				elif AT_ANY in include_name_list and (obj_name == 'AT' or obj_name.startswith('AT_')): dummy()
 				else: continue
-		if obj_name == None:
-			if NAMELESS in exclude_name_list: continue
-		else:
-			if obj_name in exclude_name_list: continue
-			if AT_ANY in exclude_name_list and (obj_name == 'AT' or obj_name.startswith('AT_')): continue
+		if exclude_name_list != []:
+			if obj_name == None:
+				if NAMELESS in exclude_name_list: continue
+			else:
+				if obj_name in exclude_name_list: continue
+				if AT_ANY in exclude_name_list and (obj_name == 'AT' or obj_name.startswith('AT_')): continue
 
-		# Check property
+		# Check property; Skip checking if target list is empty
 		if include_prop_list != []:
 			has_property = False
 			for property in include_prop_list:
@@ -173,8 +174,10 @@ def PerformAction(playdo, list_obj, do_action):
 	for obj in list_obj:
 		# Do action
 		if do_action[0] == ACTION_REMOVE_PROP:
+			parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+			is_collision_obj = parent_name.startswith('collisions')
 			for property in do_action[1:]:
-				tiled_utils.RemovePropertyFromObject(obj, property)
+				tiled_utils.RemovePropertyFromObject(obj, property, add_q_property=(not is_collision_obj))
 		if do_action[0] == ACTION_ADD_PROP:
 			prop_name = do_action[1]
 			default_value = do_action[2]
