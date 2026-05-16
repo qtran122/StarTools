@@ -43,6 +43,8 @@ def main():
         log.Info(f'TILE LAYER {src_layer_name} / {is_visible} / {has_valid_prefix}')
         if is_visible and has_valid_prefix:
             edits_made = True
+            # Rename the layer so it's prefixed with the src level name (e.g. "_a01_bg_context_15k")
+            tile_layer.set('name', f'_{args.src}_{src_layer_name}')
             # Append the tile layer into the destination folder
             dest_folder.append(tile_layer)
 
