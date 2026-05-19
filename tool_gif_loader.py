@@ -22,8 +22,8 @@ from PIL import Image
 #  The other one is the hidden folder, which houses the pre-processed frames of GIFs
 
 # TY's folders
-#HOME_FOLDER              = r"/Users/Jimmy/Desktop/PSD/dev_load_gif"
-#PREPROCESSED_GIFS_FOLDER = r"/Users/Jimmy/Desktop/PSD/dev_load_gif/_GIF"
+#HOME_FOLDER              = r"/Users/Jimmy/Desktop/Star Iliad Image Dev/dev_load_gif"
+#PREPROCESSED_GIFS_FOLDER = r"/Users/Jimmy/Desktop/Star Iliad Image Dev/_GIF"
 # Quang's folders
 HOME_FOLDER              = r"C:\\Users\\qtran\\Desktop\\Star Iliad Image Dev"
 PREPROCESSED_GIFS_FOLDER = r"C:\\Users\\qtran\\Desktop\\Star Iliad Image Dev\\_GIF"
@@ -60,15 +60,15 @@ def main():
 
 	# Loop through all the GIF in folder, export only if needed
 	# Use argparse to get the filename & other optional arguments from the command line
-	list_gif    = os.listdir(HOME_FOLDER)
-	list_frames = _GetSlicedFrames()
+	list_gif      = os.listdir(HOME_FOLDER)
+	list_exported = _GetSlicedFrames()
 	for filename in list_gif:
 		# Ignore non-GIF
 		if not filename.endswith(EXTENSION_I): continue
 
 		# Ignore GIF already sliced
 		name_without_extension = filename.split('.')[0]
-		if name_without_extension in list_frames: continue
+		if name_without_extension in list_exported: continue
 
 		# Export for GIF not yet sliced
 		_ExportGifToFrames(name_without_extension, args.preserve_bg)
@@ -123,10 +123,13 @@ def _ExportGifToFrames(name, preserve_bg):
 		if bg_color == None: preserve_bg = True    # Ignore the check if the function returns None
 		for i in range(img.n_frames):
 			num_str = ''
-			if num_frames >= 10  and i < 10:  num_str += '0'
+			if                       i < 10:  num_str += '0'
 			if num_frames >= 100 and i < 100: num_str += '0'
 			num_str += f'{i}'
-			curr_name = f'{path_frames_prefix}{num_str}{EXTENSION_O}'
+			frame_duration = int(img.info.get('duration', i))
+
+			# Set the full name
+			curr_name = f'{path_frames_prefix}{num_str}{SPLIT_CHAR}{frame_duration}ms{EXTENSION_O}'
 			log.Extra(f'  {curr_name}')
 
 			# Convert to RGBA to ensure transparency is preserved
