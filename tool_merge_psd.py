@@ -31,7 +31,9 @@ config_do_merge = True       # If False, ends program prematurely without mergin
 #   BEFORE1.psd
 #   BEFORE2.psd
 #   BEFORE3.psd
-config_folder = r'/Users/Jimmy/Desktop/PSD' # Default folder path
+
+#config_folder = r'/Users/Jimmy/Desktop/PSD' # Default folder path
+config_folder = r'C:\Users\qtran\Desktop\twitter' # Default folder path
 
 
 # Output PSD at desktop by default
