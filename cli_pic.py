@@ -11,6 +11,10 @@ import xml.etree.ElementTree as ET
 import logic.common.level_playdo as play
 import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
+import logic.common.tiled_utils as tiled_utils
+
+# Tile ID for the fuzz layer
+FUZZ_TILE_ID = 1288
 
 # Use argparse to get the filename & other optional arguments from the command line
 parser = argparse.ArgumentParser(description='Duplicates tile layers from "_dupe.xml" into specified level')
@@ -35,6 +39,7 @@ def main():
     # Get SRC level's tile layers. Note: we intentionally only do a surface-level traversal.
     # This is to avoid awkward scenarios like copying visible tile layers inside invisible folders, etc.
     src_tile_layers = playdo_src.level_root.findall('layer')
+    fuzz_tiles2d = None 
     for tile_layer in src_tile_layers:
         # if something is visible, the property is not listed, hence NONE is our check for visibility
         is_visible = tile_layer.get('visible') == None
@@ -48,6 +53,26 @@ def main():
             # Append the tile layer into the destination folder
             dest_folder.append(tile_layer)
 
+            data_str = tile_layer.find('data').text.strip()
+            tiles2d = tiled_utils.DecodeIntoTiles2d(data_str, playdo_src.map_width)
+            if fuzz_tiles2d is None:
+                fuzz_tiles2d = [[0 for _ in row] for row in tiles2d]
+            for y, row in enumerate(tiles2d):
+                for x, cell in enumerate(row):
+                    if cell != 0:
+                        fuzz_tiles2d[y][x] = FUZZ_TILE_ID
+
+    # Add a single fuzz overlay layer on top of all the copied layers
+    if edits_made:
+        fuzz_data_str = tiled_utils.EncodeToTiledFormat(fuzz_tiles2d)
+        fuzz_layer = ET.SubElement(dest_folder, 'layer', {
+            'name': "_fuzz_",
+            'width': str(playdo_src.map_width),
+            'height': str(playdo_src.map_height),
+            'opacity': '0.8',
+        })
+        fuzz_data = ET.SubElement(fuzz_layer, 'data', {'encoding': 'base64', 'compression': 'zlib'})
+        fuzz_data.text = fuzz_data_str
 
     # Remove the folder if no layers were copied into it
     if not edits_made:
