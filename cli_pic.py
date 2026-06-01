@@ -69,7 +69,7 @@ def main():
             'name': "_fuzz_",
             'width': str(playdo_src.map_width),
             'height': str(playdo_src.map_height),
-            'opacity': '0.8',
+            'opacity': '0.2',
         })
         fuzz_data = ET.SubElement(fuzz_layer, 'data', {'encoding': 'base64', 'compression': 'zlib'})
         fuzz_data.text = fuzz_data_str

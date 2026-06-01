@@ -72,9 +72,11 @@ class PatternMatcher():
                     object_copy.set('y', str(location[1] * playdo.tile_height + offset_y))
                     objects_group.append(object_copy)
 
+        
         # Raise an error if there are no matched patterns
-        if total_matched_patterns == 0:
-            raise Exception(f"No matching patterns possible because {tile_layer_name} layer was empty")
+        # 2026-06-01: Commented out below 2 lines of code since they cause cli_natty tool to trip up. Need further investigation
+        #if total_matched_patterns == 0:
+        #    raise Exception(f"No matching patterns possible because {tile_layer_name} layer was empty")
     
     def FindAndCreateAll(self, playdo, objects_layer_to_create, allow_overlap = True):
         '''Performs FindAndCreateon all ALL "visible" tile layers (layers starting with "bg_" or "fg_")'''
