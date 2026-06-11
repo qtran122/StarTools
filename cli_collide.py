@@ -32,7 +32,11 @@ _LIST_PATTERN_BB = [
     "reef3",
     "reef4",
     "reef5",
-    "reef6"
+    "reef6",
+    "mermaid_1x1",
+    "mermaid_1x1b",
+    "mermaid_2x2",
+    "mermaid_w_slope"
 ]
 
 # Ground and Slopes
@@ -101,9 +105,9 @@ def main():
         return
 
     # Remap rotated & flipped solid greyblocks to not have any transformation applied
-    tile_remapper = TM.TileRemapper()
-    tile_remapper.LoadRemapXml(file_utils.GetFullRemapPath("remap_greyblocks"), False)
-    tile_remapper.Remap(playdo)
+    #tile_remapper = TM.TileRemapper()
+    #tile_remapper.LoadRemapXml(file_utils.GetFullRemapPath("remap_greyblocks"), False)
+    #tile_remapper.Remap(playdo)
 
     # Create a PatternMatcher for "_BB" : Breakable Blocks and Skell Reefs
     pattern_matcher_bb = PM.PatternMatcher()

@@ -2,7 +2,7 @@ import logic.common.tiled_utils as tiled
 import logic.common.level_playdo as play
 import random
 ANGLE = [0, 90, 180, 270]
-EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_")
+EXCLUDED_PREFIXES = ("VINE_", "REEF_", "FALL_", "TOTEM_", "MELON_", "MERMAID_")
 
 
 
