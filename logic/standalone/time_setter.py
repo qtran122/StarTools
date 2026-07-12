@@ -1,13 +1,11 @@
 '''
-Logic module that can
- - TBA
-
+Logic module for cli_time_setter.
 
 USAGE EXAMPLE:
+	time_setter.logic(playdo, args.new_num, do_fl, do_rl)
 
 '''
 
-import os
 import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
 
@@ -19,7 +17,7 @@ layer_name = None
 
 # config_set = 'mult'	# Either 'set' or 'mult'
 config_multiply_value = True	# If True, multiply the cycle_time by a certain factor
-								# If False, set the cycle_time directly to a certain number
+								# If False, set the cycle_time directly to a certain number (unused)
 
 
 
@@ -45,7 +43,7 @@ edited_object = []
 '''Public Functions'''
 
 def logic(playdo, new_num, do_fake_light, do_real_light):
-	'''TODO'''
+	'''Main Logic'''
 	log.Must('')
 	log.Must(f'Multiplying light behavior (start_time and cycle_time), by factor of {new_num}')
 
@@ -54,7 +52,7 @@ def logic(playdo, new_num, do_fake_light, do_real_light):
 #	list_objectgroup = playdo.GetAllObjectgroup(is_print=False, ignore_inactive_objectgroup=True)
 	list_objectgroup = playdo.GetAllObjectgroup(ignore_inactive_objectgroup=True)
 	for objectgroup in list_objectgroup:
-		# Ignore if has property
+		# Ignore the whole layer if it has the "do_not_retime" property
 		if tiled_utils.GetPropertyFromObject(objectgroup, ignore_layer_with_property, True) != None: continue
 		for obj in objectgroup:
 			obj_name = tiled_utils.GetNameFromObject(obj)
@@ -76,7 +74,13 @@ def logic(playdo, new_num, do_fake_light, do_real_light):
 '''Public Functions'''
 
 def _UpdateObjectsCycleTime(obj, new_num, playdo):
-	'''TODO'''
+	'''
+	 This applies change to each individual object
+	  - Does nothing if object has no "behavior" property
+	  - Does nothing if property does not contain the keyword
+	  - If object has no assigned start_time, set to 0 before multiplying
+	  - If object has no assigned cycle_time, set to 2 before multiplying
+	'''
 	# If property is not in object, does nothing and return
 	property_value = tiled_utils.GetPropertyFromObject(obj, property_name, False)
 	if property_value == None: return
@@ -89,30 +93,27 @@ def _UpdateObjectsCycleTime(obj, new_num, playdo):
 	if     is_light_real and value_split[0] != real_light_keyword: return
 	if not is_light_real and value_split[0] != fake_light_keyword: return
 
-	# Check where the start_time and cycle_time are
+	# Check where in the property is the start_time and cycle_time specified at
 	target_start = -1
 	target_cycle = -1
 	for index, v in enumerate(value_split):
 		if behavior_start in v: target_start = index + 1
 		if behavior_cycle in v: target_cycle = index + 1
 
-	# TODO Deprecate - If both are not specified, assume the object is not applicable, so does nothing and return
-#	if target_cycle < 0 and target_start < 0: return
-
-	# Update the cycle value
+	# Update the cycle_time value
 	if target_cycle >= 0:
 		value_split[target_cycle] = _ApplyChangeToTime(value_split[target_cycle], new_num)
 	else:
-		# Exception Case - No cycle is specified, set to be default value of 2
+		# Special Case - No cycle is specified, set to be default value of 2
 		value_split.append(behavior_cycle)
 		value_split.append("2")
 		value_split[-1] = _ApplyChangeToTime(value_split[-1], new_num)
 
-	# Update the initial value, do nothing here if not specified
+	# Update the start_time value, do nothing here if not specified
 	if target_start >= 0:
 		value_split[target_start] = _ApplyChangeToTime(value_split[target_start], new_num)
 
-	# Set new value to property
+	# Replace the property with the new value
 	new_property = ",".join(value_split)
 	tiled_utils.SetPropertyOnObject(obj, property_name, new_property)
 
@@ -123,14 +124,12 @@ def _UpdateObjectsCycleTime(obj, new_num, playdo):
 	log.Info(f'  \"{object_name}\"    \"{layer_name}\"')
 
 	if log.GetVerbosityLevel() != 2: return
-#	print_msg += f'  {object_name}    {layer_name}\n'
-#	print_msg += f'-----BEF-----\n'
-#	print_msg += f'-----AFT-----\n'
-#	print_msg += f'-------------\n'
 	print_msg = ''
 	print_msg += f'    {property_value}\n'
 	print_msg += f' -> {new_property}\n'
 	log.Extra(print_msg)
+
+
 
 def _ApplyChangeToTime(old_value, new_num):
 	'''
@@ -145,23 +144,6 @@ def _ApplyChangeToTime(old_value, new_num):
 	if parsed_value == int(parsed_value): parsed_value = int(parsed_value)
 	new_value = str(parsed_value)
 	return new_value
-
-
-
-
-
-
-#--------------------------------------------------#
-'''General Utility, to be relocated?'''
-
-def _Indent(s, min_len):
-	'''Return the same string, with consistent spacing added to the end'''
-	return ( s + ' ' * (min_len-len(s)) )
-
-def _FormatNumS2TU(num_in_str):
-	'''Shortcut, for converting string (coordinates measured in pixels) intoto Tiled units'''
-	if num_in_str == None: return ''
-	return str(int( round(float(num_in_str))/16 ))
 
 
 
