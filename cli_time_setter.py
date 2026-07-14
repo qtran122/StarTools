@@ -1,6 +1,7 @@
 '''
-Command-Line Tool for editing properties of selected object types
-More specifically, the start_time & cycle_time would be multiplied by a float
+Command-Line Tool for editing the "behavior" property of targetted objects
+ Specifically, "start_time" & "cycle_time" would be multiplied by a float
+NOTE - If object layer contain property "do_not_retime", all objects inside would be ignored
 
 USAGE EXAMPLE:  # The following has multiply factor of 1.2
 	cd /Users/Jimmy/20-GitHub/StarTools
