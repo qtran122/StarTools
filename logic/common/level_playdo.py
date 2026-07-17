@@ -104,11 +104,13 @@ class LevelPlayDo():
 
 
 
-    def GetAllTiles2d(self):
+    def GetAllTiles2d(self, active_layer_only = False):
         '''Fetches all graphic tile layers and returns them as a list of Tiles2d'''
         list_tiles2d = []
         # Search using an XPath query so that tile_layers tucked within folders will not be missed
         for layer in self.level_root.findall(".//layer"):
+            if active_layer_only:
+                if not (layer.get('name').startswith('fg') or layer.get('name').startswith('bg')): continue
             data = layer.find('data').text.strip()
             tile_2d_map = tiled_utils.DecodeIntoTiles2d(data, self.map_width)
             if tile_2d_map is None: continue
@@ -180,6 +182,7 @@ class LevelPlayDo():
 #                + f" but '{tile_layer_name}' does not exist!")
 
         tile_layer_to_rewrite.find('data').text = tiled_utils.EncodeIntoZlibString64(new_tiles2d)
+        return tile_layer_to_rewrite
 
 
 
