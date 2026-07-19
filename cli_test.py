@@ -3,7 +3,8 @@
     
 USAGE EXAMPLE:
     cd /Users/Jimmy/20-GitHub/StarTools
-    python cli_test.py z01 --v 2
+    clear; python cli_test.py z01 --v 2
+    clear; python cli_test.py w01_BEFORE --v 2
 
 '''
 import argparse
@@ -12,6 +13,7 @@ import logic.common.backup_utils as backup_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
 import logic.pattern.pattern_matcher as PM
+import logic.standalone.sort2_setter as logic
 
 #--------------------------------------------------#
 '''Variables'''
@@ -42,10 +44,11 @@ def main():
 
     # Main Logic - ...
 #    do_the_thing()
+    logic.SortBGParallax(playdo)
 
     # Flush changes to File!
     playdo.Write(make_auto_backup=True)
-    backup_utils.RestoreBackup(playdo)
+#    backup_utils.RestoreBackup(playdo)    # This immediately revert the changes
 
 
 

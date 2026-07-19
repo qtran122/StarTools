@@ -11,7 +11,9 @@ USAGE EXAMPLE:
     python cli_sort.py sf1 --v 0 --combined_view
     python cli_sort.py sf1 --v 0 --sort_by_materials
     python cli_sort.py sf1 --v 0 --reveal_all_lights
+    python cli_sort.py sf1 --v 0 -- rewind
 
+    clear; python cli_sort.py w01_BEFORE --v 2
 '''
 import argparse
 import logic.common.file_utils as file_utils
@@ -59,15 +61,15 @@ def main():
         backup_utils.RestoreBackup(playdo)
         return
 
-    # Milestone 1
+    # Milestone 1 - Check if level is using either of the sort standards correctly
     has_error, is_using_sort1 = sort_logic.ErrorCheckSortOrder(playdo)
     if has_error: return
 
-    # Milestone 2
+    # Milestone 2 - Rename all tilelayers, check if there are more than 6 tilelayers in FG or BG
     has_error, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count = sort_logic.RenameTilelayer(playdo)
     if has_error: return
 
-    # Milestone 3
+    # Milestone 3 - Update all sort values in object properties
     is_sorting_by_mat = args.sort_by_materials
     if is_using_sort1 and is_sorting_by_mat:
         log.Must('\n  WARNING! Attempting to do sort by materials when level is using sort1 standard!')
@@ -77,13 +79,16 @@ def main():
     has_error, dict_sortval = sort_logic.ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, max_layer_count, is_using_sort1, is_sorting_by_mat)
     if has_error: return
 
-    # Milestone 4
+    # Milestone 4 - Group objects into appropriate objectgroups
     if dict_sortval != None:
         is_split_view = not args.do_not_split    # TODO move these directly into the function argument below?
         is_combined_view = args.combined_view
         if is_combined_view: is_split_view = False    # Force to use combined view if specified
         reveal_all_lights = args.reveal_all_lights
         has_error = sort_logic.RelocateSortObjects(playdo, dict_sortval, is_split_view, is_combined_view, reveal_all_lights)
+
+    # Milestone 5 - Update sort objects in BG Parallax
+    sort_logic.SortBGParallax(playdo)
 
     user_input = input(f"Commit changes to \'{level_name}\'? (Y/N) ")
     if user_input[0].lower() == 'y': playdo.Write(make_auto_backup=True)
