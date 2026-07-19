@@ -130,13 +130,18 @@ class TileRemapper():
             data_element = tile_layer.find('data')
             encoding_used = data_element.get('encoding')
             old_data = data_element.text.strip()
-            tiles2d = tiled_utils.DecodeIntoTiles2d(old_data, playdo.map_width, encoding_used)
-            
+
+            # copied over layers from cli_pic now uses their own width and height, rather than the destination's dimension
+            layer_width  = int(tile_layer.get('width',  playdo.map_width))
+            layer_height = int(tile_layer.get('height', playdo.map_height))
+            tiles2d = tiled_utils.DecodeIntoTiles2d(old_data, layer_width, encoding_used)
+
             if not using_dual_maps:
                 # Performing Tile Migration
-                
-                for i in range(playdo.map_height):
-                    for j in range(playdo.map_width):
+
+                # now loops over layer_height and layer_width rather than playdo.map_width/playdo.map_height
+                for i in range(layer_height):
+                    for j in range(layer_width):
                         if tiles2d[i][j] in self.A_to_B_map:
                             tiles2d[i][j] = self.A_to_B_map[tiles2d[i][j]]
                 tile_layer.find('data').text = tiled_utils.EncodeToTiledFormat(tiles2d, encoding_used)
@@ -151,8 +156,8 @@ class TileRemapper():
                 count_remapped_B_to_A = 0
                 
                 # Subject both tile layer copies to remapping, one uses A_B mapping, the other B_A mapping
-                for i in range(playdo.map_height):
-                    for j in range(playdo.map_width):
+                for i in range(layer_height):
+                    for j in range(layer_width):
                         if tiles2d[i][j] in self.A_to_B_map:
                             tiles2d_AB[i][j] = self.A_to_B_map[tiles2d[i][j]]
                             count_remapped_A_to_B += 1
