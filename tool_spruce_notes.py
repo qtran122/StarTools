@@ -18,7 +18,7 @@ import logic.common.level_playdo as play
 
 # In-editor object layers for nodes & routes
 note_layer_keyword = "note"
-overflow_check     = "9"
+overflow_check     = "7"
 
 
 
@@ -91,8 +91,15 @@ def add_leading_zero(tiled_object):
 		value    = tuple[1]
 		if not (old_name[0].isdecimal() and not old_name[1].isdecimal()): continue
 		new_name = '0' + old_name
-		tiled_utils.RemovePropertyFromObject(tiled_object, old_name)
-		tiled_utils.SetPropertyOnObject(tiled_object, new_name, value)
+		rename_property(tiled_object, old_name, new_name)
+
+def rename_property(tiled_object, old_name, new_name):
+	prop_elem = tiled_object.find('properties')
+	if prop_elem is None: return
+	for property in prop_elem.findall('property'):
+		if property.get('name') != old_name: continue
+		property.set('name', new_name)
+		break
 
 
 
