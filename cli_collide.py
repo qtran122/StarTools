@@ -105,9 +105,9 @@ def main():
         return
 
     # Remap rotated & flipped solid greyblocks to not have any transformation applied
-    #tile_remapper = TM.TileRemapper()
-    #tile_remapper.LoadRemapXml(file_utils.GetFullRemapPath("remap_greyblocks"), False)
-    #tile_remapper.Remap(playdo)
+    tile_remapper = TM.TileRemapper()
+    tile_remapper.LoadRemapXml(file_utils.GetFullRemapPath("remap_greyblocks"), False)
+    tile_remapper.Remap(playdo)
 
     # Create a PatternMatcher for "_BB" : Breakable Blocks and Skell Reefs
     pattern_matcher_bb = PM.PatternMatcher()
