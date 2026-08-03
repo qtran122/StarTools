@@ -13,7 +13,9 @@ USAGE EXAMPLE:
     python cli_sort.py sf1 --v 0 --reveal_all_lights
     python cli_sort.py sf1 --v 0 -- rewind
 
-    clear; python cli_sort.py w01_BEFORE --v 2
+    cd /Users/Jimmy/20-GitHub/StarTools
+    clear; python cli_sort.py w01_parallax_test --v 2
+    clear; python cli_sort.py w_test --v 2
 '''
 import argparse
 import logic.common.file_utils as file_utils

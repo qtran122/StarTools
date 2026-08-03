@@ -5,6 +5,7 @@ USAGE EXAMPLE:
     cd /Users/Jimmy/20-GitHub/StarTools
     clear; python cli_test.py z01 --v 2
     clear; python cli_test.py w01_BEFORE --v 2
+    clear; python cli_test.py w01_parallax_test --v 2
 
 '''
 import argparse
@@ -47,7 +48,7 @@ def main():
     logic.SortBGParallax(playdo)
 
     # Flush changes to File!
-    playdo.Write(make_auto_backup=True)
+#    playdo.Write(make_auto_backup=True)
 #    backup_utils.RestoreBackup(playdo)    # This immediately revert the changes
 
 

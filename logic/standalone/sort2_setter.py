@@ -50,11 +50,14 @@ sort_exclusion_name       = "do_not_sort"     # Layer has substring
 split_view_exclusion_name = ["no_split_view"] # Layer has substring
 
 # Sort keyword
-sort1_keyword1 = '_sort'
-sort1_keyword2 = '_sort1'
+sort1_keyword1 = 'sort'     # TODO replace previous procedures with this 2
+sort1_keyword2 = '_sort'
+#sort1_keyword2 = '_sort2'  # NOTE debugging
 sort2_keyword  = '_sort2'
 
-#sort1_keyword2 = '_sort2'  # NOTE debugging
+parallax_obj_keyword   = 'env_art'
+parallax_layer_keyword = 'bg_parallax'
+
 
 
 
@@ -130,17 +133,27 @@ def ErrorCheckSortOrder(playdo):
         log.Must(f'    {num_group1} objects are explicitly using sort1')
         log.Must(f'    {num_group2} objects are explicitly using sort2\n')
         count = 0
-        if num_group1 < num_group2:
-            log.Must(f'    Offending sort1 objects: ')
+        if log.GetVerbosityLevel() == 2 or num_group1 <= num_group2:
+            log.Must(f'    Offending sort1 objects: (\'sort\')')
             for obj in list_old_sort_objects:
                 obj_name = obj.get('name')
                 parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
-                sort0_value = tiled_utils.GetPropertyFromObject(obj, 'sort')
-                sort1_value = tiled_utils.GetPropertyFromObject(obj, '_sort')
-                log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort0_value}\', \'{sort1_value}\'')
+                sort1_value = tiled_utils.GetPropertyFromObject(obj, 'sort')
+                if sort1_value == '': continue
+                log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort1_value}\'')
                 count += 1
-        else:
-            log.Must(f'    Offending sort2 objects: ')
+            log.Extra('')
+            log.Must(f'    Offending sort1 objects: (\'_sort\')')
+            for obj in list_old_sort_objects:
+                obj_name = obj.get('name')
+                parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+                sort1_value = tiled_utils.GetPropertyFromObject(obj, '_sort')
+                if sort1_value == '': continue
+                log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort1_value}\'')
+                count += 1
+            log.Extra('')
+        if log.GetVerbosityLevel() == 2 or num_group1 >= num_group2:
+            log.Must(f'    Offending sort2 objects: (\'_sort2\')')
             for obj in list_new_sort_objects:
                 obj_name = obj.get('name')
                 parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
@@ -449,6 +462,13 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, ma
         if sort_exclusion_name in tiled_utils.GetParentObject(obj, playdo).get('name'): continue
         if tiled_utils.GetPropertyFromObject(obj, sort_exclusion_property, True) != None: continue
 
+        # Ignore if is 'env_art' objects, or value starts bg_parallax? TODO check if it's okay
+        if obj_name == parallax_obj_keyword: continue
+        temp_value  = tiled_utils.GetPropertyFromObject(obj, sort1_keyword1)
+        temp_value += tiled_utils.GetPropertyFromObject(obj, sort1_keyword2)
+        temp_value += tiled_utils.GetPropertyFromObject(obj, sort2_keyword)
+        if temp_value.startswith(parallax_layer_keyword): continue
+
         # Is in resort group?
         if obj_name in LIST_OBJ_RESORT_NAME:
             objs_to_resort.append(obj)
@@ -515,8 +535,9 @@ def _LogObjectsToResort(objs_to_resort):
     '''This function is purely for logging - Shows how many of each objects have redundant _sort'''
     if len(objs_to_resort) == 0: return
 
-    log.Must(f"{len(objs_to_resort)} objects no longer require a sort property and have graduated to a")
-    log.Must( " permanent unique sort order; their sort property will be removed.")
+    log.Must("")
+    log.Must(f"      {len(objs_to_resort)} objects no longer require a sort property and have graduated to a")
+    log.Must( "       permanent unique sort order; their sort property will be removed.")
 
     # Key is object name; Value is number of objects with for each name
     dict_by_name = {}
@@ -524,6 +545,7 @@ def _LogObjectsToResort(objs_to_resort):
         obj_name = obj.get('name')
         if not obj_name in dict_by_name: dict_by_name[obj_name] = 0
         dict_by_name[obj_name] += 1
+        log.Extra(f"         \"{obj_name}\"")
 
     # Log the details
     for key, value in dict_by_name.items():
@@ -583,11 +605,15 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
         # Create the "key" that allows sorting items by values
         #  e.g. As string, it has trouble handling single-digit numbers
         # old_sort example : "fg_tiles/13"
+#        if len(old_sort.split('/')) >= 2:
         sort_layer = old_sort.split('/')[0]      # string portion
         sort_order = int(old_sort.split('/')[1]) # int portion
+#        else:    # Crash prevention? TODO ask if it's allowed
+#            sort_layer = parallax_layer_keyword
+#            sort_order = int(old_sort) # int portion
         if sort_layer == 'fg_tiles': sort_order += DICT_KEY_ADDON_FG_SORT
         elif sort_layer == 'bg_tiles': sort_order += 0    # Do nothing
-        elif sort_layer == 'fg_parallax' or sort_layer == 'bg_parallax': continue    # Will be resorted later
+        elif sort_layer == 'fg_parallax' or sort_layer == parallax_layer_keyword: continue    # Will be resorted later
         else:
             obj_name = obj.get('name')
             parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
@@ -1137,23 +1163,26 @@ def SortBGParallax(playdo):
     list_all_objects = playdo.GetAllObjects(True, True)
     dict_all_sortval = {}
     for obj in list_all_objects:
-        # Skip object if not using sort1 standard
-        old_sort = tiled_utils.GetPropertyFromObject(obj, sort1_keyword1, True)
-        if old_sort == None: old_sort = tiled_utils.GetPropertyFromObject(obj, sort1_keyword2, True)
-        if old_sort == None: old_sort = tiled_utils.GetPropertyFromObject(obj, sort2_keyword,  True)
-#        print(old_sort)
-        if old_sort == None: continue
+        # Skip object if doesn't have sort property
+        old_sort  = tiled_utils.GetPropertyFromObject(obj, sort1_keyword1)
+        old_sort += tiled_utils.GetPropertyFromObject(obj, sort1_keyword2)
+        old_sort += tiled_utils.GetPropertyFromObject(obj, sort2_keyword)
+        if old_sort == '': continue
 
         # Skip object if the parsed sort value isn't for BG Parallax
-        sort_layer = old_sort.split('/')[0]      # string portion
-        sort_order = int(old_sort.split('/')[1]) # int portion
+        if len(old_sort.split('/')) >= 2:
+            sort_layer = old_sort.split('/')[0]      # string portion
+            sort_order = int(old_sort.split('/')[1]) # int portion
+            if sort_layer != parallax_layer_keyword: continue
+        else:    # Sometimes 'env_art' object doesn't have it specified. Crash prevention? TODO ask if it's allowed
+            if obj.get('name') != parallax_obj_keyword: continue
+            sort_order = int(old_sort) # int portion
 #        print(sort_layer)
-        if sort_layer != 'bg_parallax': continue
 #        sort_order = 20 # NOTE debug
 
         # Append to dictionary, to be reordered later
 #        list_parallax_tuple.append( (obj, old_sort) )
-        if obj.get('name') == 'env_art':
+        if obj.get('name') == parallax_obj_keyword:
             list_meta_parallax_tuple.append( (obj, sort_order) )
         else:
             if not sort_order in dict_all_sortval: dict_all_sortval[sort_order] = []
@@ -1201,8 +1230,6 @@ def SortBGParallax(playdo):
 
         sortval = sortval * 5000
         for obj in list_obj:
-            sortval += 10
-
             sort2_value = ''
             if is_fg: sort2_value += 'fg'
             else: sort2_value += 'bg'
@@ -1212,6 +1239,8 @@ def SortBGParallax(playdo):
             tiled_utils.RemovePropertyFromObject(obj, sort1_keyword1)
             tiled_utils.RemovePropertyFromObject(obj, sort1_keyword2)
             tiled_utils.SetPropertyOnObject(obj, sort2_keyword, sort2_value)
+
+            sortval += 10
 
             # This should never happen
             if sortval > 32000:
