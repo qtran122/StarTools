@@ -5,6 +5,7 @@ Procedure Overview:
  - Scan the input level
  - Make temporary new layers for each active layer, using Sound ID instead
  - Condense said new layers into 1, based on "priority" (configured inside pattern XML)
+  - Can condense based on layer order instead
  - Create a new tilelayer with the condensed layer
 
 USAGE EXAMPLE:
