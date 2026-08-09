@@ -1,6 +1,8 @@
 '''
-Command-Line Tool for ... TBA
-	
+Command-Line Tool for creating the "_soundmap" tilelayer
+Each tile in the new layer corresponds to what sound a surface will make
+ e.g. when the surface is being walked on or shot at
+
 USAGE EXAMPLE:
 	cd /Users/Jimmy/20-GitHub/StarTools
 	clear; python cli_map_surface.py _soundmap --v 2
@@ -14,38 +16,20 @@ import logic.common.backup_utils as backup_utils
 import logic.common.level_playdo as play
 import logic.standalone.soundmap as main_logic
 
-#--------------------------------------------------#
-'''Adjustable Configurations'''
+#----------------------------------------------------------#
+#-------------------- [Configurations] --------------------#
 
-# In-editor object layers for nodes & routes
-layer_name_node   = "navigation"
-layer_name_export = "navigation"
-
-
-
-
-
-# Passing configurations to logic
-passed_arguments = (
-	layer_name_node, 
-	layer_name_export
-)
-
-config_calculate_dist = True
-
+# Name of the XML that stores the soundmap
 pattern_xml = "soundmap"  # levels/star_tools/patterns/soundmap.xml
 
 
 
-
-#--------------------------------------------------#
-'''Main'''
+#------------------------------------------------#
+#-------------------- [Main] --------------------#
 
 arg_description = 'Process a tiled level XML and <TBA>'
 arg_help1 = 'Name of the tiled level XML'
 arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
-
-
 
 def main():
 	# Use argparse to get the filename & other optional arguments from the command line
