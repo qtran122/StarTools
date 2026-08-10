@@ -7,6 +7,9 @@ USAGE EXAMPLE:
 	clear; python cli_level_edit.py --v 1
 	clear; python /Users/Jimmy/20-GitHub/StarTools/cli_level_edit.py --v 1
 
+	python cli_level_edit.py
+	python cli_level_edit.py --backup
+	python cli_level_edit.py --rewind
 '''
 import argparse
 import toml
@@ -14,6 +17,7 @@ import logic.common.file_utils as file_utils
 import logic.common.log_utils as log
 import logic.common.level_playdo as play
 import logic.standalone.level_edit as level_edit
+import logic.common.backup_utils as backup_utils
 
 #--------------------------------------------------#
 '''Adjustable Configurations'''
@@ -47,8 +51,24 @@ def main():
 	# Use argparse to get the filename & other optional arguments from the command line
 	parser = argparse.ArgumentParser(description = arg_description)
 	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+	parser.add_argument('--backup', action='store_true')
+	parser.add_argument('--rewind', action='store_true')
 	args = parser.parse_args()
 	log.SetVerbosityLevel(args.v)
+
+	# Back up feature
+	if args.backup and args.rewind:
+		log.Must('ERROR! Attempting to create and restore backups simultaneously.')
+		log.Must('Please only do one action at a time')
+		return
+	if args.rewind:
+		log.Must('Restoring the latest backup of all levels from ZIP...')
+		backup_utils.DecompressAllBackups()
+		return
+	if args.backup:
+		log.Must('Creating the backup for all levels into ZIP...')
+		backup_utils.CompressAllBackupsIntoZip(None)
+		# After creating the backup ZIP, will still carry out operations next
 
 	# Read TOML
 	toml_path = curr_toml

@@ -1,4 +1,4 @@
-# This TOML is for deleting the "#Q" property from all collisions objects
+# This TOML is for adding the "_material" property. See [NOTE] at bottom for details
 
 	ACTION = ["ADD_PROPERTY", "_material", "SPRITE_UNLIT"]
 
@@ -10,7 +10,13 @@
 
 	IGNORE_OBJECTS_WITH_PROPERTY        = ["_material"]	# Comment this to disable
 
+
+
 #  [NOTE]
-# This assumes no object is having "_material" property with empty value
-#  If there are indeed such objects, you can comment out the last Exclusion Rule
-#  Just that doing so makes the tool run slower
+
+# If the object doesn't have the property, property will be added with the specified default value
+# Object is IGNORED if it does have the property, with or without any value assigned
+#  - I assume no object is having the property but with an empty value
+#  - The last Exclusion Rule ignores objects that already has the property, which hopefully makes the tool run faster
+
+# Only objects in active layer, AND is an AT object will be targetted

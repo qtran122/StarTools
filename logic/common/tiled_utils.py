@@ -381,8 +381,12 @@ def MakePolypoints( list_pos, is_reversed = False, polygon_xy = (0,0) ):
 
 
 
-def RemovePropertyFromObject( tiled_object, property_name ):
-    '''Return True if the property exists in object'''
+def RemovePropertyFromObject( tiled_object, property_name, add_q_property = True ):
+    '''
+     Return True if the property exists in object
+     By default, would add the #Q property if there is no other property
+      This is not needed for collision objects (need checking before calling this function)
+    '''
 
     # Get the properties of object
     properties = tiled_object.find('properties')
@@ -397,7 +401,7 @@ def RemovePropertyFromObject( tiled_object, property_name ):
     if not has_property_to_be_removed: return False
 
     # If the property getting removed is the only property, add the no-op #Q property
-    if len(properties) == 0:
+    if len(properties) == 0 and add_q_property:
         SetPropertyOnObject(tiled_object, '#Q', '')
     return True
 
