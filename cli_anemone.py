@@ -33,6 +33,7 @@ for pattern_file in templates:
 
 # Look for matches. We search all visible tile layers
 pattern_matcher.FindAndCreate(playdo, "_anemones", "objects_anemones", allow_overlap = False)
+pattern_matcher.FindAndCreate(playdo, "_anemones2", "objects_anemones", allow_overlap = False, discard_old = False)
 
 # Flush changes to File!
 playdo.Write()
