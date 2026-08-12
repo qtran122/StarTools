@@ -49,6 +49,16 @@ sort_exclusion_property   = "do_not_sort"     # Object has property
 sort_exclusion_name       = "do_not_sort"     # Layer has substring
 split_view_exclusion_name = ["no_split_view"] # Layer has substring
 
+# Sort keyword
+sort1_keyword1 = 'sort'     # TODO replace previous procedures with this 2
+sort1_keyword2 = '_sort'
+#sort1_keyword2 = '_sort2'  # NOTE debugging
+sort2_keyword  = '_sort2'
+
+parallax_obj_keyword   = 'env_art'
+parallax_layer_keyword = 'bg_parallax'
+
+
 
 
 #--------------------------------------------------#
@@ -123,17 +133,27 @@ def ErrorCheckSortOrder(playdo):
         log.Must(f'    {num_group1} objects are explicitly using sort1')
         log.Must(f'    {num_group2} objects are explicitly using sort2\n')
         count = 0
-        if num_group1 < num_group2:
-            log.Must(f'    Offending sort1 objects: ')
+        if log.GetVerbosityLevel() == 2 or num_group1 <= num_group2:
+            log.Must(f'    Offending sort1 objects: (\'sort\')')
             for obj in list_old_sort_objects:
                 obj_name = obj.get('name')
                 parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
-                sort0_value = tiled_utils.GetPropertyFromObject(obj, 'sort')
-                sort1_value = tiled_utils.GetPropertyFromObject(obj, '_sort')
-                log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort0_value}\', \'{sort1_value}\'')
+                sort1_value = tiled_utils.GetPropertyFromObject(obj, 'sort')
+                if sort1_value == '': continue
+                log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort1_value}\'')
                 count += 1
-        else:
-            log.Must(f'    Offending sort2 objects: ')
+            log.Extra('')
+            log.Must(f'    Offending sort1 objects: (\'_sort\')')
+            for obj in list_old_sort_objects:
+                obj_name = obj.get('name')
+                parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
+                sort1_value = tiled_utils.GetPropertyFromObject(obj, '_sort')
+                if sort1_value == '': continue
+                log.Must(f'      ({count+1}) \'{obj_name}\' at \'{parent_name}\' : \'{sort1_value}\'')
+                count += 1
+            log.Extra('')
+        if log.GetVerbosityLevel() == 2 or num_group1 >= num_group2:
+            log.Must(f'    Offending sort2 objects: (\'_sort2\')')
             for obj in list_new_sort_objects:
                 obj_name = obj.get('name')
                 parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
@@ -164,7 +184,7 @@ def RenameTilelayer(playdo):
     '''
     This renames all tilelayers to fit the current standard
      Error Check 1 : Level has more than 9 tilelayers
-     Error Check 2 : Level has more than 6 FG, or 6 BG tilelayers
+     Error Check 2 : Level has more than 6 FG tilelayers, or 6 BG tilelayers
      Error Check 3 : Level has another BG layer above bg_owp
      Error Check 4 : A layer contains a _sort property
      Error Check 5 : Level does not have a bg_owp layer
@@ -400,13 +420,15 @@ def _UpdateTileLayerReferencesInObject(obj, list_name_bef_aft, count, playdo):
 def _RenameLayerInProperty(curr_property, list_name_bef_aft):
     '''Adjust the property value if it contains a tilelayer name that needs to be renamed'''
     # Scan through all properties
+#    print(list_name_bef_aft)
     old_value = curr_property.get('value')
     new_value = old_value
-    for tuple in list_name_bef_aft:
-        name_bef = tuple[0].replace('/fx','')
-        name_aft = tuple[1].replace('/fx','')
-        if name_bef in old_value:
-            new_value = new_value.replace(name_bef, name_aft)
+    if old_value != None:
+        for tuple in list_name_bef_aft:
+            name_bef = tuple[0].replace('/fx','')
+            name_aft = tuple[1].replace('/fx','')
+            if name_bef in old_value:
+                new_value = new_value.replace(name_bef, name_aft)
     return new_value    # Property value is unchanged if it doesn't contain any of the tilelayer name before-change
 
 
@@ -439,6 +461,13 @@ def ConvertSortValueStandard(playdo, bg_owp_prev_index, fg_anchor_prev_index, ma
         if obj_name == None: continue
         if sort_exclusion_name in tiled_utils.GetParentObject(obj, playdo).get('name'): continue
         if tiled_utils.GetPropertyFromObject(obj, sort_exclusion_property, True) != None: continue
+
+        # Ignore if is 'env_art' objects, or value starts bg_parallax? TODO check if it's okay
+        if obj_name == parallax_obj_keyword: continue
+        temp_value  = tiled_utils.GetPropertyFromObject(obj, sort1_keyword1)
+        temp_value += tiled_utils.GetPropertyFromObject(obj, sort1_keyword2)
+        temp_value += tiled_utils.GetPropertyFromObject(obj, sort2_keyword)
+        if temp_value.startswith(parallax_layer_keyword): continue
 
         # Is in resort group?
         if obj_name in LIST_OBJ_RESORT_NAME:
@@ -506,8 +535,9 @@ def _LogObjectsToResort(objs_to_resort):
     '''This function is purely for logging - Shows how many of each objects have redundant _sort'''
     if len(objs_to_resort) == 0: return
 
-    log.Must(f"{len(objs_to_resort)} objects no longer require a sort property and have graduated to a")
-    log.Must( " permanent unique sort order; their sort property will be removed.")
+    log.Must("")
+    log.Must(f"      {len(objs_to_resort)} objects no longer require a sort property and have graduated to a")
+    log.Must( "       permanent unique sort order; their sort property will be removed.")
 
     # Key is object name; Value is number of objects with for each name
     dict_by_name = {}
@@ -515,6 +545,7 @@ def _LogObjectsToResort(objs_to_resort):
         obj_name = obj.get('name')
         if not obj_name in dict_by_name: dict_by_name[obj_name] = 0
         dict_by_name[obj_name] += 1
+        log.Extra(f"         \"{obj_name}\"")
 
     # Log the details
     for key, value in dict_by_name.items():
@@ -574,10 +605,15 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
         # Create the "key" that allows sorting items by values
         #  e.g. As string, it has trouble handling single-digit numbers
         # old_sort example : "fg_tiles/13"
+#        if len(old_sort.split('/')) >= 2:
         sort_layer = old_sort.split('/')[0]      # string portion
         sort_order = int(old_sort.split('/')[1]) # int portion
+#        else:    # Crash prevention? TODO ask if it's allowed
+#            sort_layer = parallax_layer_keyword
+#            sort_order = int(old_sort) # int portion
         if sort_layer == 'fg_tiles': sort_order += DICT_KEY_ADDON_FG_SORT
         elif sort_layer == 'bg_tiles': sort_order += 0    # Do nothing
+        elif sort_layer == 'fg_parallax' or sort_layer == parallax_layer_keyword: continue    # Will be resorted later
         else:
             obj_name = obj.get('name')
             parent_name = tiled_utils.GetParentObject(obj, playdo).get('name')
@@ -649,6 +685,8 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
             else: sort2_value += 'bg'
             sort2_value += '_tiles/' + str(sortval)
 
+            # TODO Deprecate
+            '''
             obj_name = obj.get('name')
             old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
             old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
@@ -663,6 +701,8 @@ def _Resort_NormalObjects(objs_to_resort, playdo, bg_owp_prev_index, fg_anchor_p
                 if mat_indicator == '': mat_indicator =  '    (---)'
                 else:                   mat_indicator = f'    ({mat_indicator})'
             log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} {change_indicator} {old_sort} -> {sort2_value}{mat_indicator}')
+            '''
+            count_sort_changed = _PrintSortChange(obj, sort2_value, is_sorting_by_mat, max_name_len, count_sort_changed)
 
             tiled_utils.SetPropertyOnObject(obj, '_sort2', sort2_value)
 
@@ -1106,6 +1146,148 @@ def _ChangeObjectType(obj, type_str):
 
 
 
+#-----------------------------------#
+#---------- [Milestone 5] ----------#
+
+def SortBGParallax(playdo):
+    '''TODO
+     Simplified version of existing methods for sorting FG & BG objects
+    '''
+    log.Must(f"  Procedure 5 - Relocating BG Parallax objects")
+
+    # TODO detect
+#    is_using_sort1 = True
+
+    # Filter only the objects needed
+    list_meta_parallax_tuple = []    # ( <obj>, <property value> )
+    list_all_objects = playdo.GetAllObjects(True, True)
+    dict_all_sortval = {}
+    for obj in list_all_objects:
+        # Skip object if doesn't have sort property
+        old_sort  = tiled_utils.GetPropertyFromObject(obj, sort1_keyword1)
+        old_sort += tiled_utils.GetPropertyFromObject(obj, sort1_keyword2)
+        old_sort += tiled_utils.GetPropertyFromObject(obj, sort2_keyword)
+        if old_sort == '': continue
+
+        # Skip object if the parsed sort value isn't for BG Parallax
+        if len(old_sort.split('/')) >= 2:
+            sort_layer = old_sort.split('/')[0]      # string portion
+            sort_order = int(old_sort.split('/')[1]) # int portion
+            if sort_layer != parallax_layer_keyword: continue
+        else:    # Sometimes 'env_art' object doesn't have it specified. Crash prevention? TODO ask if it's allowed
+            if obj.get('name') != parallax_obj_keyword: continue
+            sort_order = int(old_sort) # int portion
+#        print(sort_layer)
+#        sort_order = 20 # NOTE debug
+
+        # Append to dictionary, to be reordered later
+#        list_parallax_tuple.append( (obj, old_sort) )
+        if obj.get('name') == parallax_obj_keyword:
+            list_meta_parallax_tuple.append( (obj, sort_order) )
+        else:
+            if not sort_order in dict_all_sortval: dict_all_sortval[sort_order] = []
+            dict_all_sortval[sort_order].append(obj)
+
+    # Sort by key
+    dict_all_sortval = dict(sorted(dict_all_sortval.items()))
+
+    # TODO update comment
+    # Map all objects to the 2nd dictionary into their respective buckets
+    #  Key is the tuple storing unique sort-group in "buckets", e.g. "fg_tiles/15" -> is FG & 2nd layer -> (True, 2)
+    #  Value is the array of objects, which all belong to the same "bucket"
+    max_name_len = 1
+    dict_all_buckets = {}
+    # Add the meta objects to the dictionary first to make sure it's the first element
+    for tuple in list_meta_parallax_tuple:
+        obj   = tuple[0]
+        value = tuple[1]
+        new_layer_num = _GetLayerNumberOfParallax(value, list_meta_parallax_tuple)
+        curr_key = (False, new_layer_num)
+        if not curr_key in dict_all_buckets:
+            dict_all_buckets[curr_key] = []
+        dict_all_buckets[curr_key].append(obj)
+
+    for key, value in dict_all_sortval.items():
+        # Usually has to always create new bucket for the dict, adding if-statement as fail-safe
+        new_layer_num = _GetLayerNumberOfParallax(key, list_meta_parallax_tuple)
+        curr_key = (False, new_layer_num)
+        if not curr_key in dict_all_buckets:
+            dict_all_buckets[curr_key] = []
+#        print(f'Key : {key}     Num : {new_layer_num}')
+
+        # Append to new bucket
+        for obj in value:
+            dict_all_buckets[curr_key].append(obj)
+            obj_name = obj.get('name')
+            if max_name_len < len(obj_name): max_name_len = len(obj_name)
+
+
+    # Assign new sort values in properties
+    for key, value in dict_all_buckets.items():
+        is_fg    = key[0] # Unneeded, since it's always False
+        sortval  = key[1]
+        list_obj = value
+
+        sortval = sortval * 5000
+        for obj in list_obj:
+            sort2_value = ''
+            if is_fg: sort2_value += 'fg'
+            else: sort2_value += 'bg'
+            sort2_value += '_parallax/' + str(sortval)
+
+            _PrintSortChange(obj, sort2_value, False, max_name_len)
+            tiled_utils.RemovePropertyFromObject(obj, sort1_keyword1)
+            tiled_utils.RemovePropertyFromObject(obj, sort1_keyword2)
+            tiled_utils.SetPropertyOnObject(obj, sort2_keyword, sort2_value)
+
+            sortval += 10
+
+            # This should never happen
+            if sortval > 32000:
+                obj_name = obj.get('name')
+                log.Must(f'        WARNING! \'{obj_name}\' has new sort exceeding limit : \'{sortval}\'')
+        log.Must("")
+
+
+
+
+
+
+    # NOTE DEBUG Print
+#    print(list_parallax_tuple)
+    if not True:
+        print(list_parallax_tuple)
+#        for tuple in list_parallax_tuple: print(tuple[0].get('name') + '\t' + tuple[1])
+        print(dict_all_sortval)
+        print(dict_all_buckets)
+    return
+
+def _GetLayerNumberOfParallax(sort_num, list_parallax_tuple):
+    '''TODO
+     Return N in "above the N-th layer"
+    '''
+
+    # Get the list of parallax values from the objects, then sort in ascending order
+    list_parallax_values = []
+    for tuple in list_parallax_tuple:
+#        sort_tuple = tuple[1].split('/')
+        sort_value = tuple[1]
+        list_parallax_values.append(sort_value)
+    list_parallax_values.sort(reverse=True)
+#    print(list_parallax_values)
+
+    # Check which layer it's in
+    layer_num = -1
+    for index, value in enumerate(list_parallax_values):
+        if sort_num >= value:
+            layer_num = len(list_parallax_values) - index
+            break
+    return layer_num
+
+
+
+
+
 #--------------------------------------------------#
 '''Other Utility'''
 
@@ -1117,9 +1299,22 @@ def _IndentBack(string, max_len, add_quotation = False):
         string += (max_len - len(string)) * ' '
     return string
 
-
-
-
+def _PrintSortChange(obj, sort2_value, is_sorting_by_mat, max_name_len, count_sort_changed = 0):
+    obj_name = obj.get('name')
+    old_sort  = tiled_utils.GetPropertyFromObject(obj, 'sort')
+    old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort')
+    old_sort += tiled_utils.GetPropertyFromObject(obj, '_sort2')
+    change_indicator = ' '
+    if old_sort != sort2_value:
+        change_indicator = '*'
+        count_sort_changed += 1
+    mat_indicator = ''
+    if is_sorting_by_mat:
+        mat_indicator = tiled_utils.GetPropertyFromObject(obj, MAT_PROPERTY_NAME)
+        if mat_indicator == '': mat_indicator =  '    (---)'
+        else:                   mat_indicator = f'    ({mat_indicator})'
+    log.Must(f'      {_IndentBack(obj_name, max_name_len+2, True)} {change_indicator} {old_sort} -> {sort2_value}{mat_indicator}')
+    return count_sort_changed
 
 
 
