@@ -1,5 +1,5 @@
 '''
-Command-Line Tool for creating the "_soundmap" tilelayer
+Command-Line Tool for creating the "surface_map" tilelayer
 Each tile in the new layer corresponds to what sound a surface will make
  e.g. when the surface is being walked on or shot at
 
@@ -20,7 +20,7 @@ import logic.standalone.soundmap as main_logic
 #-------------------- [Configurations] --------------------#
 
 # Name of the XML that stores the soundmap
-pattern_xml = "soundmap"  # levels/star_tools/patterns/soundmap.xml
+pattern_xml = "surface_map"  # levels/star_tools/patterns/soundmap.xml
 
 
 

@@ -20,7 +20,7 @@ import logic.common.tiled_utils as tiled_utils
 #-------------------- [Variables] --------------------#
 
 # Name of the tilelayer that stores the soundmap
-soundmap_name = "_soundmap"
+soundmap_name = "surface_map"
 
 # Opacity of the output layer; Only the bottommost value will take effect
 output_opacity = "0.3"
