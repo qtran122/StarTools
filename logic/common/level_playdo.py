@@ -139,11 +139,12 @@ class LevelPlayDo():
 
 
 
-    def GetAllObjectgroup(self, is_print = True):
+    def GetAllObjectgroup(self, is_print = True, ignore_inactive_objectgroup = False):
         '''Fetches all object layers and returns them as a list of XML objects'''
         list_objectgroup = []
         # Search using an XPath query so that tile_layers tucked within folders will not be missed
         for objectgroup in self.level_root.findall(".//objectgroup"):
+            if ignore_inactive_objectgroup and not objectgroup.get("name").startswith("objects"): continue
             list_objectgroup.append(objectgroup)
         if is_print:
             log.Extra(f'-- level_playdo.py : objectgroup found : {len(list_objectgroup)}')
@@ -301,7 +302,7 @@ class LevelPlayDo():
     def Write(self, location = None, make_auto_backup = False):
         '''Stamps the Playdo back into an XML file and writes to disk'''
         if make_auto_backup:
-            log.Extra('\nMaking backup...\n')
+            log.Extra('\nMaking backup...')
             backup_utils.CreateBackup(self)
 
         if location is None:
