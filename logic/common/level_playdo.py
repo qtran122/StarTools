@@ -201,7 +201,7 @@ class LevelPlayDo():
     def GetTilelayer(self, tilelayer_name, discard_old):
         '''
          Return tilelayer as XML Object, allowing to get its name & properties
-         Mostly just copied from GetObjectGroup, might be buggy
+         NOTE TY mostly just copied this from GetObjectGroup, might be buggy, but should be fixed now?
         
          :param tilelayer_name: Name of the new tilelayer
          :param discard_old:    Boolean; When true, set the tiles2D to blank
@@ -211,8 +211,10 @@ class LevelPlayDo():
                 if discard_old: self.SetTiles2d(tilelayer_name, self.GetBlankTiles2d())
                 return tilelayer
         
-        # If the object group does NOT exists in the level, create a new one and return it for editing
-        new_tilelayer = ET.SubElement(self.level_root, 'layer', {'name': tilelayer_name})
+        # If the tilelayer does NOT exists in the level, create a new one and return it for editing
+        new_tilelayer = ET.SubElement(self.level_root, 'layer', {'name': tilelayer_name, 'width': f"{self.map_width}", 'height': f"{self.map_height}"})
+        new_data = ET.SubElement(new_tilelayer, 'data', {'encoding': 'base64', 'compression': 'zlib'})
+        new_data.text = tiled_utils.EncodeIntoZlibString64(self.GetBlankTiles2d())
         return new_tilelayer
 
 
