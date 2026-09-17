@@ -12,7 +12,7 @@ import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
 import logic.common.backup_utils as backup_utils
 import logic.common.level_playdo as play
-import logic.collision as main_logic
+import logic.standalone.collision as main_logic
 
 #---------------------------------------------------------------------#
 #-------------------- [Adjustable Configurations] --------------------#
