@@ -4,7 +4,7 @@ Command-Line Tool for ... TBA
 USAGE EXAMPLE:
 	cd /Users/Jimmy/20-GitHub/StarTools
 	clear; python cli_merge_poly.py ws1 --v 2
-	clear; python cli_merge_poly.py ws1 --convex_only
+	clear; python cli_merge_poly.py ws1 --allow_concave
 
 '''
 import argparse
@@ -36,7 +36,7 @@ def main():
 	parser.add_argument('filename', type=str, help = arg_help1)
 	parser.add_argument('--rewind', action='store_true')
 	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
-	parser.add_argument('--convex_only', action='store_true')
+	parser.add_argument('--allow_concave', action='store_true')
 	args = parser.parse_args()
 	log.SetVerbosityLevel(args.v)
 
@@ -50,7 +50,7 @@ def main():
 	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
 	# Main Logic
-	main_logic.MergePolygonsByType(playdo, args.convex_only)
+	main_logic.MergePolygonsByType(playdo, args.allow_concave)
 
 	# Flush changes to File!
 	playdo.Write(make_auto_backup=True)

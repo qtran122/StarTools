@@ -39,6 +39,8 @@ layer_name_excluded = "collisions excluded"
 
 # cli_merge_poly
 layer_name_merged = "_collisions merged"
+layer_name_backup = "_collisions backup"
+layer_name_base   = None	# Is updated during runtime to be the "bottom-most tilelayer name"
 merge_excluded_type = ['rare']
 merge_excluded_name = ['break_block']
 
@@ -50,10 +52,12 @@ config_always_merge_big_poly = True
 #------------------------------------------------------------#
 #-------------------- [Public Functions] --------------------#
 
-def MergePolygonsByType(playdo, convex_only = False):
+def MergePolygonsByType(playdo, allow_concave):
 	'''TODO'''
 	log.Must('')
 	log.Must(f'  Starting procedure...')
+
+	convex_only = not allow_concave
 
 	# Obtain the filtered list of XML objects
 	dict_type_of_objects = _FilterCollisionWithTypes(playdo)
@@ -66,14 +70,19 @@ def MergePolygonsByType(playdo, convex_only = False):
 		list_merged_vertices = MergeAdjacentPolygons(list_vertices, convex_only)
 		for vertices in list_merged_vertices: list_new_vertices.append(vertices)
 
-	# If convex-only, remove the concave vertices
-	# TODO
+	list_new_obj = SetVerticesToObjectLayer(playdo, list_new_vertices, layer_name_backup, True)
+	if layer_name_base != None:
+		current_layer = playdo.GetObjectGroup(layer_name_base, discard_old = False, create_new = True)
+		for obj in list_new_obj: tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, current_layer)
+		backup_layer = playdo.GetObjectGroup(layer_name_backup, discard_old = False, create_new = True)
+		for type_str, list_objects in dict_type_of_objects.items():
+			for obj in list_objects: tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, backup_layer)
 
-	SetVerticesToObjectLayer(playdo, list_new_vertices, layer_name_merged)
 	log.Must('')
 
 def _FilterCollisionWithTypes(playdo):
 	'''TODO'''
+	global layer_name_base
 	log.Extra('')
 	log.Must(f'  Filtering objects with non-empty Type attribute...')
 	list_objectgroup = playdo.GetAllObjectgroup()
@@ -84,15 +93,19 @@ def _FilterCollisionWithTypes(playdo):
 		layer_name = layer.get('name')
 		if not layer_name.startswith('collisions'): continue
 		for obj in layer:
+			# Filters out the non-applicable objects
 			obj_type = obj.get('type')
 			if obj_type == None: continue						# Ignore if no type is specified
 			if obj_type in merge_excluded_type: continue		# Ignore if type is in excluded list
 			if obj.get('name') in merge_excluded_name: continue	# Ignore if name is in excluded list
 			if obj.find('polyline') != None: continue			# Ignore if not a solid polygon, e.g. OWP
-#			print(obj_type)
+
+			# Add objects to the dictionary
 			if not obj_type in dict_type: dict_type[obj_type] = []
-#			print(dict_type[obj_type])
 			dict_type[obj_type].append(obj)
+
+			# This keeps track of which layer to output the merged polygons at
+			if layer_name_base == None: layer_name_base = layer_name
 
 #	print(len(dict_type))
 	log.Info(f'   There are {len(dict_type)} types identified')
@@ -224,10 +237,10 @@ def MakeNewObjectLayer(playdo, list_vertices):
 		tiled_utils.SetVerticesOnObject(obj, vertices)
 		layer_split_poly.append(obj)
 
-def SetVerticesToObjectLayer(playdo, list_vertices, layer_name):
+def SetVerticesToObjectLayer(playdo, list_vertices, layer_name, create_new_layer = True):
 	log.Extra('')
 	log.Must(f'  Setting {len(list_vertices)} polygon objects onto \"{layer_name}\" layer...')
-	layer = playdo.GetObjectGroup(layer_name, discard_old = True, create_new = True)
+	list_obj = []
 	for vertices in list_vertices:
 		obj = tiled_utils.CreateXMLObject()
 		is_rectangle = _CheckIsRectangle(vertices)
@@ -238,7 +251,14 @@ def SetVerticesToObjectLayer(playdo, list_vertices, layer_name):
 		else:
 #			print("Is polygon")
 			tiled_utils.SetVerticesOnObject(obj, vertices)
-		layer.append(obj)
+		list_obj.append(obj)
+
+	if create_new_layer:
+		layer = playdo.GetObjectGroup(layer_name, discard_old = True, create_new = True)
+		for obj in list_obj: layer.append(obj)
+
+	return list_obj
+
 
 def _CheckIsRectangle(vertices):
 	'''
@@ -390,7 +410,12 @@ def PolygonToVertices(polygon, forced_convex = False):
 	shifted_poly = Polygon(shifted_coords)
 	polygon = shifted_poly.simplify(0)
 
-	if forced_convex: polygon = polygon.convex_hull
+	# If config is on, check if polygon is convex, and print if yes
+	if forced_convex: 
+		convex_polygon = polygon.convex_hull
+		if not polygon.equals(convex_polygon):
+			log.Must(f'WARNING! Attempting to merged a concave polygon!!')
+			polygon = convex_polygon
 
 	new_vertices = []
 	for x, y in polygon.exterior.coords:
