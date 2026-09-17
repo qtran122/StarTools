@@ -410,6 +410,24 @@ def SetVerticesOnObject( tiled_object, list_vertices ):
     is_polygon = list_vertices[0] == list_vertices[-1]    # Polygon
     SetPolyPointsOnObject(tiled_object, MakePolypoints(list_vertices, use_tiled_units = False), is_polygon)
 
+def SetRectangleAttributeOnObject( tiled_object, x, y, w, h, rotation = 0, round_to_int = True ):
+    '''
+     Set vertices directly from a list of (<int>, <int>)
+      NOTE Coordinates are measured in pixels, NOT tiled units
+     Similar to previous function, but the rectangle coordinates are set with attributes instead
+    '''
+    if round_to_int:
+        x = int(x)
+        y = int(y)
+        w = int(w)
+        h = int(h)
+        rotation = int(rotation)
+    tiled_object.set('x',      str(x))
+    tiled_object.set('y',      str(y))
+    tiled_object.set('width',  str(w))
+    tiled_object.set('height', str(h))
+    if rotation != 0: tiled_object.set('rotation', str(rotation))
+
 
 
 def RemovePropertyFromObject( tiled_object, property_name ):

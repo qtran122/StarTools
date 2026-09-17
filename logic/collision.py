@@ -3,10 +3,10 @@ Logic module that can
  - TBA
 
 Steps:
- 1.	Filter the applicable collision objects from playdo as polygons
- 2.	Merge all polygons that are adjacent into big simple polygons
- 3.	Split into smaller polygons based on methods
- 4.	Output polygons into a new object layer
+ 1. Filter the applicable collision objects from playdo as polygons
+ 2. Merge all polygons that are adjacent into big simple polygons
+ 3. Split into smaller polygons based on methods
+ 4. Output polygons into a new object layer
 
 USAGE EXAMPLE:
 	main_logic.logic(playdo)
@@ -20,7 +20,7 @@ import logic.common.log_utils as log
 import logic.common.tiled_utils as tiled_utils
 
 import shapely
-from shapely.geometry import Polygon, MultiPolygon, box
+from shapely.geometry import Polygon, MultiPolygon, box, Point
 from shapely.ops import unary_union
 import numpy as np
 
@@ -37,6 +37,11 @@ layer_name_big_poly = "_big_poly"
 layer_name_final    = "collisions split"
 layer_name_excluded = "collisions excluded"
 
+# cli_merge_poly
+layer_name_merged = "_collisions merged"
+merge_excluded_type = ['rare']
+merge_excluded_name = ['break_block']
+
 # Config
 config_always_merge_big_poly = True
 
@@ -44,6 +49,60 @@ config_always_merge_big_poly = True
 
 #------------------------------------------------------------#
 #-------------------- [Public Functions] --------------------#
+
+def MergePolygonsByType(playdo, convex_only = False):
+	'''TODO'''
+	log.Must('')
+	log.Must(f'  Starting procedure...')
+
+	# Obtain the filtered list of XML objects
+	dict_type_of_objects = _FilterCollisionWithTypes(playdo)
+
+	# Each list of objects here will be merged into one to multiple isolated polygons
+	list_new_vertices = []
+#	for list_objects in list_type_of_objects:
+	for type_str, list_objects in dict_type_of_objects.items():
+		list_vertices = ObjectToVertices(list_objects)
+		list_merged_vertices = MergeAdjacentPolygons(list_vertices, convex_only)
+		for vertices in list_merged_vertices: list_new_vertices.append(vertices)
+
+	# If convex-only, remove the concave vertices
+	# TODO
+
+	SetVerticesToObjectLayer(playdo, list_new_vertices, layer_name_merged)
+	log.Must('')
+
+def _FilterCollisionWithTypes(playdo):
+	'''TODO'''
+	log.Extra('')
+	log.Must(f'  Filtering objects with non-empty Type attribute...')
+	list_objectgroup = playdo.GetAllObjectgroup()
+	dict_type = {}
+	list_obj      = []
+	list_excluded = []
+	for layer in list_objectgroup:
+		layer_name = layer.get('name')
+		if not layer_name.startswith('collisions'): continue
+		for obj in layer:
+			obj_type = obj.get('type')
+			if obj_type == None: continue						# Ignore if no type is specified
+			if obj_type in merge_excluded_type: continue		# Ignore if type is in excluded list
+			if obj.get('name') in merge_excluded_name: continue	# Ignore if name is in excluded list
+			if obj.find('polyline') != None: continue			# Ignore if not a solid polygon, e.g. OWP
+#			print(obj_type)
+			if not obj_type in dict_type: dict_type[obj_type] = []
+#			print(dict_type[obj_type])
+			dict_type[obj_type].append(obj)
+
+#	print(len(dict_type))
+	log.Info(f'   There are {len(dict_type)} types identified')
+	for key, value in dict_type.items(): log.Info(f'    \"{key}\" : {len(value)} polygons')
+
+	return dict_type
+
+
+
+
 
 def logic(playdo, arguments):
 	'''TODO'''
@@ -62,25 +121,25 @@ def logic(playdo, arguments):
 		log.Must(f'  vvvvv New Big Polygon layer will now be created vvvvv')
 
 	 	# Process 1 - Filter the applicable collision objects from playdo as polygons
-		list_objects, list_excluded = FilterObjects(playdo)
+		list_objects, list_excluded = FilterAllCollisionObjects(playdo)
 		list_vertices = ObjectToVertices(list_objects)
 
 	 	# Process 2 - Merge all polygons that are adjacent (recursively)
-		list_merged_verrices = MergePolygons(list_vertices)
+		list_merged_vertices = MergeAdjacentPolygons(list_vertices)
 #		SetBigPolygons(playdo, list_merged_verrices, list_excluded)
-		SetVerticesToObjectLayer(playdo, list_merged_verrices, layer_name_big_poly)
+		SetVerticesToObjectLayer(playdo, list_merged_vertices, layer_name_big_poly)
 		if len(list_excluded) > 0:
 			layer_excluded = playdo.GetObjectGroup(layer_name_excluded, discard_old = True, create_new = True)
 			for obj in list_excluded: layer_excluded.append(obj)
 	else:
 		# TODO
 		return
-		list_merged_verrices = list_vertices
+		list_merged_vertices = list_vertices
 
  	# Process 3 - Split into smaller polygons based on methods
 	log.Must('')
-#	list_split_vertices = SplitPolygonsByGrid(list_merged_verrices, 1)
-	list_split_vertices = SplitPolygonsByGrid(list_merged_verrices, 2)
+#	list_split_vertices = SplitPolygonsByGrid(list_merged_vertices, 1)
+	list_split_vertices = SplitPolygonsByGrid(list_merged_vertices, 2)
 
  	# Process 4 - Output polygons into a new object layer
 #	MakeNewObjectLayer(playdo, list_split_vertices)
@@ -171,8 +230,81 @@ def SetVerticesToObjectLayer(playdo, list_vertices, layer_name):
 	layer = playdo.GetObjectGroup(layer_name, discard_old = True, create_new = True)
 	for vertices in list_vertices:
 		obj = tiled_utils.CreateXMLObject()
-		tiled_utils.SetVerticesOnObject(obj, vertices)
+		is_rectangle = _CheckIsRectangle(vertices)
+		if is_rectangle:
+#			print("Is rectangle")
+			x,y,w,h = _GetRectangleData(vertices)
+			tiled_utils.SetRectangleAttributeOnObject(obj, x, y, w, h)
+		else:
+#			print("Is polygon")
+			tiled_utils.SetVerticesOnObject(obj, vertices)
 		layer.append(obj)
+
+def _CheckIsRectangle(vertices):
+	'''
+	 Returns True if vertices can form an upright rectangle
+	 TODO also check for tilted?
+	'''
+	# 1. A rectangle must have 4 distinct points
+#	print(len(vertices))
+#	print(vertices)
+	if len(set(vertices)) != 4: return False
+
+	p1 = vertices[0]
+	p2 = vertices[1]
+	p3 = vertices[2]
+	p4 = vertices[3]
+	points = [p1, p2, p3, p4]
+
+	# 2. Find the center point (the average of all X and Y coordinates)
+	cx = sum(p[0] for p in points) / 4
+	cy = sum(p[1] for p in points) / 4
+
+	# 3. Calculate the squared distance from each point to that center
+	# (We use squared distance to avoid slow square-root math)
+	distances = [((p[0] - cx)**2 + (p[1] - cy)**2) for p in points]
+
+	# 4. Check if all 4 distances match.
+	# We use a tiny threshold (1e-9) to handle floating-point math safely.
+	first_distance = distances[0]
+	return all(abs(d - first_distance) < 1e-9 for d in distances)
+
+def _GetRectangleData(vertices):
+	'''
+	 TODO tilted rectangle?
+	'''
+	poly = Polygon(vertices)
+
+	minx, miny, maxx, maxy = poly.bounds
+	top_left = (minx, maxy)
+	x = int(minx)
+	y = int(miny)
+	w = int(maxx - minx)
+	h = int(maxy - miny)
+	log.Info(f'   x,y,w,h : {x}, {y}, {w}, {h} ')
+	return x,y,w,h
+
+
+	# Find top-left vertex: minimum x, maximum y
+	# Using a key that maximizes y and minimizes x: (-y, x)
+	coords = list(poly.exterior.coords)[:-1]
+	top_left = min(coords, key=lambda pt: (-pt[1], pt[0]))
+	print(Point(top_left))  # Output: POINT (0 5)
+
+	# 1. Get the minimum rotated (fitted) rectangle
+	rot_rect = poly.minimum_rotated_rectangle
+
+	# 2. Get the axis-aligned bounding box (polygon)
+	aligned_box = poly.envelope
+
+	# 3. Get the bounds tuple and create a box
+	minx, miny, maxx, maxy = poly.bounds
+	bounding_box = box(minx, miny, maxx, maxy)
+
+	print("Rotated Rect:", rot_rect)
+	print("Axis-Aligned Box:", aligned_box)
+
+
 
 
 
@@ -181,7 +313,7 @@ def SetVerticesToObjectLayer(playdo, list_vertices, layer_name):
 #-------------------------------------------------------#
 #-------------------- [Procedure 1] --------------------#
 
-def FilterObjects(playdo):
+def FilterAllCollisionObjects(playdo):
 	log.Extra('')
 	log.Must(f'  Filtering objects from playdo...')
 	list_objectgroup = playdo.GetAllObjectgroup()
@@ -214,7 +346,6 @@ def ObjectToVertices(list_obj):
 			if new_x % 4 != 0 or new_y % 4 != 0: log.Must(f'\nWARNING! Vertex position is not snapped to grid! {vertices[index]}')
 #			print(index)
 		list_vertices.append(vertices)
-	x=1
 	return list_vertices
 
 
@@ -222,8 +353,14 @@ def ObjectToVertices(list_obj):
 #-------------------------------------------------------#
 #-------------------- [Procedure 2] --------------------#
 
-def MergePolygons(list_vertices):
-	'''TODO recursive'''
+def MergeAdjacentPolygons(list_vertices, forced_convex = False):
+	'''
+	 Returns the list of vertices after merging all adjacent ones
+	 [
+	  [ (x1a,y1a), (x1b,y1b), (x1c,y1c) ],
+	  [ (x2a,y2a), (x2b,y2b), (x2c,y2c), (x2d,y2d) ],
+	 ]
+	'''
 	log.Extra('')
 	log.Must(f'  Merging {len(list_vertices)} polygons...')
 
@@ -238,21 +375,23 @@ def MergePolygons(list_vertices):
 
 	# Simplify the polygons and add vertices into new array
 	for polygon in merged_polygons.geoms:
-		new_vertices = PolygonToVertices(polygon)
-		'''	
-			polygon = polygon.simplify(0)    # This removes the collinear points
-			new_vertices = []
-			for x, y in polygon.exterior.coords:
-				pos = (int(x), int(y))
-	#			print(pos)
-				new_vertices.append(pos)
-	#		print(new_vertices)
-		'''
+		new_vertices = PolygonToVertices(polygon, forced_convex)
 		list_new_vertices.append(new_vertices)
 	return list_new_vertices
 
-def PolygonToVertices(polygon):
-	polygon = polygon.simplify(0)    # This removes the collinear points
+def PolygonToVertices(polygon, forced_convex = False):
+	# This removes the collinear points
+	polygon = polygon.simplify(0)
+
+	# Special Case - Collinear point at first index
+	# Solve by shifting vertices index by 1 before simplifying again
+	coords = np.array(polygon.exterior.coords[:-1])
+	shifted_coords = np.roll(coords, shift=1, axis=0)
+	shifted_poly = Polygon(shifted_coords)
+	polygon = shifted_poly.simplify(0)
+
+	if forced_convex: polygon = polygon.convex_hull
+
 	new_vertices = []
 	for x, y in polygon.exterior.coords:
 		pos = (int(x), int(y))
