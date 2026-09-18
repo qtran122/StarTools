@@ -5,6 +5,8 @@ USAGE EXAMPLE:
 	cd /Users/Jimmy/20-GitHub/StarTools
 	clear; python cli_merge_poly.py ws1 --v 2
 	clear; python cli_merge_poly.py ws1 --allow_concave
+	clear; python cli_merge_poly.py ws1 --rewind; python cli_merge_poly.py ws1
+	clear; python cli_merge_poly.py ws1; python cli_merge_poly.py ws1 --rewind
 
 '''
 import argparse
@@ -35,7 +37,7 @@ def main():
 	parser = argparse.ArgumentParser(description = arg_description)
 	parser.add_argument('filename', type=str, help = arg_help1)
 	parser.add_argument('--rewind', action='store_true')
-	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=0, help = arg_help2)
 	parser.add_argument('--allow_concave', action='store_true')
 	args = parser.parse_args()
 	log.SetVerbosityLevel(args.v)
@@ -50,7 +52,8 @@ def main():
 	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(args.filename))
 
 	# Main Logic
-	main_logic.MergePolygonsByType(playdo, args.allow_concave)
+	has_error = main_logic.MergePolygonsByType(playdo, args.allow_concave)
+	if has_error: return
 
 	# Flush changes to File!
 	playdo.Write(make_auto_backup=True)

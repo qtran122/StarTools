@@ -39,10 +39,11 @@ layer_name_excluded = "collisions excluded"
 
 # cli_merge_poly
 layer_name_merged = "_collisions merged"
-layer_name_backup = "_collisions backup"
+layer_name_backup = "_collisions_merged_backup"
 layer_name_base   = None	# Is updated during runtime to be the "bottom-most tilelayer name"
 merge_excluded_type = ['rare']
 merge_excluded_name = ['break_block']
+list_concave_type = []		# For logging purpose only
 
 # Config
 config_always_merge_big_poly = True
@@ -54,8 +55,7 @@ config_always_merge_big_poly = True
 
 def MergePolygonsByType(playdo, allow_concave):
 	'''TODO'''
-	log.Must('')
-	log.Must(f'  Starting procedure...')
+	log.Must(f'  Merging collisions polygons... Concave allowed? {allow_concave}')
 
 	convex_only = not allow_concave
 
@@ -66,25 +66,41 @@ def MergePolygonsByType(playdo, allow_concave):
 	list_new_vertices = []
 #	for list_objects in list_type_of_objects:
 	for type_str, list_objects in dict_type_of_objects.items():
-		list_vertices = ObjectToVertices(list_objects)
-		list_merged_vertices = MergeAdjacentPolygons(list_vertices, convex_only)
+		list_vertices = ObjectToVertices(list_objects, type_str)
+		list_merged_vertices = MergeAdjacentPolygons(list_vertices, convex_only, type_str)
 		for vertices in list_merged_vertices: list_new_vertices.append(vertices)
 
-	list_new_obj = SetVerticesToObjectLayer(playdo, list_new_vertices, layer_name_backup, True)
-	if layer_name_base != None:
-		current_layer = playdo.GetObjectGroup(layer_name_base, discard_old = False, create_new = True)
-		for obj in list_new_obj: tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, current_layer)
-		backup_layer = playdo.GetObjectGroup(layer_name_backup, discard_old = False, create_new = True)
-		for type_str, list_objects in dict_type_of_objects.items():
-			for obj in list_objects: tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, backup_layer)
+	# Exit if no collision object is filtered in; The level should be unchanged
+	if layer_name_base == None:
+		log.Must(f'  No collision needs to be merged. Exiting now...')
+		log.Must('')
+		return True
+
+	# Log out the concave types
+	if list_concave_type != []:
+		log.Must(f'  WARNING! {len(list_concave_type)} sets discovered to be Concave!')
+		log.Must(f'   Culprit Sets were: {list_concave_type}')
+
+	# Move the new merged objects to existing layer
+	list_new_obj = SetVerticesToObjectLayer(playdo, list_new_vertices)
+	current_layer = playdo.GetObjectGroup(layer_name_base, discard_old = False, create_new = True)
+	for obj in list_new_obj: current_layer.append(obj)
+
+	# Move the already merged objects out to the backup layer
+	has_backup = ( playdo.GetObjectGroup(layer_name_backup, discard_old = False, create_new = False) != None )
+	backup_layer = playdo.GetObjectGroup(layer_name_backup, discard_old = False, create_new = True)
+	if not has_backup: backup_layer.set('visible', '0')    # Only change if layer doesn't exist prior
+	for type_str, list_objects in dict_type_of_objects.items():
+		for obj in list_objects: tiled_utils.MoveObjectToNewObjectgroup(playdo, obj, backup_layer)
 
 	log.Must('')
+
 
 def _FilterCollisionWithTypes(playdo):
 	'''TODO'''
 	global layer_name_base
 	log.Extra('')
-	log.Must(f'  Filtering objects with non-empty Type attribute...')
+	log.Info(f'  Filtering objects with non-empty Type attribute...')
 	list_objectgroup = playdo.GetAllObjectgroup()
 	dict_type = {}
 	list_obj      = []
@@ -106,9 +122,12 @@ def _FilterCollisionWithTypes(playdo):
 
 			# This keeps track of which layer to output the merged polygons at
 			if layer_name_base == None: layer_name_base = layer_name
+	dict_type = dict(sorted(dict_type.items()))
 
 #	print(len(dict_type))
-	log.Info(f'   There are {len(dict_type)} types identified')
+	key_str = ''
+	for key in dict_type: key_str += f'\'{key}\' '
+	log.Must(f'  {len(dict_type)} sets of polygon found - {key_str}')
 	for key, value in dict_type.items(): log.Info(f'    \"{key}\" : {len(value)} polygons')
 
 	return dict_type
@@ -237,9 +256,10 @@ def MakeNewObjectLayer(playdo, list_vertices):
 		tiled_utils.SetVerticesOnObject(obj, vertices)
 		layer_split_poly.append(obj)
 
-def SetVerticesToObjectLayer(playdo, list_vertices, layer_name, create_new_layer = True):
+def SetVerticesToObjectLayer(playdo, list_vertices, layer_name = None, create_new_layer = True):
 	log.Extra('')
-	log.Must(f'  Setting {len(list_vertices)} polygon objects onto \"{layer_name}\" layer...')
+	if layer_name != None: log.Must(f'  Setting {len(list_vertices)} polygon objects from vertices... (to \"{layer_name}\" layer)')
+	else:                  log.Must(f'  Creating {len(list_vertices)} polygon objects from vertices...')
 	list_obj = []
 	for vertices in list_vertices:
 		obj = tiled_utils.CreateXMLObject()
@@ -253,7 +273,7 @@ def SetVerticesToObjectLayer(playdo, list_vertices, layer_name, create_new_layer
 			tiled_utils.SetVerticesOnObject(obj, vertices)
 		list_obj.append(obj)
 
-	if create_new_layer:
+	if layer_name != None and create_new_layer:
 		layer = playdo.GetObjectGroup(layer_name, discard_old = True, create_new = True)
 		for obj in list_obj: layer.append(obj)
 
@@ -350,8 +370,9 @@ def FilterAllCollisionObjects(playdo):
 #	print(len(list_obj))
 	return list_obj, list_excluded
 
-def ObjectToVertices(list_obj):
-	log.Must(f'   Converting {len(list_obj)} objects into vertices / polypoints...')
+def ObjectToVertices(list_obj, type_str = None):
+	if type_str == None: log.Info(f'   Converting {len(list_obj)} objects into vertices / polypoints...')
+	else:                log.Info(f'   Converting {len(list_obj)} objects into vertices / polypoints from \"{type_str}\"...')
 	count = 0
 	list_vertices = []
 	for obj in list_obj:
@@ -373,7 +394,7 @@ def ObjectToVertices(list_obj):
 #-------------------------------------------------------#
 #-------------------- [Procedure 2] --------------------#
 
-def MergeAdjacentPolygons(list_vertices, forced_convex = False):
+def MergeAdjacentPolygons(list_vertices, forced_convex = False, type_str = None):
 	'''
 	 Returns the list of vertices after merging all adjacent ones
 	 [
@@ -382,7 +403,8 @@ def MergeAdjacentPolygons(list_vertices, forced_convex = False):
 	 ]
 	'''
 	log.Extra('')
-	log.Must(f'  Merging {len(list_vertices)} polygons...')
+	if type_str == None: log.Must(f'  Merging {len(list_vertices)} polygons...')
+#	else:                log.Must(f'    Merging {len(list_vertices)} polygons from \"{type_str}\"...')
 
 	list_polygon = []
 	for vertices in list_vertices:
@@ -390,16 +412,16 @@ def MergeAdjacentPolygons(list_vertices, forced_convex = False):
 	merged_polygons = unary_union(list_polygon)
 
 	list_new_vertices = []
+	log.Info(f'    Is MultiPolygon? {merged_polygons.geom_type == "MultiPolygon"}')
 	if merged_polygons.geom_type != 'MultiPolygon': merged_polygons = MultiPolygon([merged_polygons])
-	log.Info(f'   Is MultiPolygon? {merged_polygons.geom_type == "MultiPolygon"}')
 
 	# Simplify the polygons and add vertices into new array
 	for polygon in merged_polygons.geoms:
-		new_vertices = PolygonToVertices(polygon, forced_convex)
+		new_vertices = PolygonToVertices(polygon, forced_convex, type_str)
 		list_new_vertices.append(new_vertices)
 	return list_new_vertices
 
-def PolygonToVertices(polygon, forced_convex = False):
+def PolygonToVertices(polygon, forced_convex = False, type_str = None):
 	# This removes the collinear points
 	polygon = polygon.simplify(0)
 
@@ -414,8 +436,9 @@ def PolygonToVertices(polygon, forced_convex = False):
 	if forced_convex: 
 		convex_polygon = polygon.convex_hull
 		if not polygon.equals(convex_polygon):
-			log.Must(f'WARNING! Attempting to merged a concave polygon!!')
+#			log.Info(f'WARNING! Attempting to merged a concave polygon!!')
 			polygon = convex_polygon
+			list_concave_type.append(type_str)
 
 	new_vertices = []
 	for x, y in polygon.exterior.coords:
