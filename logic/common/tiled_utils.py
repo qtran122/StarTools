@@ -295,7 +295,7 @@ def GetVerticesFromObject( tiled_object ):
     pt2 = ( x+w, y+h )
     pt3 = ( x+w, y   )
     pt4 = ( x  , y   )
-    return [pt1, pt2, pt3, pt4]
+    return [pt4, pt1, pt2, pt3, pt4]
 
 
 
@@ -310,6 +310,25 @@ def IsTilelayerNameValid(tilelayer_name):
 
 #--------------------------------------------------#
 '''Set object property'''
+
+def CreateXMLObject():
+    '''Returns an empty XML object; This largely serves as an example on setting objects, and is mostly unused'''
+    obj = ET.Element("object")
+    obj.set("x", "0") # Unneeded, but putting here to be sure
+    obj.set("y", "0")
+    return obj
+
+def CreatePolygonObject(vertices):
+    '''
+     Returns an XML object
+     Vertices are set based on argument
+     NOTE Depending on whether the polygon closes off, i.e. [0] == [-1], is automatically assigned polygon / polyline
+    '''
+    obj = ET.Element("object")
+    obj.set("x", "0")
+    obj.set("y", "0")
+    SetVerticesOnObject(obj, vertices)
+    return obj
 
 # Deep-copy is needed before object copied from templates can be modified
 def CopyXMLObject(obj):
@@ -338,16 +357,18 @@ def SetPropertyOnObject(tiled_object, property_name, new_value):
 
 
 
-def SetPolyPointsOnObject( tiled_object, new_value ):
+def SetPolyPointsOnObject( tiled_object, new_value, is_polygon = False ):
     '''Set a new polypoint value for object, create new one if none exists yet'''
-    polyline_tag = tiled_object.find('polyline')
-    if tiled_object.find('polyline') is None:
-        polyline_tag = ET.SubElement(tiled_object, 'polyline')
+    if is_polygon: tag_name = 'polygon'
+    else:          tag_name = 'polyline'
+    polyline_tag = tiled_object.find(tag_name)
+    if tiled_object.find(tag_name) is None:
+        polyline_tag = ET.SubElement(tiled_object, tag_name)
     polyline_tag.set('points', new_value)
 
 
 
-def MakePolypoints( list_pos, is_reversed = False, polygon_xy = (0,0) ):
+def MakePolypoints( list_pos, is_reversed = False, polygon_xy = (0,0), use_tiled_units = True ):
     '''
     Converts coordinates (list of tuples of 2 int), into polypoint (string)
     Inputs are in Tiled units, output are in pixel units.
@@ -368,8 +389,10 @@ def MakePolypoints( list_pos, is_reversed = False, polygon_xy = (0,0) ):
         pos_y = curr_pos[1] - polygon_xy[1]
 
         # Convert to Tiled unit, rounded to nearest int, i.e. pixel unit
-        pos_x = int(pos_x * 16)
-        pos_y = int(pos_y * 16)
+        if use_tiled_units: pos_x *= 16; pos_y *= 16
+        pos_x = int(pos_x)
+        pos_y = int(pos_y)
+
         polypoint_str += f'{str(pos_x)},{str(pos_y)} '
 
     # Trim last character in string
@@ -378,6 +401,32 @@ def MakePolypoints( list_pos, is_reversed = False, polygon_xy = (0,0) ):
     log.Extra(f'      - {list_pos} -> \"{polypoint_str}\"')
     return polypoint_str
 
+def SetVerticesOnObject( tiled_object, list_vertices ):
+    '''
+     Set vertices directly from a list of (<int>, <int>)
+      NOTE Coordinates are measured in pixels, NOT tiled units
+     Basically combines SetPolyPointsOnObject & MakePolypoints into 1 function
+    '''
+    is_polygon = list_vertices[0] == list_vertices[-1]    # Polygon
+    SetPolyPointsOnObject(tiled_object, MakePolypoints(list_vertices, use_tiled_units = False), is_polygon)
+
+def SetRectangleAttributeOnObject( tiled_object, x, y, w, h, rotation = 0, round_to_int = True ):
+    '''
+     Set vertices directly from a list of (<int>, <int>)
+      NOTE Coordinates are measured in pixels, NOT tiled units
+     Similar to previous function, but the rectangle coordinates are set with attributes instead
+    '''
+    if round_to_int:
+        x = int(x)
+        y = int(y)
+        w = int(w)
+        h = int(h)
+        rotation = int(rotation)
+    tiled_object.set('x',      str(x))
+    tiled_object.set('y',      str(y))
+    tiled_object.set('width',  str(w))
+    tiled_object.set('height', str(h))
+    if rotation != 0: tiled_object.set('rotation', str(rotation))
 
 
 
