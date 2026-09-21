@@ -14,8 +14,7 @@ USAGE EXAMPLE:
     python cli_sort.py sf1 --v 0 -- rewind
 
     cd /Users/Jimmy/20-GitHub/StarTools
-    clear; python cli_sort.py w01_parallax_test --v 2
-    clear; python cli_sort.py w_test --v 2
+    clear; python cli_sort.py _sort --v 2
 '''
 import argparse
 import logic.common.file_utils as file_utils

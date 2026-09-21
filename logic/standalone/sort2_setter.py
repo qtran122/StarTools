@@ -55,8 +55,15 @@ sort1_keyword2 = '_sort'
 #sort1_keyword2 = '_sort2'  # NOTE debugging
 sort2_keyword  = '_sort2'
 
+anchor_name_bg  = 'bg_owp_30k'
+anchor_name_fg  = 'fg_parallax_25k'
+anchor_name_fg2 = 'fg_parallax_below_24.9k'
+
 parallax_obj_keyword   = 'env_art'
 parallax_layer_keyword = 'bg_parallax'
+
+# Flag - List that keeps track of certain checks, basically global variables, currently unused
+flag = []
 
 
 
@@ -188,6 +195,7 @@ def RenameTilelayer(playdo):
      Error Check 3 : Level has another BG layer above bg_owp
      Error Check 4 : A layer contains a _sort property
      Error Check 5 : Level does not have a bg_owp layer
+     Error Check 6 : Level has more than 2 FG Parallax layers
 
     Return a tuple (bool, int, int[2])
      1st : Whether an error has been detected
@@ -214,6 +222,7 @@ def RenameTilelayer(playdo):
     if _CheckIfTilelayerNamesOverlap(playdo): return DEFAULT_ERROR
 
 
+    count_fg_parallax = 0
     for layer_name in playdo.GetAllTileLayerNames():
         if not (layer_name.startswith('fg') or layer_name.startswith('bg')): continue
         if max_name_len < len(layer_name): max_name_len = len(layer_name)
@@ -250,9 +259,10 @@ def RenameTilelayer(playdo):
 
         # Renaming
         original_name = layer_name
-        layer_name, temp_index, is_owp, is_parallax = _GetStringOfNewName(layer_name, layer_counter)
-        if is_owp: bg_anchor_prev_index = temp_index
-        if is_parallax: fg_anchor_prev_index = temp_index
+        layer_name, temp_index, is_owp, is_fg_parallax = _GetStringOfNewName(layer_name, layer_counter)
+        if is_owp:         bg_anchor_prev_index = temp_index
+        if is_fg_parallax: fg_anchor_prev_index = temp_index
+        if is_fg_parallax: count_fg_parallax += 1
 
         # Apply change, then append to list
         _RenameTilelayer(playdo, original_name, layer_name)
@@ -260,12 +270,36 @@ def RenameTilelayer(playdo):
     max_layer_count.append(layer_counter)
 
 
+    # This section checks whether we need to set an FG Parallax underneath another
+    log.Must(f"    Checking if there exists multiple FG Parallax layers...")
+    if count_fg_parallax > 2:
+        log.Must(f"     ERROR! Level contains more than 2 FG Parallax layers!")
+        return DEFAULT_ERROR
+    elif count_fg_parallax == 2:
+        log.Must(f"     Found 2 FG Parallax layers. Setting one to be underneath...")
+        # By default, all "FG Parallax" layers will use the same name of anchor_name_fg
+        #  Here, we get the index in bef_aft by checking through all pairs
+        #  The first one we found would be the underneath one, thus to be renamed to the 2nd anchor name
+        #  The tuple in bef_aft will be changed accordingly as well
+        index = -1
+        for tuple in list_name_bef_aft:
+            index += 1
+            name_bef = tuple[0]
+            name_aft = tuple[1]
+            if anchor_name_fg in name_aft:
+                new_name = anchor_name_fg2
+                if "/fx" in name_aft: new_name += "/fx"
+                _RenameTilelayer(playdo, name_aft, new_name)
+                list_name_bef_aft[index] = (name_bef, new_name)
+                break
+
+
     # Log the layer name change in reversed order
     num_name_change = 0
     for tuple in reversed(list_name_bef_aft):
         if tuple[0] == tuple[1]: continue    # No need to log if the name before == name after
         num_name_change += 1
-        log.Must(f"    {_IndentBack(tuple[0], max_name_len+2, True)} -> \'{tuple[1]}\'")
+        log.Must(f"      {_IndentBack(tuple[0], max_name_len+2, True)} -> \'{tuple[1]}\'")
     if num_name_change == 0: log.Must("    None of the tilalayers needs to be renamed")
     log.Must("")
 
@@ -348,11 +382,11 @@ def _GetStringOfNewName(layer_name, layer_counter):
 
     # Case 1 - OWP layer is always renamed to 'bg_owp_30k'
     if layer_name.startswith('bg') and 'owp' in layer_name.lower():
-        layer_name = "bg_owp_30k"
+        layer_name = anchor_name_bg
         if has_fx: layer_name += '/fx'
         return (layer_name, layer_counter, True, False)
     if layer_name.startswith('fg') and ('parallax' in layer_name.lower() or 'paralax' in layer_name.lower()):
-        layer_name = "fg_parallax_25k"
+        layer_name = anchor_name_fg
         if has_fx: layer_name += '/fx'
         return (layer_name, layer_counter, False, True)
 
