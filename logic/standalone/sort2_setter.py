@@ -57,7 +57,7 @@ sort2_keyword  = '_sort2'
 
 anchor_name_bg  = 'bg_owp_30k'
 anchor_name_fg  = 'fg_parallax_25k'
-anchor_name_fg2 = 'fg_below_parallax_24k'
+anchor_name_fg2 = 'fg_parallax_below_24.9k'
 
 parallax_obj_keyword   = 'env_art'
 parallax_layer_keyword = 'bg_parallax'
@@ -277,6 +277,10 @@ def RenameTilelayer(playdo):
         return DEFAULT_ERROR
     elif count_fg_parallax == 2:
         log.Must(f"     Found 2 FG Parallax layers. Setting one to be underneath...")
+        # By default, all "FG Parallax" layers will use the same name of anchor_name_fg
+        #  Here, we get the index in bef_aft by checking through all pairs
+        #  The first one we found would be the underneath one, thus to be renamed to the 2nd anchor name
+        #  The tuple in bef_aft will be changed accordingly as well
         index = -1
         for tuple in list_name_bef_aft:
             index += 1
