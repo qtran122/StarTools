@@ -1,4 +1,4 @@
-/// <reference types="@mapeditor/tiled-api" />
+// <reference types="@mapeditor/tiled-api" />    // NOTE: dunno what it's for...
 /*
 Tiled Plugin for merging all the selected objects one polygon (convex hull)
 Shortcut : [Ctrl] + [B]
@@ -20,7 +20,15 @@ const print_prefix_msg = "[Plugin - Merge Polygons]\n\n";
 const name_layer_bu = "_collisions backup";
 
 // Feature Toggles
-const config_keep_bu  = false; // Create backup layer; Move processed objects to the backup layer
+const config_keep_bu   = false; // Create backup layer; Move processed objects to the backup layer
+
+const config_highlight =  true;       // Highlight the types of output objects if criteria met
+const max_vertices_allowed = 8;       // If the output polygon has more than (8) vertices, highlight it red
+let   is_property_mismatched = false; // If the input objects have properties not shared by ALL other objects, highlight yellow
+let   saved_properties = null;        // Dictionary of the properties saved, to be added to the output object
+let    num_property = 0;              // Only remember ths initially assigned value, since there will always be mismatched if number changes
+
+
 
 // Debug Messages
 const config_show_msg_end  = false; // For showing the program concludes successfully
@@ -53,23 +61,25 @@ let PluginAction = tiled.registerAction(action_fn_name, function(/* action */) {
 
 
 
-//------------------------------------------------------------//
-//-------------------- [Helper Functions] --------------------//
-//-------------------- [Testing Ground] --------------------//
+//-----------------------------------------------------------//
+//-------------------- [Logic Functions] --------------------//
 
 function _MergePolygonsIntoOne( map, list_object ){
 	// Add vertices from objects to the array
 	let list_vertices = [];
 	let count = 0;
 	for( const obj of list_object ){
+		count += 1;
 		let curr_vertices = _GetVertices(obj);
 		for( const pt of curr_vertices ) list_vertices.push(pt);
-		count += 1;
+		_CheckPropertyMismatched(obj);
 	}
+//	_PrintDictionary(saved_properties);
 	let convex_hull = getConvexHull(list_vertices);
 
 	// Create object in current layer
 	let new_object = _VerticesToPolygon(convex_hull);
+	new_object.setProperties(saved_properties);
 	let curr_layer = list_object[0].layer;
 	if (!(curr_layer && curr_layer.isObjectLayer)) {
 		_print("ERROR\nObject layer not selected!");
@@ -85,6 +95,12 @@ function _MergePolygonsIntoOne( map, list_object ){
 			obj.layer.removeObject(obj);
 			if(config_keep_bu) target_layer.addObject(obj);
 		}
+		if(config_highlight) {
+			too_many_vertices = convex_hull.length > max_vertices_allowed;
+			if(too_many_vertices)                           new_object.type = "1";
+			if(is_property_mismatched)                      new_object.type = "2";
+			if(too_many_vertices && is_property_mismatched) new_object.type = "3";
+		}
 	});
 
 	// Print message if needed
@@ -96,6 +112,30 @@ function _MergePolygonsIntoOne( map, list_object ){
 }
 
 
+
+//------------------------------------------------------------//
+//-------------------- [Helper Functions] --------------------//
+
+function _CheckPropertyMismatched(object){
+	// Save the first properties found
+	let list_properties = object.properties();
+	if(list_properties == null) list_properties = {};
+	if(saved_properties == null){
+		saved_properties = list_properties;
+		num_property = _GetDictLength(saved_properties);
+		return;
+	}
+
+	// If length is not equal, either current property is missing in the saved, or the other way around
+	// If current property is not saved, add it to dictionary
+	// If only value is mismatched, just change the boolean
+	if( num_property != _GetDictLength(list_properties) ){ is_property_mismatched = true; }
+	for(let key in list_properties){
+		if(saved_properties[key] == list_properties[key]) continue;
+		saved_properties[key] = list_properties[key];
+		is_property_mismatched = true;
+	}
+}
 
 
 
@@ -232,6 +272,14 @@ function isValidAxisAlignedRectangle(points) {
 
 function _print(print_msg){
 	tiled.alert(`${print_prefix_msg}${print_msg}`);
+}
+
+function _GetDictLength(dictionary){ return Object.keys(dictionary).length; }
+function _PrintDictionary(dictionary){
+	if(dictionary == null) return;
+	let print_msg = "";
+	for( let key in dictionary ) print_msg += `${key} : ${dictionary[key]}\n`;
+	_print(print_msg);
 }
 
 function _GetObjectLayerByName(name, create_new = true){
