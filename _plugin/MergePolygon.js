@@ -11,10 +11,10 @@ Shortcut : [Ctrl] + [B]
 //-------------------- [Variables] --------------------//
 
 // Meta Info
-const action_shortcut  = "Ctrl+B";
-const action_fn_name   = "PluginMergePolygons";
-const action_text      = "Plugin - Merge Polygons Into One";
-const print_prefix_msg = "[Plugin - Merge Polygons]\n\n";
+let action_shortcut  = "Ctrl+B";
+let action_fn_name   = "PluginMergePolygons";
+let action_text      = "Plugin - Merge Polygons Into One";
+let print_prefix_msg = "[Plugin - Merge Polygons]\n\n";
 
 // Features
 const name_layer_bu = "_collisions backup";
@@ -24,9 +24,11 @@ const config_keep_bu   = false; // Create backup layer; Move processed objects t
 
 const config_highlight =  true;       // Highlight the types of output objects if criteria met
 const max_vertices_allowed = 8;       // If the output polygon has more than (8) vertices, highlight it red
-let   is_property_mismatched = false; // If the input objects have properties not shared by ALL other objects, highlight yellow
+let   is_property_mismatched = false; // If the input objects have properties (or attributes) not shared by ALL other objects, highlight yellow
 let   saved_properties = null;        // Dictionary of the properties saved, to be added to the output object
-let    num_property = 0;              // Only remember ths initially assigned value, since there will always be mismatched if number changes
+let   saved_name = "";                // From 1st object
+let   saved_type = "";                // From 1st object
+let   num_property = 0;               // Only remember ths initially assigned value, since there will always be mismatched if number changes
 
 
 
@@ -41,13 +43,13 @@ const config_print_convex  = false; // Shows the coordinates of the convex hull 
 //---------------------------------------------------------//
 //-------------------- [Main Function] --------------------//
 
-let PluginAction = tiled.registerAction(action_fn_name, function(/* action */) {
+const PluginAction = tiled.registerAction(action_fn_name, function(/* action */) {
 	/** @type TileMap */
 	// Prints out an error message and exit
 	const map = tiled.activeAsset;
 	if (!map.isTileMap) { _print("ERROR\nNot a tile map!"); return; }
 	const list_objects = map.selectedObjects;
-	if (list_objects == null) { _print("ERROR\nNo object selected!"); return; }
+	if (list_objects == null) { _print("ERROR\nNo object selected!"); return; } // TODO this isn't responding
 
 
 	// Merge the selected polygons into 1 convex hull
@@ -65,6 +67,13 @@ let PluginAction = tiled.registerAction(action_fn_name, function(/* action */) {
 //-------------------- [Logic Functions] --------------------//
 
 function _MergePolygonsIntoOne( map, list_object ){
+	// Reset initial values
+	is_property_mismatched = false;
+	saved_properties = null;
+	saved_name = list_object[0].name;
+	saved_type = list_object[0].type;
+	num_property = 0;
+
 	// Add vertices from objects to the array
 	let list_vertices = [];
 	let count = 0;
@@ -95,6 +104,9 @@ function _MergePolygonsIntoOne( map, list_object ){
 			obj.layer.removeObject(obj);
 			if(config_keep_bu) target_layer.addObject(obj);
 		}
+		new_object.name = saved_name;
+		new_object.type = saved_type;
+
 		if(config_highlight) {
 			too_many_vertices = convex_hull.length > max_vertices_allowed;
 			if(too_many_vertices)                           new_object.type = "1";
@@ -125,6 +137,10 @@ function _CheckPropertyMismatched(object){
 		num_property = _GetDictLength(saved_properties);
 		return;
 	}
+
+	// Saved name & type are of the first object's, also highlight if mismatched
+	if(saved_name != object.name) is_property_mismatched = true;
+	if(saved_type != object.type) is_property_mismatched = true;
 
 	// If length is not equal, either current property is missing in the saved, or the other way around
 	// If current property is not saved, add it to dictionary
