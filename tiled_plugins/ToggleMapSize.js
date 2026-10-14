@@ -114,13 +114,7 @@ function _ToggleGridSize(map){
 //-----------------------------------------------------------//
 //-------------------- [General Utility] --------------------//
 
-function _print(print_msg){
-	tiled.alert(`${print_prefix_msg}${print_msg}`);
-}
-
-
-
-
+function _print(print_msg){ PrintUniversal(print_msg, print_prefix_msg); }
 
 //-----------------------------------------------------//
 //-------------------- [Meta Data] --------------------//

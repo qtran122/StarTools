@@ -56,6 +56,7 @@ function GetObjectLayerByName(name, create_new = true){
 	let target_layer = null;
 	for (let i = 0; i < map.layerCount; ++i) {
 		const layer = map.layerAt(i);
+		if(!layer.isObjectLayer) continue;
 		if(layer.name != name) continue;
 		target_layer = layer;
 		break
@@ -68,6 +69,23 @@ function GetObjectLayerByName(name, create_new = true){
 	return target_layer;
 }
 
+function GetTileLayerByName(name, create_new = true, set_visible = true){
+	const map = tiled.activeAsset;
+	let target_layer = null;
+	for (let i = 0; i < map.layerCount; ++i) {
+		const layer = map.layerAt(i);
+		if(!layer.isTileLayer) continue;
+		if(layer.name != name) continue;
+		target_layer = layer;
+		break
+	}
+	if(target_layer == null && create_new){
+		target_layer = new TileLayer(name);
+		if(!set_visible) target_layer.visible = false;
+		map.addLayer(target_layer);
+	}
+	return target_layer;
+}
 
 
 

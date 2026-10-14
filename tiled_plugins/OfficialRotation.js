@@ -49,8 +49,10 @@ function _Logic(direction){
 	const list_objects = map.selectedObjects;
 	if (list_objects == null) { _print("ERROR\nNo object selected!"); return; } // TODO this isn't responding
 
-	// Same function, but rotated in a different direction
-	_RotateSelectedPolygons(map, map.selectedObjects, direction);
+	// Perform the Main Action;
+	//  Wraping is done in the function this time
+	//  Same function, but rotated in a different direction
+	_RotateSelectedPolygons(map, list_objects, direction);
 
 	if(config_show_msg_end) _print("End of Procedure!");
 }

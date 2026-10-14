@@ -229,10 +229,6 @@ function isValidAxisAlignedRectangle(points) {
 
 function _print(print_msg){ PrintUniversal(print_msg, print_prefix_msg); }
 
-
-
-
-
 //-----------------------------------------------------//
 //-------------------- [Meta Data] --------------------//
 

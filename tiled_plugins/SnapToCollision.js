@@ -11,7 +11,7 @@ Shortcut : [Ctrl] + [F] <TBA>
 //-------------------- [Variables] --------------------//
 
 // Meta Info
-const action_shortcut  = "Ctrl+F";
+const action_shortcut  = "Ctrl+F+A";
 const action_fn_name   = "PluginSnapToCollision";
 const action_text      = "Plugin - Snap Object To Nearest Collision";
 const print_prefix_msg = "[Plugin - Snap To Collision]\n\n";
