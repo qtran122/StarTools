@@ -208,7 +208,7 @@ function _GetVertices(obj, dictionary_format = true){
 	if(curr_angle != 0){
 		const pivot_pos = { x:list_vertices[0].x, y:list_vertices[0].y };
 		for( let i = 1; i < list_vertices.length; ++i ){
-			list_vertices[i] = _RotateAbout(list_vertices[i], pivot_pos, curr_angle);
+			list_vertices[i] = RotateAbout(list_vertices[i], pivot_pos, curr_angle);
 		}
 	}
 

@@ -1,7 +1,7 @@
 // <reference types="@mapeditor/tiled-api" />
 /*
 Tiled Plugin for cycling between different size of a grid cell in the XML.
-Shortcut : [Ctrl] + [N]
+Shortcut : [Ctrl] + [Shift] + [M]
  */
 /**
  * @param thing {TileMap | GroupLayer}
@@ -11,9 +11,9 @@ Shortcut : [Ctrl] + [N]
 //-------------------- [Variables] --------------------//
 
 // Meta Info
-const action_shortcut  = "Ctrl+N";
+const action_shortcut  = "Ctrl+Shift+M";
 const action_fn_name   = "PluginToggleMapSize";
-const action_text      = "Plugin - Toggle the Gird Size";
+const action_text      = "Plugin - Toggle Map Grid Size";
 const print_prefix_msg = "[Plugin - Toggle Map Size]\n\n";
 
 // Features
