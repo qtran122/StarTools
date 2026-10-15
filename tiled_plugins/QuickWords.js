@@ -27,6 +27,8 @@ const config_print_msg_end =  false; // For showing the program concludes succes
 const config_print_index   =  false; // Shows all characters in our tilesheet-index
 const config_print_text    =  false; // Shows the starting position and text for each object
 
+const error_msg = "Quick Words requires the follow:\n - an object (to transcribe)\n - a tile layer (to receive transcription)";
+
 
 
 
@@ -40,12 +42,17 @@ let PluginAction = tiled.registerAction(action_fn_name, function(/* action */) {
 	const map = tiled.activeAsset;
 	if (!map.isTileMap) { _print("ERROR\nNot a tile map!"); return; }
 	const list_objects = map.selectedObjects;
-	if (list_objects == null || list_objects.length == 0) { _print("ERROR\nNo object selected!"); return; }
+	if (list_objects == null || list_objects.length == 0) { _print(`ERROR\nNo object selected!\n\n${error_msg}`); return; }
 
+	// Exit if no layer is selected; Disable to auto-create a new output layer
+	let output_layer = null;
+	if( map.currentLayer && map.currentLayer.isTileLayer ) output_layer = map.currentLayer;
+	if( output_layer == null ){ _print(`ERROR\nNo tilelayer selected!\n\n${error_msg}`); return; }
+	if( map.selectedLayers.length > 1 ){ _print(`ERROR\nOnly one tile layer can be selected to receive transcription\n\n${error_msg}`); return; }
+
+//	return;
 	// Perform the Main Action
 	map.macro(action_text, function() {
-		let output_layer = null;
-		if( map.currentLayer && map.currentLayer.isTileLayer ) output_layer = map.currentLayer;
 		_Logic_PluginQuickWords(list_objects, output_layer);
 	});
 

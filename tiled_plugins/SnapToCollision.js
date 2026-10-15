@@ -1,7 +1,7 @@
 // <reference types="@mapeditor/tiled-api" />
 /*
 Tiled Plugin for <TBA>
-Shortcut : [Ctrl] + [Shift] + [B]
+Shortcut : [Ctrl] + [F]
  */
 (function() {
 //-----------------------------------------------------//
