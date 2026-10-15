@@ -1,11 +1,9 @@
 // <reference types="@mapeditor/tiled-api" />
 /*
 Tiled Plugin utility functions, automatically included into all other JS files.
- */
-/**
- * @param thing {TileMap | GroupLayer}
- * @param name {string}
- */
+
+
+*/
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
 
@@ -239,8 +237,27 @@ function VerticesToPolygon(list_vertices){
 	new_object.polygon = list_vertices;
 	return new_object;
 }
+function isValidAxisAlignedRectangle(points) {
+	// 1. A rectangle must have exactly 4 vertices
+	if (!points || points.length !== 4) return false;
 
+	const xCoords = new Set();
+	const yCoords = new Set();
 
+	for (const point of points) {
+		xCoords.add(point.x);
+		yCoords.add(point.y);
+	}
+
+	// 2. An unrotated rectangle will have exactly 2 unique X values and 2 unique Y values
+	if (xCoords.size !== 2 || yCoords.size !== 2) return false;
+
+	// 3. Optional: Verify that the rectangle has a non-zero area (not flattened into a line)
+	const [x1, x2] = Array.from(xCoords);
+	const [y1, y2] = Array.from(yCoords);
+	
+	return Math.abs(x1 - x2) > 0 && Math.abs(y1 - y2) > 0;
+}
 
 
 

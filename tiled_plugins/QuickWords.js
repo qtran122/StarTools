@@ -1,15 +1,12 @@
 // <reference types="@mapeditor/tiled-api" />
 /*
 Tiled Plugin for adding the text into tilelayer, from the selected objects (whose names contain the text)
+Shortcut : [Ctrl] + [Shift] + [W]
+
  - If a tilelayer is currently selected, draw on said tilelayer
  -- Otherwise, create a new tilelayer (see name_layer_output below)
-
- Shortcut : [Ctrl] + [Shift] + [W]
  */
-/**
- * @param thing {TileMap | GroupLayer}
- * @param name {string}
- */
+(function() {
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
 
@@ -26,7 +23,7 @@ const name_layer_output = "_QuickWords"; // Name of the new layer created, only 
 let dict_char_index = {};
 
 // Debug Messages
-const config_print_msg_end = !false; // For showing the program concludes successfully
+const config_print_msg_end =  false; // For showing the program concludes successfully
 const config_print_index   =  false; // Shows all characters in our tilesheet-index
 const config_print_text    =  false; // Shows the starting position and text for each object
 
@@ -189,4 +186,5 @@ tiled.extendMenu("Map", [
 
 
 
+})();
 // End of File

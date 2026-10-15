@@ -3,10 +3,7 @@
 Tiled Plugin for <TBA>
 Shortcut : [Ctrl] + [F] <TBA>
  */
-/**
- * @param thing {TileMap | GroupLayer}
- * @param name {string}
- */
+(function() {
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
 
@@ -332,4 +329,5 @@ tiled.extendMenu("Map", [
 
 
 
+})();
 // End of File

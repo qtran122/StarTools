@@ -2,11 +2,9 @@
 /*
 Tiled Plugin for cycling between different size of a grid cell in the XML.
 Shortcut : [Ctrl] + [Shift] + [M]
- */
-/**
- * @param thing {TileMap | GroupLayer}
- * @param name {string}
- */
+
+*/
+(function() {
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
 
@@ -137,4 +135,5 @@ tiled.extendMenu("Map", [
 
 
 
+})();
 // End of File

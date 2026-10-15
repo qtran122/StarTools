@@ -3,11 +3,8 @@
 Tiled Plugin for rotating objects to fixed intervals, rotated about vertices mid-point
 Shortcut : [Ctrl] + [Shift] + [R] - Clockwise
 Shortcut : [Ctrl] + [Shift] + [E] - Counter Clockwise
- */
-/**
- * @param thing {TileMap | GroupLayer}
- * @param name {string}
- */
+*/
+(function() {
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
 
@@ -159,4 +156,5 @@ tiled.extendMenu("Map", [
 
 
 
+})();
 // End of File
