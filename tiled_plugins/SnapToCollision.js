@@ -1,30 +1,28 @@
 // <reference types="@mapeditor/tiled-api" />
 /*
 Tiled Plugin for <TBA>
-Shortcut : [Ctrl] + [F] <TBA>
+Shortcut : [Ctrl] + [Shift] + [B]
  */
 (function() {
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
 
 // Meta Info
-const action_shortcut  = "Ctrl+F+A";
+const action_shortcut  = "Ctrl+F";
 const action_fn_name   = "PluginSnapToCollision";
 const action_text      = "Plugin - Snap Object To Nearest Collision";
 const print_prefix_msg = "[Plugin - Snap To Collision]\n\n";
 
 // Features
-const allowed_angles = [ 0, 14.036, 26.565, 45, 63.435, 75.964, 90, 104.036, 116.565, 135, 153.435, 165.964, 180, 194.036, 206.565, 225, 243.435, 255.964, 270, 284.036, 296.565, 315, 333.435, 345.964 ];
-const name_layer_bu = "_collisions backup";
 const name_layer_collision = ["collisions"];
-const name_layer_pearl     = ["objects_pearl"];
+const name_layer_pearl     = ["objects_pearl", "objects_pearls"];
 
 // Feature Toggles
-const config_keep_bu  = false; // Create backup layer; Move processed objects to the backup layer
 
 // Debug Messages
-const config_show_msg_end =  false; // For showing the program concludes successfully
-const config_print_index  =  false; // Shows the coordinates of the convex hull created
+const config_print_msg_end =  false; // For showing the program concludes successfully
+const config_print_index   =  false; // Shows 
+const config_color_polygon =  false; // Change the target objects to red first, then green once procedure concludes
 
 
 
@@ -45,16 +43,17 @@ const PluginAction = tiled.registerAction(action_fn_name, function(/* action */)
 		list_objects = [];
 		for( const name of name_layer_pearl ){
 			const layer_pearls = GetObjectLayerByName(name, false)
+			if(layer_pearls == null) continue;
 			for (const obj of layer_pearls.objects) list_objects.push(obj);
 		}
 	}
 
 	// Perform the Main Action
 	map.macro(action_text, function() {
-		SnapObjectsToNearestCollision(map, list_objects);
+		SnapObjectsToNearestCollision(list_objects);
 	});
 
-	if(config_show_msg_end) _print("End of Procedure!");
+	if(config_print_msg_end) _print("End of Procedure!");
 });
 
 
@@ -64,7 +63,7 @@ const PluginAction = tiled.registerAction(action_fn_name, function(/* action */)
 //----------------------------------------------------------//
 //-------------------- [Logic Function] --------------------//
 
-function SnapObjectsToNearestCollision(map, list_objects){
+function SnapObjectsToNearestCollision(list_objects){
 	// Change the positions and rotations of all the selected obejcts
 	// Snap them to the nearest collision objects
 
@@ -76,49 +75,37 @@ function SnapObjectsToNearestCollision(map, list_objects){
 			list_collisions.push(obj);
 		}
 	}
-	let list_polygon_vertices = [];
-	for( const obj of list_collisions ){
-		list_polygon_vertices.push( _GetVertices(obj, false) );
-	}
 
-	// TODO do more than 1 object
 	// Find nearest collision polygon to the selected objects
-	let pos_snap = [];
 	for( const obj of list_objects ){
-//		obj.type = "1";
-//		break;
+		if(config_color_polygon) obj.type = "1"; // Red
 
-		const mid_pos    = _DictToArray(_GetMidPosition(obj));
-		const offset_pos = [obj.x - mid_pos[0], obj.y - mid_pos[1]];
-		const set_closest = findClosestPolygon(mid_pos, list_polygon_vertices);
+		const mid_pos      = GetMidPosition(obj);
+		const closest_data = findClosestPolygon(mid_pos, list_collisions);
+		const offset_pos   = {
+			x : obj.x - mid_pos.x, 
+			y : obj.y - mid_pos.y
+		};
 
+		obj.x = closest_data.pt_x + offset_pos.x;
+		obj.y = closest_data.pt_y + offset_pos.y;
+//		const new_angle   = 90;
+		const new_angle   = closest_data.angle;
+		const inclination = (90 + new_angle) * (Math.PI / 180);
+		RotateAboutMidPoint(obj, new_angle);
+		obj.x -= obj.width/2 * Math.cos(inclination);
+		obj.y -= obj.width/2 * Math.sin(inclination);
+		if(config_color_polygon) obj.type = "4"; // Green
+
+		if(!config_print_index) continue;
 		let print_msg = "";
 		print_msg += `Mid : (${mid_pos[0]}, ${mid_pos[1]})\n`;
-		print_msg += `Cloest : ${set_closest.ID}\n`;
-		print_msg += `Snap Pos : (${set_closest.pt[0]}, ${set_closest.pt[1]})\n`;
-//		_print(print_msg)
-//		_print(mid_pos);
-
-
-		obj.x = set_closest.pt[0] + offset_pos[0];
-		obj.y = set_closest.pt[1] + offset_pos[1];
-//		obj.type = "0";
-//		break;
+		print_msg += `Cloest ID : ${closest_data.ID}\n`;
+		print_msg += `Snap Pos : (${_round(closest_data.pt_x,0)}, ${_round(closest_data.pt_y,0)})\n`;
+		print_msg += `Angle : ${closest_data.angle}\n`;
+		_print(print_msg);
+		break;
 	}
-
-	// Snap object to the nearest
-	
-
-	// --- Example Usage ---
-	const targetPoint = [5, 5];
-	const polygonA = [[0, 0], [0, 4], [4, 4], [4, 0]]; // Square
-	const polygonB = [[10, 10], [10, 12], [12, 12]];    // Triangle
-
-	const allPolygons = [polygonA, polygonB];
-//	findClosestPolygon(targetPoint, allPolygons);
-
-//	for( const pt of polygonB ) _print(pt);
-//	for( const pt of list_polygon_vertices[0] ) _print(pt);
 
 	// Print
 	if(!config_print_index) return;
@@ -130,40 +117,12 @@ function SnapObjectsToNearestCollision(map, list_objects){
 	_print(print_msg)
 }
 
-function _DictToArray(pos){
-	// For converting position data, from Dictionary format to Array format
-	return [pos.x, pos.y];
-}
 
 
 
 
 //----------------------------------------------------------//
 //-------------------- [Testing Ground] --------------------//
-
-function _GetNextIndex(object, rotate_direction){
-	// Find the index of the "closest slightly smaller" or "exact" angle value
-	const curr_angle = object.rotation;
-	let smaller_index = -1;
-	let is_exact = false;
-	for( let i = 0; i < allowed_angles.length; ++i ){
-		if(curr_angle >  allowed_angles[i]) continue;
-		if(curr_angle == allowed_angles[i]) is_exact = true;
-		smaller_index = i;
-		break;
-	}
-	if(smaller_index < 0) smaller_index = 0;
-
-	// Set the index of the next number, based on rotating direction
-	let index_change = -1;
-	if(!rotate_direction) index_change = 1;
-	else if(!is_exact)    index_change = 0;
-	const next_index = (smaller_index - index_change + allowed_angles.length) % allowed_angles.length;
-
-	return next_index;
-}
-
-
 
 
 
@@ -175,125 +134,112 @@ function _GetNextIndex(object, rotate_direction){
 
 
 
-function _GetVertices(obj, dictionary_format = true){
-	// Return a list of vertices
-	//  Dictionary format: [ {x:x1, y:y1}, {x:x2, y:y2}, {x:x3, y:y3}, ...]
-	//  Array      format: [ [x1,y1], [x2,y2], [x3,y3], ...]
-	let list_vertices = [];
-	let points = []; // TODO unneeded?
-	if(obj.shape === MapObject.Polygon) {
-		const points = obj.polygon;
-		for( const pt of points ){
-			const x_pos = obj.x + pt.x;
-			const y_pos = obj.y + pt.y;
-			list_vertices.push( {x: x_pos, y: y_pos} );
-		}
-	}
-	if(obj.shape === MapObject.Rectangle) {
-		const x = obj.x;
-		const y = obj.y;
-		const w = obj.width;
-		const h = obj.height;
-		list_vertices.push( {x: x  , y: y  } );
-		list_vertices.push( {x: x+w, y: y  } );
-		list_vertices.push( {x: x  , y: y+h} );
-		list_vertices.push( {x: x+w, y: y+h} );
-	}
-
-	// Account for rotation in the object itself
-	const curr_angle = obj.rotation;
-	if(curr_angle != 0){
-		const pivot_pos = { x:list_vertices[0].x, y:list_vertices[0].y };
-		for( let i = 1; i < list_vertices.length; ++i ){
-			list_vertices[i] = RotateAbout(list_vertices[i], pivot_pos, curr_angle);
-		}
-	}
-
-	// Return in the correct format
-	if(dictionary_format) return list_vertices;
-	let new_list = []
-	for( const vertex of list_vertices ){
-		new_list.push( [vertex.x, vertex.y] );
-	}
-	return new_list;
-}
-
-
-
-
 
 //----------------------------------------------------------//
 //-------------------- [Math Functions] --------------------//
 
 // 1. Helper to find the closest point on a single line segment to a point
-function getClosestPointOnSegment(p, s1, s2) {
-    const ab = [s2[0] - s1[0], s2[1] - s1[1]];
-    const ap = [p[0] - s1[0], p[1] - s1[1]];
+function getClosestPointOnSegment(p, s1, s2, mid) {
+    const ab = [s2.x - s1.x, s2.y - s1.y];
+    const ap = [ p.x - s1.x,  p.y - s1.y];
     
     // Calculate projection factor t, clamped between 0 and 1
     const abLenSq = ab[0] * ab[0] + ab[1] * ab[1];
-    if (abLenSq === 0) return s1; // Segment is a point
+    if (abLenSq === 0) { _print("ERROR! Segment is a point"); return { x:s1.x, y:s1.y, angle:0}; }
     
     let t = (ap[0] * ab[0] + ap[1] * ab[1]) / abLenSq;
     t = Math.max(0, Math.min(1, t)); 
-    
+//	const contact_x = s1.x + t * ab[0];
+//	const contact_y = s1.y + t * ab[1];
+	const contact_pt = {x:s1.x + t * ab[0], y:s1.y + t * ab[1]};
+	
+	// Inclination angle
+	let inclination_angle = 90;
+	const dx = s2.x - s1.x;
+	const dy = s2.y - s1.y;
+	inclination_angle = Math.atan2(dy,dx) * (180 / Math.PI);
+//	if(dx != 0) inclination_angle = Math.atan2(dy,dx) * (180 / Math.PI);
+//	if(inclination_angle < 0) inclination_angle += 360;
+//	_print(inclination_angle)
+
     // Return the closest coordinates on the segment
-    return [s1[0] + t * ab[0], s1[1] + t * ab[1]];
+	return {
+		x : contact_pt.x,
+		y : contact_pt.y,
+		angle : inclination_angle,
+	};
 }
 
+
+
 // 2. Helper to get the minimum squared distance between a point and a polygon
-function getSqDistanceToPolygon(point, polygon) {
+function getSqDistanceToPolygon(point, obj) {
     let minSqDist = Infinity;
     let minPoint = [];
-//	_print("Polygon Edges : " + polygon.length);
-    for (let i = 0; i < polygon.length; i++) {
-        const s1 = polygon[i];
-        const s2 = polygon[(i + 1) % polygon.length]; // Connects last vertex to first
+	let inclination_angle = 0;
+
+	const vertices = GetVertices(obj);
+	const mid_pos = GetMidPosition(obj);
+	const is_clockwise = isClockwise(vertices);
+    for (let i = 0; i < vertices.length; i++) {
+		let next_id = i;
+		if(!is_clockwise) next_id += 1;
+		else              next_id -= 1;
+		next_id = (next_id + vertices.length) % vertices.length; // Make sure can connect last vertex to first
+
+        const s1 = vertices[i];
+        const s2 = vertices[next_id];
+        const closestPoint = getClosestPointOnSegment(point, s1, s2, mid_pos);
         
-        const closestPoint = getClosestPointOnSegment(point, s1, s2);
-        
-        const dx = point[0] - closestPoint[0];
-        const dy = point[1] - closestPoint[1];
+        const dx = point.x - closestPoint.x;
+        const dy = point.y - closestPoint.y;
         const sqDist = dx * dx + dy * dy;
-//		_print(point + " vs " + closestPoint);
 
         if (minSqDist > sqDist) {
             minSqDist = sqDist;
-			minPoint[0] = closestPoint[0];
-			minPoint[1] = closestPoint[1];
+			minPoint[0] = closestPoint.x;
+			minPoint[1] = closestPoint.y;
+			inclination_angle = closestPoint.angle;
         }
     }
-//	return [minSqDist];
-	return [minSqDist, minPoint];
+	return {
+		dist2: minSqDist,
+		x_pos: minPoint[0],
+		y_pos: minPoint[1],
+		angle: inclination_angle,
+	};
 }
+function isClockwise(vertices) {
+    let sum = 0;
+    for (let i = 0; i < vertices.length; i++) {
+        const current = vertices[i];
+        const next = vertices[(i + 1) % vertices.length]; // Loops back to the first vertex
+        sum += (next.x - current.x) * (next.y + current.y);
+    }
+    return sum > 0;
+}
+
+
 
 // 3. Main function to find the closest polygon
-function findClosestPolygon(point, polygons) {
-    let closestPoly = null;
+function findClosestPolygon(point, list_polygon) {
+    let closest_polygon_data = null;
     let minDistance = Infinity;
-	let count = 0;
-
-    polygons.forEach((polygon, index) => {
-		count += 1;
-		const temp  = getSqDistanceToPolygon(point, polygon);
-//		const sqDist = temp;
-		const sqDist = temp[0];
-		const closestPoint = temp[1];
-		if (sqDist < minDistance) {
+    list_polygon.forEach((polygon, index) => {
+		const polygon_data = getSqDistanceToPolygon(point, polygon);
+		const sqDist = polygon_data.dist2;
+		if( minDistance > sqDist ){
 			minDistance = sqDist;
-			closestPoly = { ID:index, poly:polygon, distance:Math.sqrt(sqDist), pt:closestPoint };
-//			closestPoly = { ID:index, poly:polygon, distance:Math.sqrt(sqDist) };
-//			closestPoly = { index, polygon, distance: Math.sqrt(sqDist) };
+			closest_polygon_data = {
+				ID:index, poly:polygon, distance:Math.sqrt(sqDist), 
+				pt_x  : polygon_data.x_pos,
+				pt_y  : polygon_data.y_pos,
+				angle : polygon_data.angle,
+			};
 		}
     });
-//	_print(count);
-
-    return closestPoly;
+    return closest_polygon_data;
 }
-
-
-
-
 
 
 

@@ -111,8 +111,8 @@ function GetVertices(obj){
 		const h = obj.height;
 		list_vertices.push( {x: x  , y: y  } );
 		list_vertices.push( {x: x+w, y: y  } );
-		list_vertices.push( {x: x  , y: y+h} );
 		list_vertices.push( {x: x+w, y: y+h} );
+		list_vertices.push( {x: x  , y: y+h} );
 	}
 
 	// Account for rotation in the object itself
