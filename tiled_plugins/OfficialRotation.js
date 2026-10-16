@@ -21,9 +21,13 @@ const print_prefix_msg = "[Plugin - Align Rotation]\n\n";
 const allowed_angles = [ 0, 14.036, 26.565, 45, 63.435, 75.964, 90, 104.036, 116.565, 135, 153.435, 165.964, 180, 194.036, 206.565, 225, 243.435, 255.964, 270, 284.036, 296.565, 315, 333.435, 345.964 ];
 
 // Debug Messages
-const config_show_msg_end   =  false; // Shows the program concludes successfully
+const config_print_msg_end  =  false; // Shows the program concludes successfully
 const config_print_index    =  false; // Shows the change in index & angle
 const config_print_vertices =  false; // Shows all vertices of a rotated object
+
+// Variables
+const config_rectangle_only = true;
+let count_non_rectangle = 0; // Print message at the end if a polygon is detected trying to be rotated
 
 
 
@@ -49,9 +53,18 @@ function _Logic(direction){
 	// Perform the Main Action;
 	//  Wraping is done in the function this time
 	//  Same function, but rotated in a different direction
+	count_non_rectangle = 0;
 	_RotateSelectedPolygons(map, list_objects, direction);
 
-	if(config_show_msg_end) _print("End of Procedure!");
+	if(config_rectangle_only && count_non_rectangle > 0) {
+		let print_msg = "";
+		print_msg += `${count_non_rectangle} polygons selected.\n`;
+		print_msg += "Official Rotations are only supported for rectangular objects.\n";
+		print_msg += "\n";
+		print_msg += "No rotation was applied to them.\n";		
+		_print(print_msg);
+	}
+	if(config_print_msg_end) _print("End of Procedure!");
 }
 
 
@@ -66,6 +79,10 @@ function _RotateSelectedPolygons(map, list_objects, rotate_direction){
 	if(!rotate_direction) new_action_text = action_text2;
 	map.macro(new_action_text, function() {
 		for( const obj of list_objects ) {
+			if(config_rectangle_only && obj.shape != MapObject.Rectangle){
+				count_non_rectangle += 1;
+				continue;
+			}
 			_RotatePolygon(obj, rotate_direction);
 		}
 	});
