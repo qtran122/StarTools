@@ -2,7 +2,12 @@
 /*
 Tiled Plugin for <TBA>
 Shortcut : [Ctrl] + [F]
- */
+
+ - Selected objects are processed
+ -- If no object selected, automatically check layers with matching name in "name_layer_pearl", e.g. objects_pearl
+ - Collision objects are recognised if they exist in the "collisions" layer
+ -- Layers whose names starting in "collisions_" are also recognised
+*/
 (function() {
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
@@ -14,6 +19,8 @@ const action_text      = "Plugin - Snap Object To Nearest Collision";
 const print_prefix_msg = "[Plugin - Snap To Collision]\n\n";
 
 // Features
+const config_check_collisions        = true;
+const config_ignore_named_collisions = true;
 const name_layer_collision = ["collisions"];
 const name_layer_pearl     = ["objects_pearl", "objects_pearls"];
 
@@ -47,6 +54,16 @@ const PluginAction = tiled.registerAction(action_fn_name, function(/* action */)
 			for (const obj of layer_pearls.objects) list_objects.push(obj);
 		}
 	}
+	if(list_objects.length <= 0){
+		let print_msg = "! ERROR !\n";
+		print_msg += `No objects selected to be snapped to collision.\n`;
+		print_msg += "\n";
+		print_msg += "Make sure you:\n";
+		print_msg += " - Select the pearl objects manually; or\n";
+		print_msg += ` - The target layer name exists in the array of plugin file\n`;
+		_print(print_msg);
+		return;
+	}
 
 	// Perform the Main Action
 	map.macro(action_text, function() {
@@ -71,9 +88,30 @@ function SnapObjectsToNearestCollision(list_objects){
 	let list_collisions = [];
 	for( const name of name_layer_collision ){
 		const layer_collision = GetObjectLayerByName(name, false)
-		for (const obj of layer_collision.objects) {
-			list_collisions.push(obj);
+		if(layer_collision == null) continue;
+		for (const obj of layer_collision.objects) list_collisions.push(obj);
+	}
+	const prefix = "collisions";
+	if(config_check_collisions) {
+		const map = tiled.activeAsset;
+		for (let i = 0; i < map.layerCount; ++i) {
+			const layer = map.layerAt(i);
+			if( !(layer.isObjectLayer && layer.name.startsWith(prefix)) ) continue;
+			for (const obj of layer.objects) {
+				if( config_ignore_named_collisions && !(obj.name == null || obj.name == "") ) continue;
+				list_collisions.push(obj);
+			}
 		}
+	}
+	if(list_collisions.length <= 0){
+		let print_msg = "! ERROR !\n";
+		print_msg += `No collision objects found.\n`;
+		print_msg += "\n";
+		print_msg += "Make sure the collision objects:\n";
+		print_msg += " - Are NOT named\n";
+		print_msg += ` - Exist in layers whose names start with \"${prefix}\"\n`;
+		_print(print_msg);
+		return;
 	}
 
 	// Find nearest collision polygon to the selected objects
@@ -89,12 +127,11 @@ function SnapObjectsToNearestCollision(list_objects){
 
 		obj.x = closest_data.pt_x + offset_pos.x;
 		obj.y = closest_data.pt_y + offset_pos.y;
-//		const new_angle   = 90;
 		const new_angle   = closest_data.angle;
 		const inclination = (90 + new_angle) * (Math.PI / 180);
 		RotateAboutMidPoint(obj, new_angle);
-		obj.x -= obj.width/2 * Math.cos(inclination);
-		obj.y -= obj.width/2 * Math.sin(inclination);
+		obj.x -= obj.height/2 * Math.cos(inclination);
+		obj.y -= obj.height/2 * Math.sin(inclination);
 		if(config_color_polygon) obj.type = "4"; // Green
 
 		if(!config_print_index) continue;
@@ -111,9 +148,7 @@ function SnapObjectsToNearestCollision(list_objects){
 	if(!config_print_index) return;
 	let print_msg = "";
 	print_msg += `Pearls : ${list_objects.length}\n`;
-//	print_msg += `Collisions : ${list_collisions.length}\n`;
 	print_msg += `Collisions : ${list_polygon_vertices.length}\n`;
-//	print_msg += `${curr_angle}˚ -> ${next_angle}˚`;
 	_print(print_msg)
 }
 
@@ -149,8 +184,6 @@ function getClosestPointOnSegment(p, s1, s2, mid) {
     
     let t = (ap[0] * ab[0] + ap[1] * ab[1]) / abLenSq;
     t = Math.max(0, Math.min(1, t)); 
-//	const contact_x = s1.x + t * ab[0];
-//	const contact_y = s1.y + t * ab[1];
 	const contact_pt = {x:s1.x + t * ab[0], y:s1.y + t * ab[1]};
 	
 	// Inclination angle
@@ -158,9 +191,6 @@ function getClosestPointOnSegment(p, s1, s2, mid) {
 	const dx = s2.x - s1.x;
 	const dy = s2.y - s1.y;
 	inclination_angle = Math.atan2(dy,dx) * (180 / Math.PI);
-//	if(dx != 0) inclination_angle = Math.atan2(dy,dx) * (180 / Math.PI);
-//	if(inclination_angle < 0) inclination_angle += 360;
-//	_print(inclination_angle)
 
     // Return the closest coordinates on the segment
 	return {
