@@ -41,16 +41,49 @@ let PluginAction = tiled.registerAction(action_fn_name, function(/* action */) {
 	// Prints out an error message and exit
 	const map = tiled.activeAsset;
 	if (!map.isTileMap) { _print("ERROR\nNot a tile map!"); return; }
-	const list_objects = map.selectedObjects;
-	if (list_objects == null || list_objects.length == 0) { _print(`ERROR\nNo object selected!\n\n${error_msg}`); return; }
+	const curr_layer = map.currentLayer;
 
-	// Exit if no layer is selected; Disable to auto-create a new output layer
+	// If no object is selected, check if any object layers are selected as well
+	let list_objects = map.selectedObjects;
+	if (list_objects == null || list_objects.length == 0) {
+		list_objects = [];
+		map.selectedLayers.forEach(layer => {
+			if( !layer.isObjectLayer ) return;
+			for (const obj of layer.objects) if(obj.name != null && obj.name != "") list_objects.push(obj);
+		});
+	}
+	if( list_objects.length == 0 ){
+		let print_msg = "! ERROR !\n";
+		print_msg += `No object with name has been selected.\n`;
+		print_msg += "\n";
+		print_msg += "Make sure you have either:\n";
+		print_msg += " - Selected specific objects\n";
+		print_msg += " - Selected the object layers that contain the text objects\n";
+		_print(print_msg);
+		return;
+	}
+
+	// Exit if either no layer or more than 1 layer are selected
 	let output_layer = null;
-	if( map.currentLayer && map.currentLayer.isTileLayer ) output_layer = map.currentLayer;
-	if( output_layer == null ){ _print(`ERROR\nNo tilelayer selected!\n\n${error_msg}`); return; }
-	if( map.selectedLayers.length > 1 ){ _print(`ERROR\nOnly one tile layer can be selected to receive transcription\n\n${error_msg}`); return; }
+	const selected_layers = map.selectedLayers.filter(layer => layer.isTileLayer);
+	if( selected_layers.length < 1 ){
+ 		let print_msg = "! ERROR !\n";
+		print_msg += `No tile layer has been selected.\n`;
+		print_msg += "\n";
+		print_msg += "You can select both the object layers and tile layer simultaneously by left-clicking them while holding [Shift]\n";
+		_print(print_msg);
+		return;
+	}
+	if( selected_layers.length > 1 ){
+ 		let print_msg = "! ERROR !\n";
+		print_msg += `More than 1 tile layers have been selected.\n`;
+		print_msg += "\n";
+		print_msg += "This is not allowed because exactly 1 tile layer is needed to transcript texts, from objects onto tile layer.\n";
+		_print(print_msg);
+		return;
+	}
+	output_layer = selected_layers[0]; // Disable this line to auto-create a new output layer instead
 
-//	return;
 	// Perform the Main Action
 	map.macro(action_text, function() {
 		_Logic_PluginQuickWords(list_objects, output_layer);
@@ -85,6 +118,7 @@ function _Logic_PluginQuickWords(list_objects, output_layer){
 		
 		// Write into tilelayer
 		_SetText(output_layer, text, start_x, start_y, end_x);
+		obj.layer.removeObject(obj);
 
 		// Print info
 		if(!config_print_text) continue;
