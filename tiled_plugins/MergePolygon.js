@@ -2,11 +2,9 @@
 /*
 Tiled Plugin for merging all the selected objects one polygon (convex hull)
 Shortcut : [Ctrl] + [B]
- */
-/**
- * @param thing {TileMap | GroupLayer}
- * @param name {string}
- */
+
+*/
+(function() {
 //-----------------------------------------------------//
 //-------------------- [Variables] --------------------//
 
@@ -20,8 +18,7 @@ let print_prefix_msg = "[Plugin - Merge Polygons]\n\n";
 const name_layer_bu = "_collisions backup";
 
 // Feature Toggles
-const config_keep_bu   = false; // Create backup layer; Move processed objects to the backup layer
-
+const config_keep_bu   = false;       // Create backup layer; Move processed objects to the backup layer
 const config_highlight =  true;       // Highlight the types of output objects if criteria met
 const max_vertices_allowed = 8;       // If the output polygon has more than (8) vertices, highlight it red
 let   is_property_mismatched = false; // If the input objects have properties (or attributes) not shared by ALL other objects, highlight yellow
@@ -33,8 +30,8 @@ let   num_property = 0;               // Only remember ths initially assigned va
 
 
 // Debug Messages
-const config_show_msg_end  = false; // For showing the program concludes successfully
-const config_print_convex  = false; // Shows the coordinates of the convex hull created
+const config_show_msg_end  =  false; // For showing the program concludes successfully
+const config_print_convex  =  false; // Shows the coordinates of the convex hull created
 
 
 
@@ -79,15 +76,15 @@ function _MergePolygonsIntoOne( map, list_object ){
 	let count = 0;
 	for( const obj of list_object ){
 		count += 1;
-		let curr_vertices = _GetVertices(obj);
+		let curr_vertices = GetVertices(obj);
 		for( const pt of curr_vertices ) list_vertices.push(pt);
 		_CheckPropertyMismatched(obj);
 	}
-//	_PrintDictionary(saved_properties);
+//	PrintDictionary(saved_properties);
 	let convex_hull = getConvexHull(list_vertices);
 
 	// Create object in current layer
-	let new_object = _VerticesToPolygon(convex_hull);
+	let new_object = VerticesToPolygon(convex_hull);
 	new_object.setProperties(saved_properties);
 	let curr_layer = list_object[0].layer;
 	if (!(curr_layer && curr_layer.isObjectLayer)) {
@@ -98,7 +95,7 @@ function _MergePolygonsIntoOne( map, list_object ){
 	// The only modifying-actions in the plugin
 	map.macro(action_text, function() {
 		curr_layer.addObject(new_object);
-		target_layer = _GetObjectLayerByName(name_layer_bu, config_keep_bu);
+		target_layer = GetObjectLayerByName(name_layer_bu, config_keep_bu);
 		for(let i = list_object.length-1; i >= 0; --i) {
 			obj = list_object[i];
 			obj.layer.removeObject(obj);
@@ -125,6 +122,8 @@ function _MergePolygonsIntoOne( map, list_object ){
 
 
 
+
+
 //------------------------------------------------------------//
 //-------------------- [Helper Functions] --------------------//
 
@@ -134,7 +133,7 @@ function _CheckPropertyMismatched(object){
 	if(list_properties == null) list_properties = {};
 	if(saved_properties == null){
 		saved_properties = list_properties;
-		num_property = _GetDictLength(saved_properties);
+		num_property = GetDictLength(saved_properties);
 		return;
 	}
 
@@ -145,72 +144,12 @@ function _CheckPropertyMismatched(object){
 	// If length is not equal, either current property is missing in the saved, or the other way around
 	// If current property is not saved, add it to dictionary
 	// If only value is mismatched, just change the boolean
-	if( num_property != _GetDictLength(list_properties) ){ is_property_mismatched = true; }
+	if( num_property != GetDictLength(list_properties) ){ is_property_mismatched = true; }
 	for(let key in list_properties){
 		if(saved_properties[key] == list_properties[key]) continue;
 		saved_properties[key] = list_properties[key];
 		is_property_mismatched = true;
 	}
-}
-
-
-
-function _VerticesToPolygon(list_vertices){
-	// Returns either a polygon, or rectangle if possible
-	// Input is the list of vertices, which should already be a convex hull
-
-	// Return rectangle if criteria met
-	let is_rectangle = isValidAxisAlignedRectangle(list_vertices);
-	if(is_rectangle){
-		const xCoords = list_vertices.map(v => v.x);
-		const yCoords = list_vertices.map(v => v.y);
-		const minX = Math.min(...xCoords);
-		const maxX = Math.max(...xCoords);
-		const minY = Math.min(...yCoords);
-		const maxY = Math.max(...yCoords);
-		const width = maxX - minX;
-		const height = maxY - minY;
-
-		let new_object = new MapObject(MapObject.Rectangle);
-		new_object.x      = minX;
-		new_object.y      = minY;
-		new_object.width  = width;
-		new_object.height = height;
-		return new_object;
-	}
-
-	// If not a rectangle, return a polygon
-	let new_object = new MapObject(MapObject.Polygon);
-	new_object.polygon = list_vertices;
-	return new_object;
-}
-
-
-
-function _GetVertices(obj){
-	// Return a list of vertices
-	// TODO it crashes the Tiled app now, am contemplating whether I should spend time fixing it
-	let list_vertices = [];
-	let points = [];
-	if(obj.shape === MapObject.Polygon) {
-		const points = obj.polygon;
-		for( const pt of points ){
-			const x_pos = obj.x + pt.x;
-			const y_pos = obj.y + pt.y;
-			list_vertices.push( {x: x_pos, y: y_pos} );
-		}
-	}
-	if(obj.shape === MapObject.Rectangle) {
-		const x = obj.x;
-		const y = obj.y;
-		const w = obj.width;
-		const h = obj.height;
-		list_vertices.push( {x: x  , y: y  } );
-		list_vertices.push( {x: x+w, y: y  } );
-		list_vertices.push( {x: x  , y: y+h} );
-		list_vertices.push( {x: x+w, y: y+h} );
-	}
-	return list_vertices;
 }
 
 
@@ -257,28 +196,6 @@ function getConvexHull(points) {
 
 
 
-function isValidAxisAlignedRectangle(points) {
-	// 1. A rectangle must have exactly 4 vertices
-	if (!points || points.length !== 4) return false;
-
-	const xCoords = new Set();
-	const yCoords = new Set();
-
-	for (const point of points) {
-		xCoords.add(point.x);
-		yCoords.add(point.y);
-	}
-
-	// 2. An unrotated rectangle will have exactly 2 unique X values and 2 unique Y values
-	if (xCoords.size !== 2 || yCoords.size !== 2) return false;
-
-	// 3. Optional: Verify that the rectangle has a non-zero area (not flattened into a line)
-	const [x1, x2] = Array.from(xCoords);
-	const [y1, y2] = Array.from(yCoords);
-	
-	return Math.abs(x1 - x2) > 0 && Math.abs(y1 - y2) > 0;
-}
-
 
 
 
@@ -286,42 +203,7 @@ function isValidAxisAlignedRectangle(points) {
 //-----------------------------------------------------------//
 //-------------------- [General Utility] --------------------//
 
-function _print(print_msg){
-	tiled.alert(`${print_prefix_msg}${print_msg}`);
-}
-
-function _GetDictLength(dictionary){ return Object.keys(dictionary).length; }
-function _PrintDictionary(dictionary){
-	if(dictionary == null) return;
-	let print_msg = "";
-	for( let key in dictionary ) print_msg += `${key} : ${dictionary[key]}\n`;
-	_print(print_msg);
-}
-
-function _GetObjectLayerByName(name, create_new = true){
-	const map = tiled.activeAsset;
-	let target_layer = null;
-	for (let i = 0; i < map.layerCount; ++i) {
-		const layer = map.layerAt(i);
-		if(layer.name != name) continue;
-		target_layer = layer;
-		break
-	}
-	if(target_layer == null && create_new){
-		target_layer = new ObjectGroup(name);
-		target_layer.visible = false;
-		map.addLayer(target_layer);
-	}
-	return target_layer;
-}
-function _MoveObjectToLayer(obj, layer){
-	obj.layer.removeObject(obj);
-	target_layer.addObject(obj);
-}
-
-
-
-
+function _print(print_msg){ PrintUniversal(print_msg, print_prefix_msg); }
 
 //-----------------------------------------------------//
 //-------------------- [Meta Data] --------------------//
@@ -344,4 +226,5 @@ tiled.extendMenu("Map", [
 
 
 
+})();
 // End of File
