@@ -54,6 +54,8 @@ DEFAULT_LINE_TYPE_MAYBE     = "1"	# Red
 DEFAULT_LINE_TYPE_REDUNDANT = "0"	# Black
 DEFAULT_LINE_TYPE_FORCED    = "8"	# Magenta
 
+CHAR_XML_PROPERTY_BREAK = "~"
+
 default_exported_attribtue = {
 	'id': "0", 
 	'type': DEFAULT_NODE_TYPE, 
@@ -512,7 +514,7 @@ def _ExportCondenseData(playdo):
 	obj_route = _MakeXmlObject(playdo, f"{obj_name_default}", f"_{len(list_nodes)}")
 	for i in range(len(list_route)):
 		if is_route_redundant[i]: continue	# Skip entirely if is redundant
-		new_name = f"{_NodeId2Name(list_route[i][0])}_{_NodeId2Name(list_route[i][1])}"
+		new_name = f"{_NodeId2Name(list_route[i][0])}{CHAR_XML_PROPERTY_BREAK}{_NodeId2Name(list_route[i][1])}"
 		x1 = list_nodes[ list_route[i][0] ][0]
 		y1 = list_nodes[ list_route[i][0] ][1]
 		x2 = list_nodes[ list_route[i][1] ][0]

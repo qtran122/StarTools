@@ -30,7 +30,8 @@ layer_name_collision = "collisions"
 #  are treated as collision that may potentially block routes
 list_object_name = [
 	"relic_block", 
-	"rare"
+	"rare",
+	"break_block",
 ]
 
 # Threshold value for determining redundant routes
