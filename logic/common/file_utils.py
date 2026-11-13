@@ -169,7 +169,7 @@ def EnsureFolderExists(filename):
 def FixFolderPath(folder_path):
     '''
      Creates a new folder if one doesn't exist yet
-     Return a fixed string of the folder path to ensure it ends with \ or /
+     Return a fixed string of the folder path to ensure it ends with '\' or '/'
     '''
 
     # TODO Check if it's a folder path, and not like a PNG file
