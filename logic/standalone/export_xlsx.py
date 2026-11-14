@@ -3,12 +3,14 @@ Logic module for cli_export_xl
 
 
 USAGE EXAMPLE:
+	cd /Users/Jimmy/20-GitHub/StarTools
+	clear; python cli_export_xl.py
 	main_logic.logic(playdo)
 
 '''
 import logic.common.log_utils as log
 import openpyxl
-from openpyxl.styles import PatternFill
+from openpyxl.styles import PatternFill, Alignment, Font
 
 #-----------------------------------------------------#
 #-------------------- [Variables] --------------------#
@@ -67,8 +69,8 @@ def logic(playdo, filepath_output):
 	# Map data
 	num_row = playdo.map_height
 	num_col = playdo.map_width
-	min_x = num_col
-	min_y = num_row
+	min_x = num_col+1
+	min_y = num_row+1
 	max_x = 0
 	max_y = 0
 
@@ -85,8 +87,8 @@ def logic(playdo, filepath_output):
 			if not tiles2d[i][j] in list_key: continue
 			if min_x > j: min_x = j
 			if min_y > i: min_y = i
-			if max_x < j: max_x = j
-			if max_y < i: max_y = i
+			if max_x < j: max_x = j + 1
+			if max_y < i: max_y = i + 1
 			for key, value in dict_id_to_hex.items():
 				if tiles2d[i][j] != key: continue
 				map_simple[i][j]  = list_key.index(key)
@@ -94,8 +96,21 @@ def logic(playdo, filepath_output):
 	log.Must(f"    Min X: {min_x}, Min Y: {min_y}")
 	log.Must(f"    Max X: {max_x}, Max Y: {max_y}")
 
-#	PrintInConsole(map_simple, empty_id)
-	ExportXlsx(map_simple, filepath_output, min_x, min_y, max_x, max_y)
+	wb = openpyxl.Workbook()
+	ws = wb.active
+
+	# Create the new XLSX file with all the colors
+#	ExportXlsx(ws, map_simple, filepath_output, min_x, min_y, max_x, max_y)
+	ExportXlsx(ws, map_simple, min_x, min_y, max_x, max_y)
+	AddFreezeLabel(ws, max_y - min_y) # Add a column & row to the left & top side respectively
+	ResizeColumns(ws)                 # Resize all columns to smaller width
+
+	# Save spreadsheet to filepath
+	log.Must('')
+	log.Must(f"  Exporting at : f{filepath_output}")
+	log.Must(f"   Rows: {ws.max_row}, Columns: {ws.max_column}")
+	wb.save(filepath_output)
+
 	log.Must('')
 
 
@@ -103,15 +118,38 @@ def logic(playdo, filepath_output):
 #------------------------------------------------------------#
 #-------------------- [Helper Functions] --------------------#
 
-def ExportXlsx(map_simple, filepath_output, min_x, min_y, max_x, max_y):
+def AddFreezeLabel(ws, num_rows):
+
+	ws.insert_cols(idx=1)
+	ws.insert_rows(idx=1)
+
+	# Top-row - Number & Syntax
+	num = 0
+	for col in ws.columns:
+		column_letter = col[0].column_letter
+		cell = ws[f"{column_letter}1"]
+#		ws[f"{column_letter}1"] = num
+		cell.value     = num
+		cell.font      = Font(bold=True, underline="single")
+		cell.alignment = Alignment(horizontal="center", vertical="center")
+		num += 1
+
+	# Add number in left-column
+	for i in range(num_rows+1):
+		cell = ws[f"A{i+1}"]
+		cell.value     = i
+		cell.font      = Font(bold=True, underline="single")
+		cell.alignment = Alignment(horizontal="center", vertical="center")
+
+	# Freeze first row and column
+	ws.freeze_panes = "B2"
+
+
+#def ExportXlsx(ws, map_simple, filepath_output, min_x, min_y, max_x, max_y):
+def ExportXlsx(ws, map_simple, min_x, min_y, max_x, max_y):
 	'''
 	 This exports the XLSX based on the recorded coloring data
 	'''
-
-	# Create a new workbook and select the active worksheet
-	wb = openpyxl.Workbook()
-	ws = wb.active
-
 	# Creates an array for just the color hex values
 	list_fill = []
 	for key, value in dict_id_to_hex.items():
@@ -134,25 +172,14 @@ def ExportXlsx(map_simple, filepath_output, min_x, min_y, max_x, max_y):
 	# Set the default BG Color for the "unedited cells" and "out of bound cells"
 	bg_fill    = PatternFill( start_color = bg_hex,     end_color = bg_hex,     fill_type="solid" )
 	black_fill = PatternFill( start_color = unused_hex, end_color = unused_hex, fill_type="solid" )
-	for row in ws.iter_rows(min_row = 1, max_row = max_y):
+	for row in ws.iter_rows(min_row = 1, max_row = max_y+1):
 		for cell in row:
 			if cell.fill.fill_type in (None, "none"): cell.fill = bg_fill
-	for row in ws.iter_rows(min_row = max_y-min_y+1, max_row = 1000):	# NOTE Somehow this line crops sheet to 273 rows
+	for row in ws.iter_rows(min_row = max_y-min_y+2, max_row = 1000):	# NOTE Somehow this line crops sheet to 273 rows
 #	for row in ws.iter_rows(min_row = max_y-min_y+1, max_row = max_y-min_y+1):
 		for cell in row: cell.fill = black_fill
 #	for row in ws.iter_rows(min_row = max_y-min_y+2, max_row = 1000):
 #		for cell in row: cell.fill = black_fill
-
-	# Resize the column width so it's easier to fit into the screen
-	for col in ws.columns:
-		column_letter = col[0].column_letter
-		ws.column_dimensions[column_letter].width = column_width / 7    # Function uses "character" as measurement, each ~7px
-
-	# Save the workbook
-	# NOTE The trimming functions don't seem to work at all either
-#	trim_empty_borders(ws)
-	wb.save(filepath_output)
-#	delete_at_up_and_left(filepath_output)
 
 
 
@@ -175,6 +202,11 @@ def PrintInConsole(map_simple, empty_id):
 		print_msg += "\n"
 	log.Must(print_msg)
 
+def ResizeColumns(ws):
+	# Resize the column width so it's easier to fit into the screen
+	for col in ws.columns:
+		column_letter = col[0].column_letter
+		ws.column_dimensions[column_letter].width = column_width / 7    # Function uses "character" as measurement, each ~7px
 
 
 
