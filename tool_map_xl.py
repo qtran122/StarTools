@@ -1,21 +1,30 @@
 '''
-Logic module for cli_export_xl
-
-
+Command-Line Tool for reading a simplified map XML, then creates a XLSX file at desktop
+The new XLSX contains the coloring data from the XML, and can then be imported into Google Sheet
+	
 USAGE EXAMPLE:
-	main_logic.logic(playdo)
-
+	cd /Users/Jimmy/20-GitHub/StarTools
+	clear; python tool_map_xl.py
 '''
+import argparse
 import logic.common.log_utils as log
-import openpyxl
-from openpyxl.styles import PatternFill
+import logic.common.file_utils as file_utils
+import logic.common.level_playdo as play
 
-#-----------------------------------------------------#
-#-------------------- [Variables] --------------------#
+import openpyxl
+from openpyxl.styles import PatternFill, Alignment, Font
+
+#---------------------------------------------------------------------#
+#-------------------- [Adjustable Configurations] --------------------#
+
+# In-editor object layers for nodes & routes
+level_name_input = "map_simplified.xml"
+path_t           =  "/Users/Jimmy/Desktop/whale_map.xlsx"      # TY's path
+path_q           = r"C:\Users\qtran\Desktop\whale_map.xlsx"    # Quang's path
+filepath_output  = path_q
 
 # XML Configurations
 layer_name = "BG"
-
 
 # Spreadsheet Format
 column_width = 30    # (in pixels) Width of each column in the spreadsheet
@@ -55,6 +64,23 @@ dict_id_to_hex = {
 
 
 
+#------------------------------------------------#
+#-------------------- [Main] --------------------#
+
+arg_description = 'Process a tiled level XML and <TBA>'
+arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
+
+def main():
+	# Use argparse to get the filename & other optional arguments from the command line
+	parser = argparse.ArgumentParser(description = arg_description)
+	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
+	args = parser.parse_args()
+	log.SetVerbosityLevel(args.v)
+
+	# Use a playdo to read/process the XML
+	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(level_name_input))
+	logic(playdo, filepath_output)
+
 #------------------------------------------------------------#
 #-------------------- [Public Functions] --------------------#
 
@@ -67,8 +93,8 @@ def logic(playdo, filepath_output):
 	# Map data
 	num_row = playdo.map_height
 	num_col = playdo.map_width
-	min_x = num_col
-	min_y = num_row
+	min_x = num_col+1
+	min_y = num_row+1
 	max_x = 0
 	max_y = 0
 
@@ -85,8 +111,8 @@ def logic(playdo, filepath_output):
 			if not tiles2d[i][j] in list_key: continue
 			if min_x > j: min_x = j
 			if min_y > i: min_y = i
-			if max_x < j: max_x = j
-			if max_y < i: max_y = i
+			if max_x < j: max_x = j + 1
+			if max_y < i: max_y = i + 1
 			for key, value in dict_id_to_hex.items():
 				if tiles2d[i][j] != key: continue
 				map_simple[i][j]  = list_key.index(key)
@@ -94,8 +120,20 @@ def logic(playdo, filepath_output):
 	log.Must(f"    Min X: {min_x}, Min Y: {min_y}")
 	log.Must(f"    Max X: {max_x}, Max Y: {max_y}")
 
-#	PrintInConsole(map_simple, empty_id)
-	ExportXlsx(map_simple, filepath_output, min_x, min_y, max_x, max_y)
+	wb = openpyxl.Workbook()
+	ws = wb.active
+
+	# Create the new XLSX file with all the colors
+	ExportXlsx(ws, map_simple, min_x, min_y, max_x, max_y)
+	AddFreezeLabel(ws, max_y - min_y) # Add a column & row to the left & top side respectively
+	ResizeColumns(ws)                 # Resize all columns to smaller width
+
+	# Save spreadsheet to filepath
+	log.Must('')
+	log.Must(f"  Exporting at : f{filepath_output}")
+	log.Must(f"   Rows: {ws.max_row}, Columns: {ws.max_column}")
+	wb.save(filepath_output)
+
 	log.Must('')
 
 
@@ -103,15 +141,41 @@ def logic(playdo, filepath_output):
 #------------------------------------------------------------#
 #-------------------- [Helper Functions] --------------------#
 
-def ExportXlsx(map_simple, filepath_output, min_x, min_y, max_x, max_y):
+def AddFreezeLabel(ws, num_rows):
+	'''
+	  Add Number & Syntax to the top row & left column, then freeze them
+	'''
+
+	ws.insert_cols(idx=1)
+	ws.insert_rows(idx=1)
+
+	# Top-row
+	num = -1
+	for col in ws.columns:
+		column_letter = col[0].column_letter
+		cell = ws[f"{column_letter}1"]
+		cell.value     = num
+		cell.font      = Font(bold=True, underline="single")
+		cell.alignment = Alignment(horizontal="center", vertical="center")
+		num += 1
+
+	# Add number in left-column
+	for i in range(num_rows+1):
+		cell = ws[f"A{i+1}"]
+		cell.value     = num_rows - i
+		cell.font      = Font(bold=True, underline="single")
+		cell.alignment = Alignment(horizontal="center", vertical="center")
+
+	# Freeze first row and column
+	ws[f"A1"] = ""
+	ws.freeze_panes = "B2"
+
+
+
+def ExportXlsx(ws, map_simple, min_x, min_y, max_x, max_y):
 	'''
 	 This exports the XLSX based on the recorded coloring data
 	'''
-
-	# Create a new workbook and select the active worksheet
-	wb = openpyxl.Workbook()
-	ws = wb.active
-
 	# Creates an array for just the color hex values
 	list_fill = []
 	for key, value in dict_id_to_hex.items():
@@ -134,27 +198,14 @@ def ExportXlsx(map_simple, filepath_output, min_x, min_y, max_x, max_y):
 	# Set the default BG Color for the "unedited cells" and "out of bound cells"
 	bg_fill    = PatternFill( start_color = bg_hex,     end_color = bg_hex,     fill_type="solid" )
 	black_fill = PatternFill( start_color = unused_hex, end_color = unused_hex, fill_type="solid" )
-	for row in ws.iter_rows(min_row = 1, max_row = max_y):
+	for row in ws.iter_rows(min_row = 1, max_row = max_y+1):
 		for cell in row:
 			if cell.fill.fill_type in (None, "none"): cell.fill = bg_fill
-	for row in ws.iter_rows(min_row = max_y-min_y+1, max_row = 1000):	# NOTE Somehow this line crops sheet to 273 rows
+	for row in ws.iter_rows(min_row = max_y-min_y+2, max_row = 1000):	# NOTE Somehow this line crops sheet to 273 rows
 #	for row in ws.iter_rows(min_row = max_y-min_y+1, max_row = max_y-min_y+1):
 		for cell in row: cell.fill = black_fill
 #	for row in ws.iter_rows(min_row = max_y-min_y+2, max_row = 1000):
 #		for cell in row: cell.fill = black_fill
-
-	# Resize the column width so it's easier to fit into the screen
-	for col in ws.columns:
-		column_letter = col[0].column_letter
-		ws.column_dimensions[column_letter].width = column_width / 7    # Function uses "character" as measurement, each ~7px
-
-	# Save the workbook
-	# NOTE The trimming functions don't seem to work at all either
-#	trim_empty_borders(ws)
-	wb.save(filepath_output)
-#	delete_at_up_and_left(filepath_output)
-
-
 
 def PrintInConsole(map_simple, empty_id):
 	'''
@@ -177,92 +228,19 @@ def PrintInConsole(map_simple, empty_id):
 
 
 
-
-
-#------------------------------------------------------------#
-#-------------------- [Unused Functions] --------------------#
-
-def trim_empty_borders(ws):
-    # 1. Find the minimum and maximum row/column indices containing actual data
-    min_r, max_r = None, None
-    min_c, max_c = None, None
-
-    for r in range(1, ws.max_row + 1):
-        for c in range(1, ws.max_column + 1):
-            val = ws.cell(row=r, column=c).value
-            # Check for None or whitespace-only strings
-            if val is not None and str(val).strip() != "":
-                if min_r is None or r < min_r:
-                    min_r = r
-                if max_r is None or r > max_r:
-                    max_r = r
-                if min_c is None or c < min_c:
-                    min_c = c
-                if max_c is None or c > max_c:
-                    max_c = c
-
-    # If the entire sheet is empty, clear all rows
-    if min_r is None:
-        ws.delete_rows(1, ws.max_row)
-        return
-
-    # 2. Delete bottom empty rows (delete from end first to avoid index shifts)
-    if max_r < ws.max_row:
-        ws.delete_rows(idx=max_r + 1, amount=ws.max_row - max_r)
-
-    # 3. Delete top empty rows
-    if min_r > 1:
-        ws.delete_rows(idx=1, amount=min_r - 1)
-
-    # 4. Delete right empty columns
-    if max_c < ws.max_column:
-        ws.delete_cols(idx=max_c + 1, amount=ws.max_column - max_c)
-
-    # 5. Delete left empty columns
-    if min_c > 1:
-        ws.delete_cols(idx=1, amount=min_c - 1)
-
-
-
-
-
-def delete_at_up_and_left(filepath):
-	wb = openpyxl.load_workbook(filepath)
-	ws = wb.active
-
-	# 1. Find the first non-empty row (top)
-	first_data_row = None
-	for row in ws.iter_rows():
-		if any(
-			cell.value is not None and str(cell.value).strip() != "" for cell in row
-		):
-			first_data_row = row[0].row
-			break
-
-	# Delete all empty rows above the first data row
-	if first_data_row and first_data_row > 1:
-		ws.delete_rows(1, first_data_row - 1)
-
-	# 2. Find the first non-empty column (left)
-	first_data_col = None
-	for col in ws.iter_cols():
-		if any(
-			cell.value is not None and str(cell.value).strip() != "" for cell in col
-		):
-			first_data_col = col[0].column
-			break
-
-	# Delete all empty columns to the left of the first data column
-	if first_data_col and first_data_col > 1:
-		ws.delete_cols(1, first_data_col - 1)
-
-	wb.save(filepath)
+def ResizeColumns(ws):
+	# Resize the column width so it's easier to fit into the screen
+	for col in ws.columns:
+		column_letter = col[0].column_letter
+		ws.column_dimensions[column_letter].width = column_width / 7    # Function uses "character" as measurement, each ~7px
 
 
 
 
 
 #--------------------------------------------------#
+
+main()
 
 
 
