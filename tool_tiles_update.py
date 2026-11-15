@@ -45,6 +45,10 @@ hex_base  = '#000000' # Base color of the sheet
 hex_tile  = '#FF0000' # Base color of the tile altered
 hex_pixel = '#00FFFF' # Color of all the changed pixels
 
+# Configuraitons
+config_check_0_alpha_same = True    # If true, treat color same if alpha values are 0, even if RGB values differ
+config_ignore_transparent = True    # If true, will not highlight transparent pixels as "changed"
+
 
 
 
@@ -139,25 +143,49 @@ def compare_images(image1_path, image2_path, output_path, grid_size=16):
 
 		# NOTE This snippet is a replacement of the above to account for transparent pixel
 		# Differences in RGB, ignoring alpha for the moment
-		rgb_mask = channels[0]
-		for channel in channels[1:3]:
-			rgb_mask = ImageChops.lighter(rgb_mask, channel)
-		rgb_mask = rgb_mask.point(lambda value: 255 if value > 0 else 0)
+		if config_check_0_alpha_same:
+			rgb_mask = channels[0]
+			for channel in channels[1:3]:
+				rgb_mask = ImageChops.lighter(rgb_mask, channel)
+			rgb_mask = rgb_mask.point(lambda value: 255 if value > 0 else 0)
 
-		# Differences in alpha still count
-		alpha_mask = channels[3].point(lambda value: 255 if value > 0 else 0)
+			# Differences in alpha still count
+			alpha_mask = channels[3].point(lambda value: 255 if value > 0 else 0)
 
-		# Find pixels that are transparent in both images
-		transparent1 = image1.getchannel("A").point( lambda alpha: 255 if alpha == 0 else 0 )
-		transparent2 = image2.getchannel("A").point( lambda alpha: 255 if alpha == 0 else 0 )
-		both_transparent = ImageChops.darker(transparent1, transparent2)
+			# Find pixels that are transparent in both images
+			transparent1 = image1.getchannel("A").point( lambda alpha: 255 if alpha == 0 else 0 )
+			transparent2 = image2.getchannel("A").point( lambda alpha: 255 if alpha == 0 else 0 )
+			both_transparent = ImageChops.darker(transparent1, transparent2)
 
-		# Ignore RGB differences for pixels transparent in both images
-		visible_mask = ImageChops.invert(both_transparent)
-		rgb_mask = ImageChops.multiply(rgb_mask, visible_mask)
+			# Ignore RGB differences for pixels transparent in both images
+			visible_mask = ImageChops.invert(both_transparent)
+			rgb_mask = ImageChops.multiply(rgb_mask, visible_mask)
 
-		# A pixel differs if its visible RGB differs or its alpha differs
-		mask = ImageChops.lighter(rgb_mask, alpha_mask)
+			# A pixel differs if its visible RGB differs or its alpha differs
+			mask = ImageChops.lighter(rgb_mask, alpha_mask)
+
+
+
+		if config_ignore_transparent:
+			# Mark a pixel if any RGBA channel differs
+			channels = difference.split()
+			diff_mask = channels[0]
+			for channel in channels[1:]:
+				diff_mask = ImageChops.lighter(diff_mask, channel)
+
+			diff_mask = diff_mask.point(lambda value: 255 if value > 0 else 0)
+
+			# Keep only pixels that are nontransparent in BOTH images
+			visible1 = image1.getchannel("A").point(
+				lambda alpha: 255 if alpha > 0 else 0
+			)
+			visible2 = image2.getchannel("A").point(
+				lambda alpha: 255 if alpha > 0 else 0
+			)
+			both_visible = ImageChops.darker(visible1, visible2)
+
+			# Final mask: different and visible in both images
+			mask = ImageChops.multiply(diff_mask, both_visible)
 
 
 
