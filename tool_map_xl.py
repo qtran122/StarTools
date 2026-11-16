@@ -11,6 +11,7 @@ import logic.common.log_utils as log
 import logic.common.file_utils as file_utils
 import logic.common.level_playdo as play
 
+from pathlib import Path
 import openpyxl
 from openpyxl.styles import PatternFill, Alignment, Font
 
@@ -67,7 +68,7 @@ dict_id_to_hex = {
 #------------------------------------------------#
 #-------------------- [Main] --------------------#
 
-arg_description = 'Process a tiled level XML and <TBA>'
+arg_description = 'Process a simplified map XML and export a XLSX with colors'
 arg_help2 = 'Controls the amount of information displayed to screen. 0 = nearly silent, 2 = verbose'
 
 def main():
@@ -76,6 +77,18 @@ def main():
 	parser.add_argument('--v', type=int, choices=[0, 1, 2], default=1, help = arg_help2)
 	args = parser.parse_args()
 	log.SetVerbosityLevel(args.v)
+
+	# Check if address exists, exit and do nothing if so
+	output_folder = filepath_output
+	if '/'  in output_folder: output_folder = output_folder.replace(filepath_output.split('/')[-1], "")
+	if '\\' in output_folder: output_folder = output_folder.replace(filepath_output.split('\\')[-1], "")
+#	log.Must(f"  Output: {output_folder}\n")
+	if not Path(output_folder).exists():
+		log.Must(f"  Output: {output_folder}\n")
+		log.Must( "  Output path does not exist!")
+		log.Must( "   Make sure you are setting the correct path inside the .py file")
+		log.Must("")
+		return
 
 	# Use a playdo to read/process the XML
 	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(level_name_input))
@@ -229,7 +242,9 @@ def PrintInConsole(map_simple, empty_id):
 
 
 def ResizeColumns(ws):
-	# Resize the column width so it's easier to fit into the screen
+	'''
+	 Resize the column width so it's easier to fit into the screen
+	'''
 	for col in ws.columns:
 		column_letter = col[0].column_letter
 		ws.column_dimensions[column_letter].width = column_width / 7    # Function uses "character" as measurement, each ~7px
