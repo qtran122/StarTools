@@ -46,8 +46,9 @@ hex_tile  = '#FF0000' # Base color of the tile altered
 hex_pixel = '#00FFFF' # Color of all the changed pixels
 
 # Configuraitons
-config_check_0_alpha_same = True    # If true, treat color same if alpha values are 0, even if RGB values differ
-config_ignore_transparent = True    # If true, will not highlight transparent pixels as "changed"
+config_check_0_alpha_same  = True    # If true, treat color same if alpha values are 0, even if RGB values differ
+config_ignore_transparent  = True    # If true, will not highlight transparent pixels as "changed"
+config_delete_after_export = True    # If true, the downloaded tilesheet will be deleted after copying
 
 
 
@@ -109,6 +110,7 @@ def main():
 	# Step 4 - Copy tilesheet to new location
 	shutil.copy(img_path_dl, img_path_pj)
 	log.Must("  Tilesheet overwritten.")
+	if config_delete_after_export: os.remove(img_path_dl); log.Must("   The downloaded Tilesheet deleted")
 	log.Must("")
 
 
