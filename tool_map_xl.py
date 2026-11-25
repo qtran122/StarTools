@@ -13,22 +13,52 @@ import logic.common.level_playdo as play
 
 from pathlib import Path
 import openpyxl
-from openpyxl.styles import PatternFill, Alignment, Font
+from openpyxl.styles import PatternFill, Alignment, Font, Border, Side
+import subprocess
+import time
+import os
+from datetime import datetime
 
 #---------------------------------------------------------------------#
 #-------------------- [Adjustable Configurations] --------------------#
 
 # In-editor object layers for nodes & routes
 level_name_input = "map_simplified.xml"
+level_name_input = "map_planning.xml"
+level_name_input = "map_export_xlsx.xml"
 path_t           =  "/Users/Jimmy/Desktop/whale_map.xlsx"      # TY's path
 path_q           = r"C:\Users\qtran\Desktop\whale_map.xlsx"    # Quang's path
 filepath_output  = path_q
 
+mode_export = 1    # 1: Export color in XLSX, 2: Export name in TXT
+
 # XML Configurations
-layer_name = "BG"
+layer_name_color   = "FILL"
+layer_name_icon    = "ICON"
+layer_name_biome   = "_room_letter"
+layer_name_number  = "_room_num_all"
+layer_name_border1 = "_map_grid_LR"
+layer_name_border2 = "_map_grid_DU"
 
 # Spreadsheet Format
 column_width = 30    # (in pixels) Width of each column in the spreadsheet
+
+grid_thickness = 'thick'   # 'thin' 'thick'
+grid_color_1   = 'FFFFFF' # Wall
+grid_color_2   = '888888' # Door
+dict_grid_to_id = {
+	"wall_l": 400+1,
+	"door_l": 528+1,
+	"wall_u": 273+1,
+	"door_u": 274+1,
+}
+
+room_color_save = '00FFFF' # Save rooms - Cyan
+room_color_warp = '32CD32' # Warp rooms - Lime Green
+dict_room_to_id = {
+	"warp": [145+1,],
+	"save": [144+1,146+1,148+1,149+1,],
+}
 
 bg_hex     = "0076a3"    # dict_id_to_hex[411+1]
 unused_hex = "000000"
@@ -61,6 +91,8 @@ dict_id_to_hex = {
 	540+1:"7b0046",
 }
 
+dict_id_to_num    = {}
+dict_id_to_letter = {}
 
 
 
@@ -92,54 +124,26 @@ def main():
 
 	# Use a playdo to read/process the XML
 	playdo = play.LevelPlayDo(file_utils.GetFullLevelPath(level_name_input))
-	logic(playdo, filepath_output)
+	if   mode_export == 1: ExportMapColorInXlsx(playdo, filepath_output)
+	elif mode_export == 2: ExportRoomNamesInTxt(playdo)
+	else: log.Must("[EROOR] - Export Mode invalid, please go to the .py file to change")
 
 #------------------------------------------------------------#
 #-------------------- [Public Functions] --------------------#
 
-def logic(playdo, filepath_output):
+def ExportMapColorInXlsx(playdo, filepath_output):
 	'''
 	 Reads the XML and output a XLSX spreadsheet in the designated filepath
 	'''
-	log.Must(f'  Reading the map data...')
-
-	# Map data
-	num_row = playdo.map_height
-	num_col = playdo.map_width
-	min_x = num_col+1
-	min_y = num_row+1
-	max_x = 0
-	max_y = 0
-
-	# Initialise the array
-	empty_id = -1
-	map_simple = [[empty_id for _ in range(num_col)] for _ in range(num_row)]
-
-	# Check each cell in Tiled
-	# The color data and max/min range is recorded, latter is shown as message
-	tiles2d = playdo.GetTiles2d(layer_name)
-	list_key = list(dict_id_to_hex.keys())
-	for i in range(num_row):
-		for j in range(num_col):
-			if not tiles2d[i][j] in list_key: continue
-			if min_x > j: min_x = j
-			if min_y > i: min_y = i
-			if max_x < j: max_x = j + 1
-			if max_y < i: max_y = i + 1
-			for key, value in dict_id_to_hex.items():
-				if tiles2d[i][j] != key: continue
-				map_simple[i][j]  = list_key.index(key)
-	log.Must(f"   Map W: {num_col}, Map H: {num_row}")
-	log.Must(f"    Min X: {min_x}, Min Y: {min_y}")
-	log.Must(f"    Max X: {max_x}, Max Y: {max_y}")
-
+	log.Must(f'  Exporting XLSX from map data - {playdo.map_width} x {playdo.map_height}')
 	wb = openpyxl.Workbook()
 	ws = wb.active
 
 	# Create the new XLSX file with all the colors
-	ExportXlsx(ws, map_simple, min_x, min_y, max_x, max_y)
-	AddFreezeLabel(ws, max_y - min_y) # Add a column & row to the left & top side respectively
-	ResizeColumns(ws)                 # Resize all columns to smaller width
+	AddColorToXlsx(ws, playdo)
+	AddGridlinesToXlsx(ws, playdo)        # Add white grid lines for each room
+	AddFreezeLabel(ws, playdo.map_height) # Add a column & row to the left & top side respectively
+	ResizeColumns(ws)                     # Resize all columns to smaller width
 
 	# Save spreadsheet to filepath
 	log.Must('')
@@ -151,14 +155,204 @@ def logic(playdo, filepath_output):
 
 
 
-#------------------------------------------------------------#
-#-------------------- [Helper Functions] --------------------#
+#---------------------------------------------------------#
+#-------------------- [TXT Functions] --------------------#
+
+def ExportRoomNamesInTxt(playdo):
+	'''
+	 Generate a TXT file that contains the room names at corresponding cell position
+	 The entire content can be copy-pasted directly onto the spreadsheet, starting at top-left [B2]
+	'''
+	num_row = playdo.map_height
+	num_col = playdo.map_width
+	empty_id = -1
+
+	# Initialise the array
+	map_output = [[empty_id for _ in range(num_col)] for _ in range(num_row)]
+
+	# Set up the dictionary : TileID -> Number, TileID -> Biome Letter
+	MakeDictIdToNum()
+#	for key, value in dict_id_to_num.items(): print(f"{key} : {value}")
+#	for key, value in dict_id_to_letter.items(): print(f"{key} : {value}")
+
+	# Read map data into string
+	tiles2d_letter = playdo.GetTiles2d(layer_name_biome)
+	tiles2d_number = playdo.GetTiles2d(layer_name_number)
+	for i in range(num_row):
+		for j in range(num_col):
+			if     tiles2d_number[i][j] == 0:              continue
+			if not tiles2d_number[i][j] in dict_id_to_num: continue
+			map_output[i][j]  = dict_id_to_letter[tiles2d_letter[i][j]]
+			map_output[i][j] += dict_id_to_num[   tiles2d_number[i][j]]
+	log.Must(f"  Map W: {num_col}, Map H: {num_row}")
+	log.Must("")
+
+	# Export into TXT file
+	_ExportMapToString(map_output, empty_id, "   ", '\t', False)
+
+def _ExportMapToString(map_simple, empty_id, empty_char = " ", separator = " ", print_in_console = True):
+	'''
+	 Prints the map data on console instead
+	 For debugging, and in case want to switch over to the "copy-paste plain text" method
+	'''
+	num_row = len(map_simple)
+	num_col = len(map_simple[0])
+	log.Must(f"  Exporting room names in plain text: {num_col}x{num_row}...")
+	log.Must(f"")
+
+	# Generate the string here
+	print_msg = f"[B2] Copy-Paste to here ; Last Exported at {datetime.now().replace(microsecond=0)}"
+	for i in range(num_row):
+		for j in range(num_col):
+			if map_simple[i][j] == empty_id: print_msg += empty_char
+#			else:                            print_msg += "x"
+#			else:                            print_msg += map_simple[i][j][0]
+#			else:                            print_msg += map_simple[i][j] // 10
+			else:                            print_msg += f"{map_simple[i][j]}"
+			print_msg += separator
+		print_msg += "\n"
+	
+	# Output to either Console or in a TXT file
+	# NOTE Make sure to close the app first before re-running, otherwise the TXT won't update
+	if print_in_console: log.Must(print_msg)
+	log.Must(f"  Opening the generated TXT automatically...")
+	filepath = "map_exported.txt"
+#	filepath = input folder + "map_exported.rxt"
+	with open(filepath, "w", encoding="utf-8") as file: file.write(print_msg)
+	subprocess.run(["open", "-a", "TextEdit", filepath])
+	time.sleep(1)
+	os.remove(filepath)
+	log.Must(f"   Generated TXT deleted")
+	log.Must(f"")
+
+
+
+def MakeDictIdToNum():
+
+	# Tile ID to Room Number
+	global dict_id_to_num
+	START_ID = 789+1
+	WIDTH = 5
+	for i in range(60):
+		tile_id = START_ID + i % WIDTH + (i // WIDTH) * 128
+		num_string = ""
+		if i+1 < 10: num_string = "0"
+		num_string += f"{i+1}"
+		if i == 59: num_string = "00"
+		dict_id_to_num[tile_id] = num_string
+	dict_id_to_num[0] = "  "
+
+	# Special Cases
+	dict_id_to_num[1936+1] = "-natty"
+
+	# Tile ID to Biome Letter
+	global dict_id_to_letter
+	START_ID = 784+1
+	WIDTH = 5
+	for i in range(26):
+		tile_id = START_ID + i % WIDTH + (i // WIDTH) * 128
+		letter_string = chr(ord('A') + i)
+		dict_id_to_letter[tile_id] = letter_string
+	dict_id_to_letter[0] = " "
+
+
+
+
+
+
+
+
+#----------------------------------------------------------#
+#-------------------- [XLSX Functions] --------------------#
+
+def AddColorToXlsx(ws, playdo):
+	'''
+	 This exports the XLSX based on the recorded coloring data
+	'''
+	log.Must('  Adding color to XLSX...')
+	num_row = playdo.map_height
+	num_col = playdo.map_width
+
+	# Creates an array for just the color hex values
+	list_key = list(dict_id_to_hex.keys())
+	dict_id_to_fill = {}
+	for key, value in dict_id_to_hex.items(): dict_id_to_fill[key] = PatternFill(start_color = value, end_color = value, fill_type="solid")
+	for ID in dict_room_to_id["save"]: dict_id_to_fill[ID] = PatternFill(start_color = room_color_save, end_color = room_color_save, fill_type="solid")
+	for ID in dict_room_to_id["warp"]: dict_id_to_fill[ID] = PatternFill(start_color = room_color_warp, end_color = room_color_warp, fill_type="solid")
+
+	# Fill color to the XLSX
+	tiles2d = playdo.GetTiles2d(layer_name_color)
+	if tiles2d == None: log.Must(f"  [ERROR] - Layer {layer_name_color} not found!"); return
+	for i in range(num_row):
+		for j in range(num_col):
+#			if not tiles2d[i][j] in list_key: continue
+			if not tiles2d[i][j] in dict_id_to_fill.keys(): continue
+#			hex = dict_id_to_hex[tiles2d[i][j]]
+#			fill = PatternFill(start_color = hex, end_color = hex, fill_type="solid")
+			fill = dict_id_to_fill[tiles2d[i][j]]
+			ws.cell(row = i+1, column = j+1, value = " ").fill = fill
+
+	# Special case - Warp and Save room
+	tiles2d_icon = playdo.GetTiles2d(layer_name_icon)
+	for i in range(num_row):
+		if tiles2d_icon == None: log.Must("   Icon layer not found, omitting check..."); break
+		for j in range(num_col):
+			if tiles2d[i][j] == 0: continue                          # Quick filter
+			if not tiles2d[i][j] in dict_id_to_fill.keys(): continue # Safety check
+			fill = dict_id_to_fill[tiles2d[i][j]]
+			ws.cell(row = i+1, column = j+1, value = " ").fill = fill
+
+	# Set the default BG Color for the "unedited cells" and "out of bound cells"
+	bg_fill    = PatternFill( start_color = bg_hex,     end_color = bg_hex,     fill_type="solid" )
+	black_fill = PatternFill( start_color = unused_hex, end_color = unused_hex, fill_type="solid" )
+	for row in ws.iter_rows(min_row = 1, max_row = num_row+1):
+		for cell in row:
+			if cell.fill.fill_type in (None, "none"): cell.fill = bg_fill
+	for row in ws.iter_rows(min_row = num_row+2, max_row = 1000):	# NOTE Somehow this line crops sheet to 273 rows
+#	for row in ws.iter_rows(min_row = max_y-min_y+1, max_row = max_y-min_y+1):
+		for cell in row: cell.fill = black_fill
+#	for row in ws.iter_rows(min_row = max_y-min_y+2, max_row = 1000):
+#		for cell in row: cell.fill = black_fill
+
+
+
+
+
+def AddGridlinesToXlsx(ws, playdo):
+	'''
+	 TODO
+	'''
+	log.Must('  Adding gridlines to XLSX...')
+	num_row = playdo.map_height
+	num_col = playdo.map_width
+
+	# Initialise the array
+	wall_gridline = Side(style=grid_thickness, color=grid_color_1)
+	door_gridline = Side(style=grid_thickness, color=grid_color_2)
+
+	# Read map data into string
+	tiles2d_lr = playdo.GetTiles2d(layer_name_border1)
+	tiles2d_du = playdo.GetTiles2d(layer_name_border2)
+	if tiles2d_lr == None or tiles2d_du == None:
+		log.Must('   Grid layers not found, skipping operation...')
+		return
+	for i in range(num_row):
+		for j in range(num_col):
+			gridline_l = None
+			gridline_u = None
+			if tiles2d_lr[i][j] == dict_grid_to_id["wall_l"]: gridline_l = wall_gridline
+			if tiles2d_lr[i][j] == dict_grid_to_id["door_l"]: gridline_l = door_gridline
+			if tiles2d_du[i][j] == dict_grid_to_id["wall_u"]: gridline_u = wall_gridline
+			if tiles2d_du[i][j] == dict_grid_to_id["door_u"]: gridline_u = door_gridline
+			ws.cell(row = i+1, column = j+1).border = Border(left=gridline_l, top=gridline_u)
+
+
 
 def AddFreezeLabel(ws, num_rows):
 	'''
 	  Add Number & Syntax to the top row & left column, then freeze them
 	'''
-
+	log.Must('  Adding frozen first row & column to XLSX...')
 	ws.insert_cols(idx=1)
 	ws.insert_rows(idx=1)
 
@@ -185,66 +379,11 @@ def AddFreezeLabel(ws, num_rows):
 
 
 
-def ExportXlsx(ws, map_simple, min_x, min_y, max_x, max_y):
-	'''
-	 This exports the XLSX based on the recorded coloring data
-	'''
-	# Creates an array for just the color hex values
-	list_fill = []
-	for key, value in dict_id_to_hex.items():
-		list_fill.append( PatternFill(start_color = value, end_color = value, fill_type="solid") )
-	list_fill.append( PatternFill(fill_type=None) )
-
-	# Enter data to corresponding cells based on map data
-	num_row = len(map_simple)
-	num_col = len(map_simple[0])
-	for row in range(num_row):
-		if row < min_y: continue
-		for col in range(num_col):
-			if col < min_x: continue
-			if map_simple[row][col] < 0: continue
-			new_x = col + 1 - min_x
-			new_y = row + 1 - min_y
-			fill_id = map_simple[row][col]
-			ws.cell(row = new_y, column = new_x, value = " ").fill = list_fill[fill_id]
-
-	# Set the default BG Color for the "unedited cells" and "out of bound cells"
-	bg_fill    = PatternFill( start_color = bg_hex,     end_color = bg_hex,     fill_type="solid" )
-	black_fill = PatternFill( start_color = unused_hex, end_color = unused_hex, fill_type="solid" )
-	for row in ws.iter_rows(min_row = 1, max_row = max_y+1):
-		for cell in row:
-			if cell.fill.fill_type in (None, "none"): cell.fill = bg_fill
-	for row in ws.iter_rows(min_row = max_y-min_y+2, max_row = 1000):	# NOTE Somehow this line crops sheet to 273 rows
-#	for row in ws.iter_rows(min_row = max_y-min_y+1, max_row = max_y-min_y+1):
-		for cell in row: cell.fill = black_fill
-#	for row in ws.iter_rows(min_row = max_y-min_y+2, max_row = 1000):
-#		for cell in row: cell.fill = black_fill
-
-def PrintInConsole(map_simple, empty_id):
-	'''
-	 Prints the map data on console instead
-	 For debugging, and in case want to switch over to the "copy-paste plain text" method
-	'''
-	num_row = len(map_simple)
-	num_col = len(map_simple[0])
-	print_msg = ""
-	for i in range(num_row):
-		for j in range(num_col):
-			if map_simple[i][j] == empty_id: print_msg += " "
-#			else:                            print_msg += "x"
-#			else:                            print_msg += map_simple[i][j][0]
-#			else:                            print_msg += map_simple[i][j] // 10
-			else:                            print_msg += f"{map_simple[i][j]}"
-			print_msg += " "
-		print_msg += "\n"
-	log.Must(print_msg)
-
-
-
 def ResizeColumns(ws):
 	'''
 	 Resize the column width so it's easier to fit into the screen
 	'''
+	log.Must(f'  Resizing each column to be {column_width} pixels...')
 	for col in ws.columns:
 		column_letter = col[0].column_letter
 		ws.column_dimensions[column_letter].width = column_width / 7    # Function uses "character" as measurement, each ~7px
